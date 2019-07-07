@@ -15,9 +15,7 @@ for p in $buildInputs; do
     export PATH=$p/bin${PATH:+:}$PATH
 done
 
-if [ -n "$src" ]; then
-    cd $src
-fi
+cp -r $src/*.* .
 
 echo "Running byte-compile..."
 
