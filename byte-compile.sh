@@ -27,5 +27,7 @@ emacs --batch \
     --funcall batch-byte-compile \
     $targetFiles
 
+echo "Byte-compilation was successful."
+
 # nix-build fails if you don't make the output directory
 mkdir -p $out
