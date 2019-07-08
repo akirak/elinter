@@ -50,6 +50,7 @@ in rec
     # Assume the items of targetFiles never contain space
       args = pkgs.lib.foldr (a: b: a + " " + b) "" targetFiles;
     in ''
+    set -e
     cd ${src}
     ELPA_USER_DIR=${elpaCache} emacs --batch -l ${./run-package-lint.el} ${args}
     echo "package-lint is OK."
