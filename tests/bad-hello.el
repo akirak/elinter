@@ -2,13 +2,6 @@
 
 ;; Copyright (C) 2019 Akira Komamura
 
-;; Author: Akira Komamura <akira.komamura@gmail.com>
-;; Version: 0.1
-;; Package-Requires: ((emacs "25.1"))
-;; URL: https://github.com/akirak/emacs-package-checker
-
-;; This file is not part of GNU Emacs.
-
 ;;; License:
 
 ;; This program is free software: you can redistribute it and/or modify
