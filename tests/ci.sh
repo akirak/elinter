@@ -3,8 +3,6 @@
 set -e
 
 EMACS="${EMACS:-emacs}"
-unset NIX_BUILD_SHELL
-export NIX_BUILD_SHELL
 
 nix-build() {
     command nix-build --quiet \
