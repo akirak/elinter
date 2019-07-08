@@ -1,0 +1,102 @@
+* emacs-package-checker
+Emacs Package Checker lets you quickly configure typical linters (i.e. package-lint, byte-compile, and checkdoc) for your Emacs package.
+
+There are existing solutions in this field like [[https://github.com/vermiculus/emake.el][emake.el]] and [[https://gitlab.petton.fr/DamienCassou/makel][makel]]. 
+Emacs Package Checker is not any more capable than those existing solutions, but it is based on [[https://nixos.org/nix/][Nix]] package manager and runs tests in a pure, sandboxed environment.
+This is useful for testing Emacs packages on local machines.
+** Configuration for a single package
+First you have to create a configuration file in your package repository.
+The recommended file name is =default.nix=, but it can be any file name with =.nix= suffix.
+
+The following is an example from [[https://github.com/akirak/poly-vue][poly-vue]] package:
+
+#+begin_src nix
+  { pkgs ? import <nixpkgs> {}, emacs ? pkgs.emacs25 }:
+  let
+    check-package = import (builtins.fetchGit {
+      url = "https://github.com/akirak/emacs-package-checker";
+      ref = "master";
+      rev = "327d9ade9b2ea6a2f7799dcb1689865846dab1de";
+    });
+  in check-package {
+    inherit emacs pkgs;
+    name = "emacs-poly-vue";
+    src = ./.;
+    targetFiles = ["poly-vue.el"];
+    emacsPackages = epkgs: (with epkgs.melpaPackages; [
+      polymode
+    ]);
+  }
+#+end_src
+
+- An optional argument =emacs= is the Emacs package in [[https://github.com/NixOS/nixpkgs/][nixpkgs]] used to byte-compile Emacs Lisp files. For details, refer to [[https://nixos.org/nixos/manual/index.html#module-services-emacs-releases][a subsection in NixOS manual]].
+- =rev= must be the hash of this repository.
+- =name= can be any string accepted as a file name. It is used as part of directory names.
+- =src= should point to the directory containing Emacs Lisp files.
+- =targetFiles= is a list of Emacs Lisp files to check.
+- =emacsPackages= is a function that returns a list of Emacs Lisp packages required to build the Emacs Lisp files in =targetFiles=.
+  This should be done [[https://nixos.org/nixos/manual/index.html#module-services-emacs-adding-packages][as in NixOS]].
+*** Checking the package locally
+If the name of the configuration file is =default.nix=, you can check the package as follows:
+
+#+begin_src shell
+# Run checkdoc
+nix-build --no-out-link --quiet -A checkdoc
+# Byte-compile
+nix-build --no-out-link --quiet -A byte-compile
+# Package-lint
+nix-shell --pure --quiet -A package-lint
+#+end_src
+
+- =checkdoc= and =byte-compile= can be run in =nix-build=, but =package-lint= must be run in =nix-shell=. This is because 
+  =package-lint= requires an internet connection to check if packages are installable, but =nix-build= forbidden that.
+- =--no-out-link= is need to prevent =nix-build= from creating =result= directory in the repository.
+- When =--pure= is given as an argument, =nix-shell= runs the command in a sandbox.
+- =--quiet= flag suppress messages related to Nix.
+
+If you have set =NIX_BUILD_SHELL= environment variable to something like =zsh=, you may have to unset it temporarily when you run =nix-shell=.
+
+If the file name is something other than =default.nix=, then you have to append the file name to each command line.
+*** Travis configuration
+A minimal configuration for [[https://travis-ci.org/][TravisCI]] is as follows:
+
+#+begin_src yaml
+  language: nix
+
+  script:
+    - nix-build -A byte-compile --no-out-link --quiet
+    - nix-build -A checkdoc --no-out-link --quiet
+    - nix-shell -A package-lint --pure --quiet
+
+  cache:
+    directories:
+      - /nix/store
+      - /dev/shm/package-lint
+#+end_src
+** Notes
+*** Files created on the file system
+- Files are built in the Nix store, which is located in =/nix/store= by default. You can remove unnecessary files by running =nix-store --gc=.
+- Package archives are stored in a directory in =/dev/shm/package-lint/elpa= when you run =package-lint=. You can safely remove them after the process is finished.
+*** Setting the Emacs version at runtime
+By default, an Emacs package specified after =?= in the input argument is used to build the Emacs package.
+You can override this value from the command line.
+
+To use the latest stable version for byte-compiling the package, add the following arguments to the command line:
+
+#+begin_src shell
+--arg emacs "(import <nixpkgs> {}).emacs"
+#+end_src
+
+The entire command line will be as follows:
+
+#+begin_src shell
+nix-build --no-out-link --quiet -A byte-compile --arg emacs "(import <nixpkgs> {}).emacs"
+#+end_src
+
+To use Emacs 25:
+
+#+begin_src shell
+nix-build --no-out-link --quiet -A byte-compile --arg emacs "(import <nixpkgs> {}).emacs25"
+#+end_src
+** License
+GPL v3
