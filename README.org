@@ -6,7 +6,7 @@ Emacs Package Checker is not any more capable than those existing solutions, but
 This is useful for testing Emacs packages on local machines.
 ** Configuration for a single package
 First you have to create a configuration file in your package repository.
-The recommended file name is =default.nix=, but it can be any file name with =.nix= suffix.
+The recommended file name is =default.nix=, but it can be any name with =.nix= suffix.
 
 The following is an example from [[https://github.com/akirak/poly-vue][poly-vue]] package:
 
@@ -37,7 +37,7 @@ The following is an example from [[https://github.com/akirak/poly-vue][poly-vue]
 - =emacsPackages= is a function that returns a list of Emacs Lisp packages required to build the Emacs Lisp files in =targetFiles=.
   This should be done [[https://nixos.org/nixos/manual/index.html#module-services-emacs-adding-packages][as in NixOS]].
 *** Checking the package locally
-If the name of the configuration file is =default.nix=, you can check the package as follows:
+If the name of the configuration file is =default.nix=, you can check the package with the following command:
 
 #+begin_src shell
 # Run checkdoc
@@ -73,13 +73,15 @@ A minimal configuration for [[https://travis-ci.org/][TravisCI]] is as follows:
       - /nix/store
       - /dev/shm/package-lint
 #+end_src
+
+Optionally, you can add =matrix= to run tests on multiple configurations.
 ** Notes
 *** Files created on the file system
 - Files are built in the Nix store, which is located in =/nix/store= by default. You can remove unnecessary files by running =nix-store --gc=.
 - Package archives are stored in a directory in =/dev/shm/package-lint/elpa= when you run =package-lint=. You can safely remove them after the process is finished.
 *** Setting the Emacs version at runtime
-By default, an Emacs package specified after =?= in the input argument is used to build the Emacs package.
-You can override this value from the command line.
+In the configuration, an Emacs package specified as =emacs= in the input argument is used to build the Emacs package, and the value after =?= is used as its default value.
+You can override the argument from the command line.
 
 To use the latest stable version for byte-compiling the package, add the following arguments to the command line:
 
