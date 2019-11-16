@@ -10,7 +10,7 @@ let
   emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
     emacsPackages;
   # Emacs with package-lint. This is used for running package-lint.
-  emacsForPackageLint = (pkgs.emacsPackagesNgGen pkgs.emacs).emacsWithPackages
+  emacsForPackageLint = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
     (epkgs: (with epkgs.melpaStablePackages; [ package-lint ]));
   # At present, elpa packages are stored in shared memory, per package.
   #
