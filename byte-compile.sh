@@ -15,6 +15,10 @@ for p in $buildInputs; do
     export PATH=$p/bin${PATH:+:}$PATH
 done
 
+echo "----------------------------------------------------------------------"
+emacs --version
+echo "----------------------------------------------------------------------"
+
 cp -r $src/*.* .
 
 echo "Running byte-compile..."
