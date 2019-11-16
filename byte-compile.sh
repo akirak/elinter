@@ -19,7 +19,7 @@ cp -r $src/*.* .
 
 echo "Running byte-compile..."
 
-emacs --batch \
+emacs --batch --no-site-file \
     --eval "(require 'package)" \
     --eval "(setq package-archives nil)" \
     --eval "(package-initialize)" \

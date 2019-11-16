@@ -52,7 +52,7 @@ in rec
     in ''
     set -e
     cd ${src}
-    ELPA_USER_DIR=${elpaCache} emacs --batch -l ${./run-package-lint.el} ${args}
+    ELPA_USER_DIR=${elpaCache} emacs --no-site-file --batch -l ${./run-package-lint.el} ${args}
     echo "package-lint is OK."
     # Prevent from actually entering the shell
     exit
