@@ -15,21 +15,23 @@ The recommended file name is =default.nix=, but it can be any name with =.nix= s
 The following is an example from [[https://github.com/akirak/poly-vue][poly-vue]] package:
 
 #+begin_src nix
-  { pkgs ? import <nixpkgs> {}, emacs ? pkgs.emacs25 }:
+  { pkgs ? import <nixpkgs> {},
+    emacs ? (import (builtins.fetchTarball "https://github.com/purcell/nix-emacs-ci/archive/master.tar.gz")).emacs-25-2
+  }:
   let
-    check-package = import (builtins.fetchGit {
-      url = "https://github.com/akirak/emacs-package-checker";
-      ref = "master";
-      rev = "1553d9f6c8d61e8f455f22e4a1d0743bc8cd48a9";
-    });
+    check-package = import (builtins.fetchTarball "https://github.com/akirak/emacs-package-checker/archive/v1/master.tar.gz");
+    emacs-workarounded = emacs // {
+      meta = emacs.meta // { platforms = pkgs.stdenv.lib.platforms.all; };
+    };
   in check-package {
-    inherit emacs pkgs;
+    inherit pkgs;
     name = "emacs-poly-vue";
     src = ./.;
     targetFiles = ["poly-vue.el"];
     emacsPackages = epkgs: (with epkgs.melpaPackages; [
       polymode
     ]);
+    emacs = emacs-workarounded;
   }
 #+end_src
 
@@ -61,24 +63,47 @@ nix-shell --pure --quiet -A package-lint
 If you have set =NIX_BUILD_SHELL= environment variable to something like =zsh=, you may have to unset it temporarily when you run =nix-shell=.
 
 If the file name is something other than =default.nix=, then you have to append the file name to each command line.
-*** Travis configuration
-A minimal configuration for [[https://travis-ci.org/][TravisCI]] is as follows:
+*** GitHub Actions
+Create =.github/workflows/test.yml= like this:
 
 #+begin_src yaml
-  language: nix
+  name: CI
 
-  script:
-    - nix-build -A byte-compile --no-out-link --quiet
-    - nix-build -A checkdoc --no-out-link --quiet
-    - nix-shell -A package-lint --pure --quiet
+  on:
+    push:
+      paths-ignore:
+      - '**/*.md'
+      - '**/*.org'
 
-  cache:
-    directories:
-      - /nix/store
-      - /dev/shm/package-lint
+  jobs:
+    build:
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          emacs-version:
+            - emacs-25-1
+            - emacs-26-1
+            - emacs-26-3
+      steps:
+      - name: install nix
+        uses: cachix/install-nix-action@v5
+      - name: install cachix
+        run: nix-env -iA cachix -f https://cachix.org/api/v1/install
+      - name: enable cachix for emacs-ci
+        run: cachix use emacs-ci
+      - name: check if nix is installed
+        run: nix-env --version
+      - uses: actions/checkout@v1
+      - run: nix-channel --add https://github.com/purcell/nix-emacs-ci/archive/master.tar.gz emacs-ci
+      - run: nix-channel --update
+      - name: Run tests
+        run: |
+          set -e
+          nix-build --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A byte-compile --no-out-link --quiet
+          nix-build --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A checkdoc --no-out-link --quiet
+          nix-shell --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A package-lint --pure --quiet
+
 #+end_src
-
-Optionally, you can add =matrix= to run tests on multiple configurations.
 ** Notes
 *** Files created on the file system
 - Files are built in the Nix store, which is located in =/nix/store= by default. You can remove unnecessary files by running =nix-store --gc=.
