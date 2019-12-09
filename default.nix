@@ -28,7 +28,7 @@ in rec
     name = name + "-byte-compile";
     builder = "${pkgs.bash}/bin/bash";
     args = [ ./byte-compile.sh ];
-    buildInputs = with pkgs; [ coreutils emacsWithPackages ];
+    buildInputs = [ pkgs.coreutils emacsWithPackages ];
   };
 
   checkdoc = derivation {
@@ -36,7 +36,7 @@ in rec
     name = name + "-checkdoc";
     builder = "${pkgs.bash}/bin/bash";
     args = [ ./checkdoc.sh ];
-    buildInputs = with pkgs; [ coreutils emacs ];
+    buildInputs = [ pkgs.coreutils emacs ];
   };
 
   # Since package-lint requires the internet connection to test
