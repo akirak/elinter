@@ -1,5 +1,5 @@
 * emacs-package-checker
-[[https://travis-ci.org/akirak/emacs-package-checker][https://travis-ci.org/akirak/emacs-package-checker.svg?branch=master]]
+[[https://github.com/akirak/emacs-package-checker/workflows/CI/badge.svg?branch=v1][https://github.com/akirak/emacs-package-checker/workflows/CI/badge.svg?branch=v1]]
 
 Emacs Package Checker lets you quickly configure typical linters (i.e. package-lint, byte-compile, and checkdoc) for your Emacs package.
 
@@ -25,7 +25,7 @@ The following is an example from [[https://github.com/akirak/poly-vue][poly-vue]
     })).emacs-25-2
   }:
   let
-    check-package = import (builtins.fetchTarball "https://github.com/akirak/emacs-package-checker/archive/v1/master.tar.gz");
+    check-package = import (builtins.fetchTarball "https://github.com/akirak/emacs-package-checker/archive/v1.tar.gz");
   in check-package {
     inherit emacs pkgs;
     name = "emacs-poly-vue";
