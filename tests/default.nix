@@ -1,6 +1,8 @@
-{ pkgs ? import <nixpkgs> {}, emacs }:
+{ pkgs ? import <nixpkgs> {},
+  emacs ? import ./emacs.nix
+}:
 let
-  check-package = import ../.;
+  check-package = import (builtins.fetchTarball "https://github.com/akirak/emacs-package-checker/archive/v1/master.tar.gz");
 in check-package {
   inherit emacs pkgs;
   name = "emacs-package-checker-hello";
