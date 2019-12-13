@@ -1,5 +1,5 @@
 * emacs-package-checker
-[[https://travis-ci.org/akirak/emacs-package-checker][https://travis-ci.org/akirak/emacs-package-checker.svg?branch=master]]
+[[https://github.com/akirak/emacs-package-checker/workflows/CI/badge.svg?branch=v1][https://github.com/akirak/emacs-package-checker/workflows/CI/badge.svg?branch=v1]]
 
 Emacs Package Checker lets you quickly configure typical linters (i.e. package-lint, byte-compile, and checkdoc) for your Emacs package.
 
