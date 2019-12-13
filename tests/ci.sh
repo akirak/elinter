@@ -5,13 +5,11 @@ set -e
 EMACS="${EMACS:-emacs}"
 
 nix-build() {
-    command nix-build --quiet \
-            --arg emacs "(import <nixpkgs> {}).$EMACS" "$@"
+    command nix-build --quiet "$@"
 }
 
 nix-shell() {
-    command nix-shell --pure --quiet \
-            --arg emacs "(import <nixpkgs> {}).$EMACS" "$@"
+    command nix-shell --pure --quiet "$@"
 }
 
 nix-build -A byte-compile

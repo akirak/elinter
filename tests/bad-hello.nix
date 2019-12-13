@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {}, emacs }:
+{ pkgs ? import <nixpkgs> {}, emacs ? import ./emacs.nix }:
 let
   check-package = import ../.;
 in check-package {

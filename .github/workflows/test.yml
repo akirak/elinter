@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+    - '**/*.md'
+    - '**/*.org'
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: install nix
+      uses: cachix/install-nix-action@v5
+    - name: install cachix
+      run: nix-env -iA cachix -f https://cachix.org/api/v1/install
+    - name: enable cachix for emacs-ci
+      run: cachix use emacs-ci
+    - name: check if nix is installed
+      run: nix-env --version
+    - uses: actions/checkout@v1
+    - run: nix-channel --add https://github.com/purcell/nix-emacs-ci/archive/master.tar.gz emacs-ci
+    - run: nix-channel --update
+    - name: Run tests
+      run: |
+        cd tests
+        bash ci.sh
