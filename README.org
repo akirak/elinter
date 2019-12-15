@@ -104,30 +104,5 @@ Create =.github/workflows/test.yml= like this:
           nix-shell --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A package-lint --pure --quiet
 
 #+end_src
-** Notes
-*** Files created on the file system
-- Files are built in the Nix store, which is located in =/nix/store= by default. You can remove unnecessary files by running =nix-store --gc=.
-- Package archives are stored in a directory in =/dev/shm/package-lint/elpa= when you run =package-lint=. You can safely remove them after the process is finished.
-*** Setting the Emacs version at runtime
-In the configuration, an Emacs package specified as =emacs= in the input argument is used to build the Emacs package, and the value after =?= is used as its default value.
-You can override the argument from the command line.
-
-To use the latest stable version for byte-compiling the package, add the following arguments to the command line:
-
-#+begin_src shell
---arg emacs "(import <nixpkgs> {}).emacs"
-#+end_src
-
-The entire command line will be as follows:
-
-#+begin_src shell
-nix-build --no-out-link --quiet -A byte-compile --arg emacs "(import <nixpkgs> {}).emacs"
-#+end_src
-
-To use Emacs 25:
-
-#+begin_src shell
-nix-build --no-out-link --quiet -A byte-compile --arg emacs "(import <nixpkgs> {}).emacs25"
-#+end_src
 ** License
 GPL v3
