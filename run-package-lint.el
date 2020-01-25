@@ -7,9 +7,7 @@
 ;; Configure the standard set of package archives
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("melpa" . "https://melpa.org/packages/")
-        ("melpa-stable" . "https://stable.melpa.org/packages/")
-        ("org" . "http://orgmode.org/elpa/")))
+        ("melpa" . "https://melpa.org/packages/")))
 
 ;; Set the package cache location to the environment variable
 ;; You need to provide this environment variable from the outside script.
