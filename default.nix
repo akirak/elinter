@@ -13,6 +13,8 @@ let
   # Emacs with package-lint. This is used for running package-lint.
   emacsForPackageLint = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
     (epkgs: (with epkgs.melpaStablePackages; [ package-lint ]));
+  emacsWithButtercup = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
+    (epkgs: (with epkgs.melpaStablePackages; [buttercup]) ++ emacsPackages epkgs);
 in rec
 {
 
@@ -50,6 +52,23 @@ in rec
     # Prevent from actually entering the shell
     exit
     '';
+  };
+
+  buttercup = pkgs.stdenv.mkDerivation {
+    name = name + "-buttercup";
+    buildInputs = [ emacsWithButtercup ];
+    shellHook =
+      ''
+      echo "Running buttercup..."
+      set -e
+      out=$(mktemp)
+      cd ${src}
+      emacs --batch --no-site-file \
+          --load package --eval '(setq package-archives nil)' \
+          -f package-initialize \
+          --load buttercup -f buttercup-run-discover
+      exit
+      '';
   };
 
 }
