@@ -2,7 +2,8 @@
   system ? builtins.currentSystem,
   name ? "awesome-emacs-package",
   emacs ? pkgs.emacs,
-  emacsPackages, src, targetFiles
+  emacsPackages, src, targetFiles,
+  elpaCache ? "/dev/shm/package-lint/elpa/${name}"
 }:
 let
   # Emacs with packages specified as dependencies from outside of this
@@ -12,14 +13,8 @@ let
   # Emacs with package-lint. This is used for running package-lint.
   emacsForPackageLint = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
     (epkgs: (with epkgs.melpaStablePackages; [ package-lint ]));
-  # At present, elpa packages are stored in shared memory, per package.
-  #
-  # Package archives remain on memory unless you delete them manually,
-  # and the (nearly) same package database is cached for every package,
-  # which take some disk space.
-  #
-  # I don't think this can be a serious issue
-  elpaCache = "/dev/shm/package-lint/elpa/${name}";
+  emacsWithButtercup = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
+    (epkgs: (with epkgs.melpaStablePackages; [buttercup]) ++ emacsPackages epkgs);
 in rec
 {
 
@@ -57,6 +52,23 @@ in rec
     # Prevent from actually entering the shell
     exit
     '';
+  };
+
+  buttercup = pkgs.stdenv.mkDerivation {
+    name = name + "-buttercup";
+    buildInputs = [ emacsWithButtercup ];
+    shellHook =
+      ''
+      echo "Running buttercup..."
+      set -e
+      out=$(mktemp)
+      cd ${src}
+      emacs --batch --no-site-file \
+          --load package --eval '(setq package-archives nil)' \
+          -f package-initialize \
+          --load buttercup -f buttercup-run-discover
+      exit
+      '';
   };
 
 }
