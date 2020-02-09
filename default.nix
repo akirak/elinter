@@ -54,11 +54,16 @@ in rec
     '';
   };
 
-  buttercup = pkgs.stdenv.mkDerivation {
-    name = name + "-buttercup";
-    buildInputs = [ emacsWithButtercup ];
-    shellHook =
-      ''
+  buttercup =
+    let
+      loadFiles = builtins.concatStringsSep " "
+        (map (filename: "--load " + filename) targetFiles);
+    in
+      pkgs.stdenv.mkDerivation {
+        name = name + "-buttercup";
+        buildInputs = [ emacsWithButtercup ];
+        shellHook =
+          ''
       echo "Running buttercup..."
       set -e
       out=$(mktemp)
@@ -66,9 +71,10 @@ in rec
       emacs --batch --no-site-file \
           --load package --eval '(setq package-archives nil)' \
           -f package-initialize \
+          ${loadFiles} \
           --load buttercup -f buttercup-run-discover
       exit
       '';
-  };
+      };
 
 }
