@@ -12,9 +12,9 @@ let
     emacsPackages;
   # Emacs with package-lint. This is used for running package-lint.
   emacsForPackageLint = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
-    (epkgs: (with epkgs.melpaStablePackages; [ package-lint ]));
+    (epkgs: (with epkgs.melpaPackages; [ package-lint ]));
   emacsWithButtercup = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
-    (epkgs: (with epkgs.melpaStablePackages; [buttercup]) ++ emacsPackages epkgs);
+    (epkgs: (with epkgs.melpaPackages; [buttercup]) ++ emacsPackages epkgs);
 in rec
 {
 
