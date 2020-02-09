@@ -38,5 +38,9 @@
   (interactive)
   (message "Hello"))
 
+(defun hello-identity (x)
+  "Return X."
+  x)
+
 (provide 'hello)
 ;;; hello.el ends here
