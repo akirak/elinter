@@ -3,9 +3,8 @@
 
 Emacs Package Checker lets you quickly configure typical linters (i.e. package-lint, byte-compile, and checkdoc) for your Emacs package.
 
-Emacs Package Checker is not any more capable than those existing solutions, but it is based on [[https://nixos.org/nix/][Nix]] package manager and runs tests in a pure, sandboxed environment.
-This is useful for testing Emacs packages on local machines.
 There are existing solutions in this field like [[https://github.com/vermiculus/emake.el][emake.el]], [[https://gitlab.petton.fr/DamienCassou/makel][makel]], and [[https://github.com/alphapapa/makem.sh][makem.sh]].
+Emacs Package Checker is not any more capable than those existing solutions, but it is based on [[https://nixos.org/nix/][Nix]] package manager.
 ** Configuration for a single package
 First you have to create a configuration file in your package repository.
 The recommended file name is =default.nix=, but it can be any name with =.nix= suffix.
