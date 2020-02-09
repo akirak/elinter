@@ -46,12 +46,14 @@ The following is an example from [[https://github.com/akirak/poly-vue][poly-vue]
 If the name of the configuration file is =default.nix=, you can check the package with the following command:
 
 #+begin_src shell
-# Run checkdoc
-nix-build --no-out-link --quiet -A checkdoc
-# Byte-compile
-nix-build --no-out-link --quiet -A byte-compile
-# Package-lint
-nix-shell --pure --quiet -A package-lint
+  # Run checkdoc
+  nix-build --no-out-link --quiet -A checkdoc
+  # Byte-compile
+  nix-build --no-out-link --quiet -A byte-compile
+  # Package-lint
+  nix-shell --pure --quiet -A package-lint
+  # Buttercup
+  nix-shell --pure --quiet -A buttercup
 #+end_src
 
 - =checkdoc= and =byte-compile= can be run in =nix-build=, but =package-lint= must be run in =nix-shell=. This is because 
@@ -102,6 +104,7 @@ Create =.github/workflows/test.yml= like this:
           nix-build --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A byte-compile --no-out-link --quiet
           nix-build --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A checkdoc --no-out-link --quiet
           nix-shell --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A package-lint --pure --quiet
+          nix-shell --arg emacs "(import <emacs-ci>).${{ matrix.emacs-version }}" -A buttercup-lint --pure --quiet
 
 #+end_src
 ** License
