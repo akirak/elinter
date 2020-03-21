@@ -15,8 +15,6 @@ let
   # Emacs with package-lint. This is used for running package-lint.
   emacsForPackageLint = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
     (epkgs: (with epkgs.melpaPackages; [ package-lint ]));
-  emacsWithButtercup = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
-    (epkgs: (with epkgs.melpaPackages; [buttercup]) ++ dependencies epkgs);
 in rec
 {
 
@@ -58,14 +56,17 @@ in rec
 
   buttercup =
     let
-      loadFiles = builtins.concatStringsSep " "
-        (map (filename: "--load " + filename) files);
+      emacsWithButtercup = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
+        (epkgs:
+          [epkgs.melpaPackages.buttercup]
+          # ++ dependencies epkgs
+          ++ [melpaBuild]);
     in
       pkgs.stdenv.mkDerivation {
         name = pname + "-buttercup";
         buildInputs = [ emacsWithButtercup ];
         shellHook =
-          ''
+      ''
       echo "Running buttercup..."
       set -e
       out=$(mktemp)
@@ -73,7 +74,6 @@ in rec
       emacs --batch --no-site-file \
           --load package --eval '(setq package-archives nil)' \
           -f package-initialize \
-          ${loadFiles} \
           --load buttercup -f buttercup-run-discover
       exit
       '';
