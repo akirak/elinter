@@ -18,6 +18,7 @@ let
 in rec
 {
 
+  # Deprecated. Use melpaBuild instead.
   byte-compile = derivation {
     inherit src files system;
     name = pname + "-byte-compile";
