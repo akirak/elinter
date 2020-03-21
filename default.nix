@@ -1,6 +1,8 @@
 { pkgs ? import <nixpkgs> {},
   system ? builtins.currentSystem,
   pname ? "awesome-emacs-package",
+  version,
+  recipe,
   emacs ? pkgs.emacs,
   dependencies, src, files,
   elpaCache ? "/dev/shm/package-lint/elpa/${pname}"
@@ -76,5 +78,11 @@ in rec
       exit
       '';
       };
+
+  melpaBuild =
+    pkgs.emacsPackages.melpaBuild {
+      inherit pname version src files recipe;
+      packageRequires = dependencies pkgs.emacsPackages;
+    };
 
 }

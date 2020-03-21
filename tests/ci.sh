@@ -24,6 +24,10 @@ nix-build -A checkdoc
 # Clean up
 rm -rf result
 
+nix-build -A melpaBuild
+# Clean up
+rm -rf result
+
 nix-shell -A package-lint
 
 nix-shell -A buttercup
