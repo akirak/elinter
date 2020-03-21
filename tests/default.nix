@@ -14,6 +14,6 @@ in check-package {
   ]);
   recipe = pkgs.writeText "recipe" ''
 (hello :fetcher github :repo "akirak/emacs-package-checker"
-       :files ("tests/hello.el"))
+       :files ("hello.el"))
 '';
 }
