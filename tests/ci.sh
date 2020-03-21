@@ -33,6 +33,6 @@ nix-shell -A package-lint
 nix-shell -A buttercup
 
 # The following commands are expected to fail.
-! nix-build -A byte-compile bad-hello.nix
 ! nix-build -A checkdoc bad-hello.nix
+! nix-build -A melpaBuild bad-hello.nix
 ! nix-shell -A package-lint bad-hello.nix
