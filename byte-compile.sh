@@ -29,7 +29,7 @@ emacs --batch --no-site-file \
     --eval "(package-initialize)" \
     --eval "(setq byte-compile-error-on-warn t)" \
     --funcall batch-byte-compile \
-    $targetFiles
+    $files
 
 echo "Byte-compilation was successful."
 

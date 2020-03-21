@@ -28,7 +28,7 @@ mkdir -p $out
 logFile=$out/checkdoc.log
 touch $logFile
 
-for f in $targetFiles; do
+for f in $files; do
     # Run checkdoc on each file and append the output to the log file
     emacs --batch --eval "(checkdoc-file \"$f\")" 2>&1 | tee -a $logFile
 done

@@ -1,34 +1,34 @@
 { pkgs ? import <nixpkgs> {},
   system ? builtins.currentSystem,
-  name ? "awesome-emacs-package",
+  pname ? "awesome-emacs-package",
   emacs ? pkgs.emacs,
-  emacsPackages, src, targetFiles,
-  elpaCache ? "/dev/shm/package-lint/elpa/${name}"
+  dependencies, src, files,
+  elpaCache ? "/dev/shm/package-lint/elpa/${pname}"
 }:
 let
   # Emacs with packages specified as dependencies from outside of this
   # nix file. This is used for byte-compiling the package.
   emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
-    emacsPackages;
+    dependencies;
   # Emacs with package-lint. This is used for running package-lint.
   emacsForPackageLint = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
     (epkgs: (with epkgs.melpaPackages; [ package-lint ]));
   emacsWithButtercup = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
-    (epkgs: (with epkgs.melpaPackages; [buttercup]) ++ emacsPackages epkgs);
+    (epkgs: (with epkgs.melpaPackages; [buttercup]) ++ dependencies epkgs);
 in rec
 {
 
   byte-compile = derivation {
-    inherit src targetFiles system;
-    name = name + "-byte-compile";
+    inherit src files system;
+    name = pname + "-byte-compile";
     builder = "${pkgs.bash}/bin/bash";
     args = [ ./byte-compile.sh ];
     buildInputs = [ pkgs.coreutils emacsWithPackages ];
   };
 
   checkdoc = derivation {
-    inherit src targetFiles system;
-    name = name + "-checkdoc";
+    inherit src files system;
+    name = pname + "-checkdoc";
     builder = "${pkgs.bash}/bin/bash";
     args = [ ./checkdoc.sh ];
     buildInputs = [ pkgs.coreutils emacs ];
@@ -38,12 +38,12 @@ in rec
   # if dependencies are installable, you can only run this command
   # in nix-shell, and not in nix-build.
   package-lint = pkgs.stdenv.mkDerivation {
-    name = name + "-package-lint";
+    name = pname + "-package-lint";
     buildInputs = [ emacsForPackageLint ];
     shellHook =
     let
-    # Assume the items of targetFiles never contain space
-      args = pkgs.lib.foldr (a: b: a + " " + b) "" targetFiles;
+    # Assume the items of files never contain space
+      args = pkgs.lib.foldr (a: b: a + " " + b) "" files;
     in ''
     set -e
     cd ${src}
@@ -57,10 +57,10 @@ in rec
   buttercup =
     let
       loadFiles = builtins.concatStringsSep " "
-        (map (filename: "--load " + filename) targetFiles);
+        (map (filename: "--load " + filename) files);
     in
       pkgs.stdenv.mkDerivation {
-        name = name + "-buttercup";
+        name = pname + "-buttercup";
         buildInputs = [ emacsWithButtercup ];
         shellHook =
           ''
