@@ -5,10 +5,10 @@ let
   check-package = import ../.;
 in check-package {
   inherit emacs pkgs;
-  name = "emacs-package-checker-hello";
+  pname = "hello";
   src = ./.;
-  targetFiles = ["hello.el"];
-  emacsPackages = epkgs: (with epkgs.melpaStablePackages; [
+  files = ["hello.el"];
+  dependencies = epkgs: (with epkgs.melpaStablePackages; [
     dash
   ]);
 }

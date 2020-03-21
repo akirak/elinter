@@ -3,8 +3,8 @@ let
   check-package = import ../.;
 in check-package {
   inherit emacs pkgs;
-  name = "emacs-package-checker-bad-hello";
+  pname = "bad-hello";
   src = ./.;
-  targetFiles = ["bad-hello.el"];
-  emacsPackages = epkgs: [];
+  files = ["bad-hello.el"];
+  dependencies = epkgs: [];
 }
