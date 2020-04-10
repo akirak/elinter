@@ -1,10 +1,11 @@
 { pkgs ? import <nixpkgs> {},
   emacs ? import ./emacs.nix,
-  testDir ? ./.
+  testDir ? ""
 }:
 let
   config = {
-    inherit pkgs emacs testDir;
+    inherit pkgs emacs;
+    testDir = ./. + "/${testDir}";
   };
   melpaCheck = import ../.;
   packages = import ./packages.nix { inherit pkgs; };
