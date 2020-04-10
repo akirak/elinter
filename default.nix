@@ -1,6 +1,7 @@
 { pkgs ? import <nixpkgs> {},
   system ? builtins.currentSystem,
-  emacs ? pkgs.emacs
+  emacs ? pkgs.emacs,
+  testDir ? null
   # elpaCache ? "/dev/shm/package-lint/elpa/${pname}"
 }:
 packages:
@@ -47,31 +48,6 @@ let
     '';
     };
 
-    buttercup = package:
-      let
-        emacsWithButtercup = emacsWithPackages
-          (epkgs:
-            [epkgs.melpaPackages.buttercup]
-            # ++ package.dependencies epkgs
-            ++ [melpaBuild package]);
-      in
-        pkgs.stdenv.mkDerivation {
-          name = package.pname + "-buttercup";
-          buildInputs = [ emacsWithButtercup ];
-          shellHook =
-            ''
-      echo "Running buttercup..."
-      set -e
-      out=$(mktemp)
-      cd ${package.src}
-      emacs --batch --no-site-file \
-          --load package --eval '(setq package-archives nil)' \
-          -f package-initialize \
-          --load buttercup -f buttercup-run-discover
-      exit
-      '';
-        };
-
     melpaBuild = package:
       pkgs.emacsPackages.melpaBuild {
         inherit (package) pname version src files recipe;
@@ -80,10 +56,33 @@ let
    
   };
   forEachPackage = pkgs.lib.forEach (pkgs.lib.attrValues packages);
+  byte-compile = forEachPackage utils.melpaBuild;
 in
 {
+  inherit byte-compile;
   checkdoc = forEachPackage utils.checkdoc;
-  byte-compile = forEachPackage utils.melpaBuild;
   package-lint =
     pkgs.lib.mapAttrs (name: package: utils.package-lint package) packages;
+  buttercup = pkgs.stdenv.mkDerivation {
+    name = (builtins.head (pkgs.lib.attrValues packages)).pname + "-buttercup";
+    buildInputs = [
+      (emacsWithPackages
+        (epkgs:
+          [epkgs.melpaPackages.buttercup]
+          ++ byte-compile))
+    ];
+    shellHook =
+      ''
+      echo "Running buttercup..."
+      set -e
+      out=$(mktemp)
+      cd ${testDir}
+      emacs --batch --no-site-file \
+          --load package --eval '(setq package-archives nil)' \
+          -f package-initialize \
+          --load buttercup -f buttercup-run-discover
+      exit
+      '';
+  };
+
 }

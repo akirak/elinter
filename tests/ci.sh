@@ -31,7 +31,7 @@ rm -rf result
 nix-shell -A package-lint.hello
 nix-shell -A package-lint.hello2
 
-# nix-shell -A buttercup
+nix-shell -A buttercup
 
 # The following commands are expected to fail.
 # Temporarily disable these checks.
