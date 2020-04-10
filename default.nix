@@ -5,7 +5,7 @@
 }:
 packages:
 let
-  unwords = builtins.concatStringsSep " ";
+  emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages;
   utils = rec {
     checkdoc = package: derivation {
       inherit system;
@@ -22,7 +22,7 @@ let
     package-lint = package: pkgs.stdenv.mkDerivation {
       name = package.pname + "-package-lint";
       buildInputs = [
-        ((pkgs.emacsPackagesNgGen emacs).emacsWithPackages
+        (emacsWithPackages
           (epkgs:
             (package.dependencies epkgs) ++
             [ epkgs.melpaPackages.package-lint ]))
@@ -49,7 +49,7 @@ let
 
     buttercup = package:
       let
-        emacsWithButtercup = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages
+        emacsWithButtercup = emacsWithPackages
           (epkgs:
             [epkgs.melpaPackages.buttercup]
             # ++ package.dependencies epkgs
