@@ -12,12 +12,6 @@ nix-shell() {
     command nix-shell --pure --quiet "$@"
 }
 
-# nix-build -A byte-compile
-# # result directory should be empty
-# [[ `ls result` = "" ]]
-# # Clean up
-# rm -rf result
-
 nix-build -A checkdoc 
 # There should be an empty checkdoc.log file in result directory
 [[ `stat --printf=%s result/checkdoc.log` = "0" ]]
