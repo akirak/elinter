@@ -57,12 +57,12 @@ let
   };
   forEachPackage = pkgs.lib.forEach (pkgs.lib.attrValues packages);
   byte-compile = forEachPackage utils.melpaBuild;
+  mapPackage = f: pkgs.lib.mapAttrs (name: package: f package) packages;
 in
 {
   inherit byte-compile;
   checkdoc = forEachPackage utils.checkdoc;
-  package-lint =
-    pkgs.lib.mapAttrs (name: package: utils.package-lint package) packages;
+  package-lint = mapPackage utils.package-lint;
   buttercup = pkgs.stdenv.mkDerivation {
     name = (builtins.head (pkgs.lib.attrValues packages)).pname + "-buttercup";
     buildInputs = [
@@ -84,5 +84,9 @@ in
       exit
       '';
   };
-
+  shell = mapPackage (package: pkgs.mkShell {
+    buildInputs = [
+      (emacsWithPackages (epkgs: [(utils.melpaBuild package)]))
+    ];
+  });
 }
