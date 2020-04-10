@@ -33,11 +33,13 @@ let
           args = pkgs.lib.foldr (a: b: a + " " + b) "" package.files;
           localDeps = pkgs.lib.concatMapStringsSep " " (pkg: pkg.pname)
             (package.localDependencies or []);
+          mainFile = package.mainFile or "";
         in ''
     set -e
     cd ${package.src}
     emacs --no-site-file --batch \
        --eval "(setq explicitly-installed-packages '(${localDeps}))" \
+       --eval "(setq package-lint-main-file \"${mainFile}\")" \
        -l ${./run-package-lint.el} ${args}
     echo "package-lint is OK."
     # Prevent from actually entering the shell

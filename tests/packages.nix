@@ -7,13 +7,14 @@ rec {
     pname = "hello";
     version = "0.1";
     src = ../.;
-    files = ["tests/hello.el"];
+    files = ["tests/hello.el" "tests/hello-util.el"];
     dependencies = epkgs: (with epkgs.melpaPackages; [
       dash
     ]);
+    mainFile = "tests/hello.el";
     recipe = pkgs.writeText "recipe" ''
 (hello :fetcher github :repo "akirak/emacs-package-checker"
-       :files ("tests/hello.el"))
+       :files ("tests/hello.el" "tests/hello-util.el"))
 '';
   };
 

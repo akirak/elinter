@@ -1,10 +1,10 @@
-;;; hello.el --- An example package -*- lexical-binding: t -*-
+;;; hello-util.el --- An example package -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2019 Akira Komamura
 
 ;; Author: Akira Komamura <akira.komamura@gmail.com>
 ;; Version: 0.1
-;; Package-Requires: ((emacs "25.1") (dash "2.17"))
+;; Package-Requires: ((emacs "25.1"))
 ;; URL: https://github.com/akirak/emacs-package-checker
 
 ;; This file is not part of GNU Emacs.
@@ -30,17 +30,11 @@
 
 ;;; Code:
 
-(require 'hello-util)
+(require 'dash)
 
-;;;###autoload
-(defun hello-message ()
+(defun hello-util ()
   "Say Hello."
-  (interactive)
   (message "Hello"))
 
-(defun hello-identity (x)
-  "Return X."
-  x)
-
-(provide 'hello)
-;;; hello.el ends here
+(provide 'hello-util)
+;;; hello-util.el ends here
