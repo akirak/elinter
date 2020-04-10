@@ -11,7 +11,7 @@
 
 ;; Set the package cache location to the environment variable
 ;; You need to provide this environment variable from the outside script.
-(setq package-user-dir (getenv "ELPA_USER_DIR"))
+;; (setq package-user-dir (getenv "ELPA_USER_DIR"))
 ;; Download the package database only once
 (if (file-directory-p package-user-dir)
     (package-initialize)
@@ -27,4 +27,12 @@
 ;; This is provided by nix.
 (require 'package-lint)
 (message "Running package-lint on %s..." command-line-args-left)
+(require 'cl-lib)
+(defvar explicitly-installed-packages)
+(when (boundp 'explicitly-installed-packages)
+  (advice-add #'package-lint--check-packages-installable
+              :filter-args
+              (lambda (args)
+                (list (cl-set-difference (car args) explicitly-installed-packages
+                                         :test (lambda (x y) (eq (car x) y)))))))
 (package-lint-batch-and-exit)

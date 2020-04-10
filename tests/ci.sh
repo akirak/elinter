@@ -18,21 +18,23 @@ nix-shell() {
 # # Clean up
 # rm -rf result
 
-nix-build -A checkdoc
+nix-build -A checkdoc 
 # There should be an empty checkdoc.log file in result directory
 [[ `stat --printf=%s result/checkdoc.log` = "0" ]]
 # Clean up
 rm -rf result
 
-nix-build -A melpaBuild
+nix-build -A byte-compile
 # Clean up
 rm -rf result
 
-nix-shell -A package-lint
+nix-shell -A package-lint.hello
+nix-shell -A package-lint.hello2
 
-nix-shell -A buttercup
+# nix-shell -A buttercup
 
 # The following commands are expected to fail.
-! nix-build -A checkdoc bad-hello.nix
-! nix-build -A melpaBuild bad-hello.nix
-! nix-shell -A package-lint bad-hello.nix
+# Temporarily disable these checks.
+# ! nix-build -A checkdoc bad-hello.nix
+# ! nix-build -A melpaBuild bad-hello.nix
+# ! nix-shell -A package-lint bad-hello.nix

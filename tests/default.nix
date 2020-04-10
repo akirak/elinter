@@ -2,18 +2,9 @@
   emacs ? import ./emacs.nix
 }:
 let
-  check-package = import ../.;
-in check-package {
-  inherit emacs pkgs;
-  pname = "hello";
-  version = "0.1";
-  src = ../.;
-  files = ["tests/hello.el"];
-  dependencies = epkgs: (with epkgs.melpaStablePackages; [
-    dash
-  ]);
-  recipe = pkgs.writeText "recipe" ''
-(hello :fetcher github :repo "akirak/emacs-package-checker"
-       :files ("tests/hello.el"))
-'';
-}
+  config = {
+    inherit pkgs emacs;
+  };
+  melpaCheck = import ../.;
+  packages = import ./packages.nix { inherit pkgs; };
+in melpaCheck config packages
