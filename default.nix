@@ -45,7 +45,12 @@ let
           args = pkgs.lib.foldr (a: b: a + " " + b) "" package.files;
           localDeps = pkgs.lib.concatMapStringsSep " " (pkg: pkg.pname)
             (package.localDependencies or []);
-          mainFile = package.mainFile or "";
+          mainFile =
+            # package.mainFile can be null if the package is converted
+            # from Dhall, so the null check is necessary.
+            if package ? mainFile && !(isNull package.mainFile)
+            then package.mainFile
+            else "";
         in ''
     set -e
     cd ${package.src}
