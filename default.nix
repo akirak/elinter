@@ -1,10 +1,12 @@
 { pkgs ? import <nixpkgs> {},
   system ? builtins.currentSystem,
   emacs ? pkgs.emacs,
-  testDir ? null
+  srcDir ? null,
+  testDir ? null,
+  packageFile
   # elpaCache ? "/dev/shm/package-lint/elpa/${pname}"
 }:
-packages:
+with pkgs.lib;
 let
   emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages;
   utils = rec {
@@ -55,12 +57,70 @@ let
       };
    
   };
+  dhallUtils = rec {
+    # Since dhall-nix in nixpkgs is often broken, I will use the
+    # binary provided by the source repo.
+    # See https://github.com/dhall-lang/dhall-haskell/issues/1624
+    easyDhall = import (pkgs.fetchFromGitHub {
+      owner = "justinwoo";
+      repo = "easy-dhall-nix";
+      rev = "35bca5ba56b7b3f8684aa0afbb65608159beb5ce";
+      # date = 2020-04-04T12:53:43+02:00;
+      sha256 = "16l71qzzfkv4sbxl03r291nswsrkr3g13viqkma2s8r5vy9la3al";
+    }) {};
+    dhallToNix = code :
+      let
+        file = builtins.toFile "dhall-expr" code;
+
+        drv = pkgs.stdenv.mkDerivation {
+          name = "dhall-expr-as-nix";
+
+          buildCommand = ''
+        dhall-to-nix <<< "${file}" > $out
+      '';
+
+          buildInputs = [ easyDhall.dhall-nix-simple ];
+        };
+      in import "${drv}";
+    parsePackageList = plainPackageList:
+      with pkgs.lib;
+      let
+        localPackages = map (p: p.pname) plainPackageList;
+        localMelpaBuild = epkgs: pkg: epkgs.melpaBuild {
+          inherit (pkg) pname version src files recipe;
+          packageRequires = pkg.dependencies epkgs;
+        };
+        f = self: builtins.listToAttrs (forEach plainPackageList (x:
+          {
+            name = x.pname;
+            value = x // {
+              src = srcDir;
+              recipe = pkgs.writeText "recipe" x.recipe;
+              dependencies = epkgs: forEach x.dependencies (depName:
+                if builtins.elem depName localPackages
+                then localMelpaBuild epkgs self."${depName}"
+                else epkgs.melpaPackages."${depName}"
+              );
+              localDependencies = forEach x.localDependencies (depName:
+                self."${depName}"
+              );
+            };
+          }));
+      in fix f;
+    parseDhallPackageList = content: parsePackageList (dhallToNix content);
+  };
+  packages =
+    if hasSuffix ".dhall" (toString packageFile)
+    then dhallUtils.parseDhallPackageList (builtins.readFile packageFile)
+      # Nix
+    else import packageFile { inherit pkgs; };
   forEachPackage = pkgs.lib.forEach (pkgs.lib.attrValues packages);
   byte-compile = forEachPackage utils.melpaBuild;
   mapPackage = f: pkgs.lib.mapAttrs (name: package: f package) packages;
 in
 {
-  inherit byte-compile;
+  # Export dhallUtils for testing purposes
+  inherit byte-compile dhallUtils;
   checkdoc = forEachPackage utils.checkdoc;
   package-lint = mapPackage utils.package-lint;
   buttercup = pkgs.stdenv.mkDerivation {

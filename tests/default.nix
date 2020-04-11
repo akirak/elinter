@@ -1,12 +1,11 @@
 { pkgs ? import <nixpkgs> {},
   emacs ? import ./emacs.nix,
-  testDir ? ""
+  # srcDir ? ./.,
+  testDir ? "",
+  packageFile ? ./packages.dhall
 }:
-let
-  config = {
-    inherit pkgs emacs;
-    testDir = ./. + "/${testDir}";
-  };
-  melpaCheck = import ../.;
-  packages = import ./packages.nix { inherit pkgs; };
-in melpaCheck config packages
+import ../. {
+  inherit pkgs emacs packageFile;
+  srcDir = ../.;
+  testDir = ./. + "/${testDir}";
+}
