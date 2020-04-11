@@ -10,14 +10,23 @@ with pkgs.lib;
 let
   emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages;
   utils = rec {
-    checkdoc = package: derivation {
-      inherit system;
-      inherit (package) src files;
-      name = package.pname + "-checkdoc";
-      builder = "${pkgs.bash}/bin/bash";
-      args = [ ./checkdoc.sh ];
-      buildInputs = [ pkgs.coreutils emacs ];
-    };
+    checkdoc = package:
+      assert (builtins.isPath package.src);
+      assert (builtins.pathExists package.src);
+      assert (builtins.all (file:
+        let
+          srcPath = package.src + "/${file}";
+        in
+          builtins.trace srcPath (builtins.pathExists srcPath)
+      ) package.files);
+      derivation {
+        inherit system;
+        inherit (package) src files;
+        name = package.pname + "-checkdoc";
+        builder = "${pkgs.bash}/bin/bash";
+        args = [ ./checkdoc.sh ];
+        buildInputs = [ pkgs.coreutils emacs ];
+      };
 
     # Since package-lint requires the internet connection to test
     # if dependencies are installable, you can only run this command
