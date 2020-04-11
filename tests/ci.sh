@@ -26,7 +26,7 @@ nix-shell -A package-lint.hello
 nix-shell -A package-lint.hello2
 
 nix-shell -A buttercup
-nix-shell -A buttercup --argstr testDir tests
+nix-shell -A buttercup --arg testDir ./tests/.
 
 # The following commands are expected to fail.
 # Temporarily disable these checks.

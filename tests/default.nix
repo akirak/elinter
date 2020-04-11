@@ -1,11 +1,10 @@
 { pkgs ? import <nixpkgs> {},
   emacs ? import ./emacs.nix,
-  # srcDir ? ./.,
-  testDir ? "",
-  packageFile ? ./packages.dhall
+  # In typical situation, this should be ./.
+  srcDir ? ../.,
+  testDir ? ./.,
+  packageFile ? ./melpa-packages.dhall
 }:
 import ../. {
-  inherit pkgs emacs packageFile;
-  srcDir = ../.;
-  testDir = ./. + "/${testDir}";
+  inherit pkgs emacs packageFile srcDir testDir;
 }
