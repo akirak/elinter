@@ -9,9 +9,19 @@
       '(("gnu" . "https://elpa.gnu.org/packages/")
         ("melpa" . "https://melpa.org/packages/")))
 
-;; Set the package cache location to the environment variable
-;; You need to provide this environment variable from the outside script.
-;; (setq package-user-dir (getenv "ELPA_USER_DIR"))
+;; Store packages in a separate directory to avoid polution of
+;; user-emacs-directory.
+(when (eq system-type 'gnu/linux)
+  (setq package-user-dir
+        ;; If you want to store packages in a specific directory,
+        ;; e.g. for caching on CI, you can give it as an environment
+        ;; variable.
+        (or (getenv "ELPA_USER_DIR")
+            (let ((xdg-cache (or (getenv "XDG_CACHE_HOME")
+                                 (expand-file-name "~/.cache"))))
+              (expand-file-name "melpa-check/elpa" xdg-cache))))
+  (message "Set package-user-dir to %s" package-user-dir))
+
 ;; Download the package database only once
 (if (file-directory-p package-user-dir)
     (package-initialize)
