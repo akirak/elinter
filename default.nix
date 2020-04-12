@@ -160,9 +160,19 @@ in
       exit
       '';
   };
-  shell = mapPackage (package: pkgs.mkShell {
-    buildInputs = [
-      (emacsWithPackages (epkgs: [(utils.melpaBuild package)]))
-    ];
-  });
+  shell =
+    let
+      individuals = mapPackage (package: pkgs.mkShell {
+        buildInputs = [
+          (emacsWithPackages (epkgs: [(utils.melpaBuild package)]))
+        ];
+      });
+      all = pkgs.mkShell {
+        buildInputs = [
+          (emacsWithPackages (epkgs: byte-compile))
+        ];
+      };
+      onlyAll = { inherit all; };
+    in
+      all // individuals // onlyAll;
 }
