@@ -82,16 +82,16 @@ let
       # date = 2020-04-04T12:53:43+02:00;
       sha256 = "16l71qzzfkv4sbxl03r291nswsrkr3g13viqkma2s8r5vy9la3al";
     }) {};
-    dhallToNix = code :
+    dhallToNix = file:
       let
-        file = builtins.toFile "dhall-expr" code;
-
         drv = pkgs.stdenv.mkDerivation {
-          name = "dhall-expr-as-nix";
+          name = "generate-nix-from-dhall";
 
           buildCommand = ''
-        dhall-to-nix <<< "${file}" > $out
-      '';
+          cd ${srcDir}
+          cd ${builtins.dirOf file}
+          dhall-to-nix < "${builtins.baseNameOf file}" > $out
+          '';
 
           buildInputs = [ easyDhall.dhall-nix-simple ];
         };
@@ -121,13 +121,16 @@ let
             };
           }));
       in fix f;
-    parseDhallPackageList = content: parsePackageList (dhallToNix content);
+    readDhallPackageList = file: parsePackageList (dhallToNix file);
   };
   packages =
-    if hasSuffix ".dhall" (toString packageFile)
-    then dhallUtils.parseDhallPackageList (builtins.readFile packageFile)
-      # Nix
-    else import packageFile { inherit pkgs; };
+    assert (builtins.isString packageFile);
+    let packagePath = srcDir + "/${packageFile}";
+    in assert (builtins.trace packagePath (builtins.pathExists packagePath));
+      if hasSuffix ".dhall" packageFile
+      then dhallUtils.readDhallPackageList packageFile
+        # Nix
+      else import packagePath { inherit pkgs; };
   forEachPackage = pkgs.lib.forEach (pkgs.lib.attrValues packages);
   byte-compile = forEachPackage utils.melpaBuild;
   mapPackage = f: pkgs.lib.mapAttrs (name: package: f package) packages;

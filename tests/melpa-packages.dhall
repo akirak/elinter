@@ -1,9 +1,10 @@
+let Package = (../schema.dhall).Package
+in
 [
-  {
+  Package :: {
     pname = "hello",
     version = "0.1",
     files = ["tests/hello.el", "tests/hello-util.el"],
-    localDependencies = [] : List Text,
     dependencies = ["dash"],
     mainFile = Some "tests/hello.el",
     recipe = ''
@@ -11,13 +12,12 @@
        :files ("tests/hello.el" "tests/hello-util.el"))
     ''
   },
-  {
+  Package :: {
     pname = "hello2",
     version = "0.1",
     files = ["tests/hello2.el"],
     dependencies = ["hello"],
     localDependencies = ["hello"],
-    mainFile = None Text,
     recipe = ''
     (hello2 :fetcher github :repo "akirak/emacs-package-checker"
        :files ("tests/hello2.el"))
