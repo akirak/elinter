@@ -4,7 +4,6 @@
   srcDir ? null,
   testDir ? null,
   packageFile
-  # elpaCache ? "/dev/shm/package-lint/elpa/${pname}"
 }:
 with pkgs.lib;
 let
@@ -132,24 +131,21 @@ let
         # Nix
       else import packagePath { inherit pkgs; };
   forEachPackage = pkgs.lib.forEach (pkgs.lib.attrValues packages);
-  byte-compile = forEachPackage utils.melpaBuild;
   mapPackage = f: pkgs.lib.mapAttrs (name: package: f package) packages;
-in
-{
-  # Export dhallUtils for testing purposes
-  inherit byte-compile dhallUtils;
-  checkdoc = forEachPackage utils.checkdoc;
-  package-lint = mapPackage utils.package-lint;
-  buttercup = pkgs.stdenv.mkDerivation {
-    name = (builtins.head (pkgs.lib.attrValues packages)).pname + "-buttercup";
-    buildInputs = [
-      (emacsWithPackages
-        (epkgs:
-          [epkgs.melpaPackages.buttercup]
-          ++ byte-compile))
-    ];
-    shellHook =
-      ''
+  tasks = rec {
+    byte-compile = forEachPackage utils.melpaBuild;
+    checkdoc = forEachPackage utils.checkdoc;
+    package-lint = mapPackage utils.package-lint;
+    buttercup = pkgs.stdenv.mkDerivation {
+      name = (builtins.head (pkgs.lib.attrValues packages)).pname + "-buttercup";
+      buildInputs = [
+        (emacsWithPackages
+          (epkgs:
+            [epkgs.melpaPackages.buttercup]
+            ++ byte-compile))
+      ];
+      shellHook =
+        ''
       echo "Running buttercup..."
       set -e
       out=$(mktemp)
@@ -160,10 +156,25 @@ in
           --load buttercup -f buttercup-run-discover
       exit
       '';
+    };
+    shell =
+      let
+        individuals = mapPackage (package: pkgs.mkShell {
+          buildInputs = [
+            (emacsWithPackages (epkgs: [(utils.melpaBuild package)]))
+          ];
+        });
+        all = pkgs.mkShell {
+          buildInputs = [
+            (emacsWithPackages (epkgs: byte-compile))
+          ];
+        };
+        onlyAll = { inherit all; };
+      in
+        all // individuals // onlyAll;
   };
-  shell = mapPackage (package: pkgs.mkShell {
-    buildInputs = [
-      (emacsWithPackages (epkgs: [(utils.melpaBuild package)]))
-    ];
-  });
+in {
+  inherit (tasks) byte-compile checkdoc package-lint buttercup shell;
+  # Export dhallUtils for testing purposes
+  inherit dhallUtils;
 }
