@@ -1,4 +1,4 @@
-let Package = (../types.dhall).Package
+let Package = (../schema.dhall).Package
 in
 [
   Package :: {

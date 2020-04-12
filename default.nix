@@ -84,15 +84,11 @@ let
     }) {};
     dhallToNix = file:
       let
-        cwd = builtins.dirOf (builtins.toString (srcDir + "/${file}"));
         drv = pkgs.stdenv.mkDerivation {
           name = "generate-nix-from-dhall";
 
-          src = srcDir;
           buildCommand = ''
           cd ${srcDir}
-          pwd
-          ls -l
           cd ${builtins.dirOf file}
           dhall-to-nix < "${builtins.baseNameOf file}" > $out
           '';
