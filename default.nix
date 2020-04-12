@@ -4,7 +4,6 @@
   srcDir ? null,
   testDir ? null,
   packageFile
-  # elpaCache ? "/dev/shm/package-lint/elpa/${pname}"
 }:
 with pkgs.lib;
 let
