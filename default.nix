@@ -58,15 +58,24 @@ let
             then package.mainFile
             else "";
         in ''
-    set -e
+    echo
+    echo ==========================================================
+    echo package-lint on ${package.pname} package
+    echo ==========================================================
     cd ${package.src}
     emacs --no-site-file --batch \
        --eval "(setq explicitly-installed-packages '(${localDeps}))" \
        --eval "(setq package-lint-main-file \"${mainFile}\")" \
        -l ${./run-package-lint.el} ${concatShArgs package.files}
-    echo "package-lint is OK."
+    result=$?
+    echo ----------------------------------------------------------
+    if [[ $result -eq 0 ]]; then
+      echo "No package-lint errors found."
+    else
+      echo "Errors found by package-lint."
+    fi
     # Prevent from actually entering the shell
-    exit
+    exit $result
     '';
     };
 
