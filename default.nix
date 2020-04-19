@@ -9,6 +9,7 @@ with pkgs.lib;
 let
   emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages;
   utils = rec {
+    concatShArgs = files: pkgs.lib.foldr (a: b: a + " " + b) "" files;
     checkdoc = package:
       assert (builtins.isPath package.src);
       assert (builtins.pathExists package.src);
@@ -16,15 +17,22 @@ let
         let
           srcPath = package.src + "/${file}";
         in
-          builtins.trace srcPath (builtins.pathExists srcPath)
+          builtins.pathExists srcPath
       ) package.files);
-      derivation {
-        inherit system;
-        inherit (package) src files;
+      pkgs.stdenv.mkDerivation {
         name = package.pname + "-checkdoc";
-        builder = "${pkgs.bash}/bin/bash";
-        args = [ ./checkdoc.sh ];
-        buildInputs = [ pkgs.coreutils emacs ];
+        buildInputs = [emacs pkgs.coreutils];
+        shellHook = ''
+          echo
+          echo ==========================================================
+          echo Checkdoc on ${package.pname} package
+          echo ==========================================================
+          cd ${package.src}
+          emacs --batch --no-site-file \
+                --load ${./run-checkdoc.el} \
+                ${concatShArgs package.files}
+          exit $?
+        '';
       };
 
     # Since package-lint requires the internet connection to test
@@ -41,7 +49,6 @@ let
       shellHook =
         let
           # Assume the items of files never contain space
-          args = pkgs.lib.foldr (a: b: a + " " + b) "" package.files;
           localDeps = pkgs.lib.concatMapStringsSep " " (pkg: pkg.pname)
             (package.localDependencies or []);
           mainFile =
@@ -56,7 +63,7 @@ let
     emacs --no-site-file --batch \
        --eval "(setq explicitly-installed-packages '(${localDeps}))" \
        --eval "(setq package-lint-main-file \"${mainFile}\")" \
-       -l ${./run-package-lint.el} ${args}
+       -l ${./run-package-lint.el} ${concatShArgs package.files}
     echo "package-lint is OK."
     # Prevent from actually entering the shell
     exit
@@ -125,7 +132,7 @@ let
   packages =
     assert (builtins.isString packageFile);
     let packagePath = srcDir + "/${packageFile}";
-    in assert (builtins.trace packagePath (builtins.pathExists packagePath));
+    in assert builtins.pathExists packagePath;
       if hasSuffix ".dhall" packageFile
       then dhallUtils.readDhallPackageList packageFile
         # Nix
@@ -134,7 +141,16 @@ let
   mapPackage = f: pkgs.lib.mapAttrs (name: package: f package) packages;
   tasks = rec {
     byte-compile = forEachPackage utils.melpaBuild;
-    checkdoc = forEachPackage utils.checkdoc;
+    checkdoc =
+      mapPackage utils.checkdoc
+      //
+      utils.checkdoc (builtins.head (pkgs.lib.attrValues packages)
+        //
+        {
+          pname = (builtins.head (pkgs.lib.attrValues packages)).pname + "-all";
+          files = builtins.concatLists (forEachPackage (p: p.files));
+        });
+
     package-lint = mapPackage utils.package-lint;
     buttercup = pkgs.stdenv.mkDerivation {
       name = (builtins.head (pkgs.lib.attrValues packages)).pname + "-buttercup";
