@@ -5,31 +5,27 @@ set -e
 EMACS="${EMACS:-emacs}"
 
 nix-build() {
-    command nix-build --quiet "$@"
+    command nix-build --quiet --no-out-link "$@"
 }
 
 nix-shell() {
-    command nix-shell --pure --quiet "$@"
+    env NIX_BUILD_SHELL=bash nix-shell --pure --quiet "$@"
 }
 
-nix-build -A checkdoc 
-# There should be an empty checkdoc.log file in result directory
-[[ `stat --printf=%s result/checkdoc.log` = "0" ]]
-# Clean up
-rm -rf result
-
+nix-shell -A checkdoc
 nix-build -A byte-compile
-# Clean up
-rm -rf result
-
 nix-shell -A package-lint.hello
 nix-shell -A package-lint.hello2
-
-nix-shell -A buttercup
-nix-shell -A buttercup --arg testDir ./tests/.
+nix-build -A prepareButtercup --no-build-output
+nix-shell -A buttercup.hello
+nix-shell -A buttercup.hello2
 
 # The following commands are expected to fail.
-# Temporarily disable these checks.
-# ! nix-build -A checkdoc bad-hello.nix
-# ! nix-build -A melpaBuild bad-hello.nix
-# ! nix-shell -A package-lint bad-hello.nix
+! nix-shell bad.nix -A checkdoc
+! nix-build bad.nix -A byte-compile
+! nix-shell bad.nix -A package-lint.bad-hello
+
+echo
+echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+echo "All checks have passed."
+echo

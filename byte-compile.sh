@@ -15,23 +15,37 @@ for p in $buildInputs; do
     export PATH=$p/bin${PATH:+:}$PATH
 done
 
-echo "----------------------------------------------------------------------"
+echo "=========================================================="
+echo "byte-compile on $pname"
+echo "=========================================================="
 emacs --version
-echo "----------------------------------------------------------------------"
+if [[ -n "$dependencyNames" ]]; then
+    echo
+    echo "Added packages: $dependencyNames"
+fi
+echo "----------------------------------------------------------"
 
-cp -r $src/*.* .
+shopt -s extglob
+cp -r $src/* .
+chmod u+w -R .
 
-echo "Running byte-compile..."
+echo "Running byte-compile on $files..."
 
 emacs --batch --no-site-file \
     --eval "(require 'package)" \
     --eval "(setq package-archives nil)" \
     --eval "(package-initialize)" \
     --eval "(setq byte-compile-error-on-warn t)" \
-    --funcall batch-byte-compile \
-    $files
+    --eval "(dolist (dir $loadPaths) (add-to-list 'load-path (expand-file-name dir)))" \
+    --funcall batch-byte-compile $files
 
-echo "Byte-compilation was successful."
-
-# nix-build fails if you don't make the output directory
-mkdir -p $out
+result=$?
+if [[ $result -eq 0 ]]; then
+    echo "Byte-compilation was successful."
+    # nix-build fails if you don't make the output directory
+    mkdir -p $out
+    echo "***** Information from nix-build"
+else
+    echo "Byte-compilation failed in one of $files"
+fi
+exit $result

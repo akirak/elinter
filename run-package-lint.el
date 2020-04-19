@@ -19,8 +19,7 @@
         (or (getenv "ELPA_USER_DIR")
             (let ((xdg-cache (or (getenv "XDG_CACHE_HOME")
                                  (expand-file-name "~/.cache"))))
-              (expand-file-name "melpa-check/elpa" xdg-cache))))
-  (message "Set package-user-dir to %s" package-user-dir))
+              (expand-file-name "melpa-check/elpa" xdg-cache)))))
 
 ;; Download the package database only once
 (if (file-directory-p package-user-dir)
@@ -36,7 +35,13 @@
 ;; You need to use an Emacs package with the linter.
 ;; This is provided by nix.
 (require 'package-lint)
-(message "Running package-lint on %s..." command-line-args-left)
+(message "package-user-dir: %s" (abbreviate-file-name package-user-dir))
+(message "package-archives:\n%s"
+         (mapconcat (lambda (cell)
+                      (format "  %s: %s" (car cell) (cdr cell)))
+                    package-archives "\n"))
+(message "----------------------------------------------------------")
+(message "Running package-lint on %s..." (string-join command-line-args-left " "))
 (require 'cl-lib)
 (defvar explicitly-installed-packages)
 (when (boundp 'explicitly-installed-packages)
