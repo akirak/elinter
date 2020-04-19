@@ -84,6 +84,29 @@ let
         inherit (package) pname version src files recipe;
         packageRequires = package.dependencies pkgs.emacsPackages;
       };
+
+    byte-compile = package: derivation {
+      inherit system;
+      src = srcDir;
+      name = package.pname + "-byte-compile";
+      builder = "${pkgs.bash}/bin/bash";
+      buildInputs = [
+        pkgs.coreutils
+        (emacsWithPackages package.dependencies)
+      ];
+      args = [ ./byte-compile.sh ];
+      # Only used in the shell script
+      files = concatShArgs package.files;
+      inherit (package) pname;
+      dependencyNames = concatShArgs (package.dependencyNames or ["unknown"]);
+      # localDependencyNames = concatShArgs package.localDependencyNames;
+      loadPaths =
+        let
+          dirs = pkgs.lib.unique (map builtins.dirOf package.files);
+          dquote = file: "\"" + file + "\"";
+        in
+          "'(${concatShArgs (map dquote dirs)})";
+    };
    
   };
   dhallUtils = rec {
@@ -133,6 +156,8 @@ let
               localDependencies = forEach x.localDependencies (depName:
                 self."${depName}"
               );
+              # Only used for information to the user
+              dependencyNames = x.dependencies;
             };
           }));
       in fix f;
@@ -149,7 +174,8 @@ let
   forEachPackage = pkgs.lib.forEach (pkgs.lib.attrValues packages);
   mapPackage = f: pkgs.lib.mapAttrs (name: package: f package) packages;
   tasks = rec {
-    byte-compile = forEachPackage utils.melpaBuild;
+    byte-compile = forEachPackage utils.byte-compile;
+
     checkdoc =
       mapPackage utils.checkdoc
       //
