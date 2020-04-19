@@ -4,6 +4,8 @@ set -e
 
 EMACS="${EMACS:-emacs}"
 
+export NIX_BUILD_SHELL=bash
+
 nix-build() {
     command nix-build --quiet "$@"
 }
@@ -30,6 +32,8 @@ nix-shell -A buttercup --arg testDir ./tests/.
 
 # The following commands are expected to fail.
 # Temporarily disable these checks.
-# ! nix-build -A checkdoc bad-hello.nix
-# ! nix-build -A melpaBuild bad-hello.nix
-# ! nix-shell -A package-lint bad-hello.nix
+! nix-build -A checkdoc bad.nix
+! nix-build -A byte-compile bad.nix
+! nix-shell -A package-lint.bad-hello bad.nix
+
+echo "All tests have passed."
