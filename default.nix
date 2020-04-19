@@ -107,7 +107,81 @@ let
         in
           "'(${concatShArgs (map dquote dirs)})";
     };
-   
+
+    discoverFiles = rootDir: patterns:
+      let
+        drv = pkgs.stdenv.mkDerivation {
+          name = "bath-glob";
+          buildInputs = [pkgs.bash];
+          buildCommand = ''
+          shopt -s extglob nullglob
+          cd ${rootDir}
+          echo ${concatShArgs patterns} > $out
+          '';
+        };
+        raw = pkgs.lib.fileContents drv;
+      in
+        filter (str: builtins.pathExists (rootDir + "/${str}"))
+          (pkgs.lib.splitString " " raw);
+
+    buttercup = package:
+      let
+        patterns = package.buttercupTests;
+        testFiles = discoverFiles package.src patterns;
+        noTestsDrv = pkgs.stdenv.mkDerivation {
+          name = package.pname + "-no-buttercup";
+          buildInputs = [];
+          shellHook = ''
+          echo "${package.pname} has no tests."
+          exit
+          '';
+        };
+        makeLoadArguments = pkgs.lib.concatMapStringsSep " " (x: "-l " + x);
+        makeTestCommand = file:
+          ''
+          echo "Running tests in ${file}..."
+          emacs --batch --no-site-file \
+              --load package --eval '(setq package-archives nil)' \
+              -f package-initialize \
+              --load buttercup -l ${file} -f buttercup-run
+          r=$?
+          e=$((e + r))
+          echo ----------------------------------------------------------
+          '';
+        testsDrv = pkgs.stdenv.mkDerivation {
+          name = package.pname + "-buttercup";
+          buildInputs = [
+            (emacsWithPackages
+              (epkgs:
+                [epkgs.melpaPackages.buttercup (melpaBuild package)]))
+          ];
+          shellHook = ''
+            e=0
+            cd ${package.src}
+            echo ==========================================================
+            echo Buttercup tests on ${package.pname}
+            echo ==========================================================
+            echo "File patterns: ${builtins.concatStringsSep " " patterns}"
+            echo Matched files: ${builtins.concatStringsSep " " testFiles}
+            echo
+            emacs --version
+            echo ----------------------------------------------------------
+            ${pkgs.lib.concatMapStringsSep "\n" makeTestCommand testFiles}
+            if [[ $e -gt 0 ]]; then
+              echo "Some buttercup tests for ${package.pname} have failed."
+              exit 1
+            else
+              echo "All buttercup tests for ${package.pname} have passed."
+              exit 0
+            fi
+          '';
+        };
+      in
+        testsDrv;
+        # if builtins.length nonEmptyTests == 0
+        # then noTestsDrv
+        # else testsDrv;
+  
   };
   dhallUtils = rec {
     # Since dhall-nix in nixpkgs is often broken, I will use the
@@ -187,27 +261,17 @@ let
         });
 
     package-lint = mapPackage utils.package-lint;
-    buttercup = pkgs.stdenv.mkDerivation {
-      name = (builtins.head (pkgs.lib.attrValues packages)).pname + "-buttercup";
-      buildInputs = [
-        (emacsWithPackages
-          (epkgs:
-            [epkgs.melpaPackages.buttercup]
-            ++ byte-compile))
-      ];
-      shellHook =
-        ''
-      echo "Running buttercup..."
-      set -e
-      out=$(mktemp)
-      cd ${testDir}
-      emacs --batch --no-site-file \
-          --load package --eval '(setq package-archives nil)' \
-          -f package-initialize \
-          --load buttercup -f buttercup-run-discover
-      exit
-      '';
-    };
+
+    # A task to silent build output in buttercup.
+    # To be run by nix-build with --no-build-output as a preparation step.
+    # onlyBuild = forEachPackage utils.melpaBuild;
+    prepareButtercup = forEachPackage (package:
+      emacsWithPackages (epkgs:
+        [epkgs.melpaPackages.buttercup (utils.melpaBuild package)])
+    );
+
+    buttercup = mapPackage utils.buttercup;
+
     shell =
       let
         individuals = mapPackage (package: pkgs.mkShell {
@@ -225,7 +289,7 @@ let
         all // individuals // onlyAll;
   };
 in {
-  inherit (tasks) byte-compile checkdoc package-lint buttercup shell;
+  inherit (tasks) byte-compile checkdoc package-lint prepareButtercup buttercup shell;
   # Export dhallUtils for testing purposes
   inherit dhallUtils;
 }
