@@ -4,7 +4,7 @@
   emacs ? pkgs.emacs,
   srcDir ? null,
   testDir ? null,
-  packageFile
+  packageFile ? ".melpa-check/packages.dhall"
 }:
 with pkgs.lib;
 let
