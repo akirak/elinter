@@ -2,6 +2,8 @@ name: "Building CLI"
 
 on:
   push:
+    branches:
+    - v3
     paths-ignore:
     - 'README.*'
 
