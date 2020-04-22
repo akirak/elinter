@@ -1,5 +1,6 @@
 * emacs-package-checker
-[[https://github.com/akirak/emacs-package-checker/workflows/CI/badge.svg?branch=v1][https://github.com/akirak/emacs-package-checker/workflows/CI/badge.svg?branch=v1]]
+[[https://github.com/akirak/melpa-check/workflows/Tests/badge.svg?branch=v3][https://github.com/akirak/melpa-check/workflows/Tests/badge.svg?branch=v3]]
+[[https://github.com/akirak/melpa-check/workflows/Building+CLI/badge.svg?branch=v3][https://github.com/akirak/melpa-check/workflows/Building+CLI/badge.svg?branch=v3]]
 
 Emacs Package Checker lets you quickly configure typical linters (i.e. package-lint, byte-compile, and checkdoc) for your Emacs package.
 
