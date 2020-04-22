@@ -8,3 +8,4 @@
 /cli/.purs*
 /cli/.psa*
 /cli/.spago
+/cli/.spago2nix

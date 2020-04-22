@@ -1,39 +1,63 @@
 { pkgs ? import <nixpkgs> {} }:
 let
-  easyPS = import (pkgs.fetchFromGitHub {
-    owner = "justinwoo";
-    repo = "easy-purescript-nix";
-    rev = "aa3e608608232f4a009b5c132ae763fdabfb4aba";
-    sha256 = "0y6jikncxs9l2zgngbd1775f1zy5s1hdc5rhkyzsyaalcl5cajk8";
-    # date = 2020-03-16T09:31:55+01:00;
-  }) {};
-  spago = easyPS.spago;
-  purs = easyPS.purs;
+  deps = (import ./deps.nix) { inherit pkgs; };
+  spago = deps.spago;
+  purs = deps.purs;
+  spago2nix = deps.spago2nix;
 
-in pkgs.stdenv.mkDerivation {
+  spagoPkgs = import ./spago-packages.nix { inherit pkgs; };
 
-  name = "melpa-check";
-  version = "0.1";
-  src = ./.;
+  base = {
+    name ="melpa-check";
+    version = "0.1";
+    src = ./.;
+  };
 
-  buildInputs = [purs pkgs.makeWrapper];
+  dists = {
+    cli-with-node = pkgs.stdenv.mkDerivation (base // {
 
-  buildPhase = ''
-    ${spago}/bin/spago bundle-app --no-install --no-build --to $out/index.js
-  '';
+      buildInputs = [purs pkgs.makeWrapper];
 
-  installPhase = ''
-    mkdir -p $out/bin
-    target=$out/bin/melpa-check
+      buildPhase = ''
+        cd ${spagoPkgs.mkBuildProjectOutput { inherit purs; src = ./.; }}
+        ${spago}/bin/spago bundle-app --main Main --no-install --no-build --to $out/index.js
+      '';
 
-    >>$target echo "#!/usr/bin/env node"
-    >>$target echo "require('$out/index.js')";
+      installPhase = ''
+        mkdir -p $out/bin
+        target=$out/bin/melpa-check
 
-    chmod +x $target
+        >>$target echo "#!${pkgs.nodejs}/bin/node"
+        >>$target echo "require('$out/index.js')";
 
-    wrapProgram $target \
-      --prefix PATH : ${pkgs.lib.makeBinPath [
-      pkgs.nodejs
-    ]}
-'';
+        chmod +x $target
+
+        wrapProgram $target \
+          --prefix PATH : ${pkgs.lib.makeBinPath [
+          pkgs.nodejs
+        ]}
+      '';
+    });
+
+    cli-for-github-action = pkgs.stdenv.mkDerivation (base // {
+
+      buildPhase = "";
+
+      installPhase = ''
+        mkdir -p $out/bin
+        target=$out/bin/melpa-check
+
+        >>$target echo "#!/usr/bin/env node"
+        >>$target echo "require('${./dist.js}')";
+
+        chmod +x $target
+      '';    
+    });   
+  };
+
+in
+dists.cli-with-node
+//
+{
+  gh-action = dists.cli-for-github-action;
 }
