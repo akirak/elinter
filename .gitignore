@@ -1,0 +1,11 @@
+/cli/bower_components/
+/cli/node_modules/
+/cli/.pulp-cache/
+/cli/output/
+/cli/generated-docs/
+/cli/.psc-package/
+/cli/.psc*
+/cli/.purs*
+/cli/.psa*
+/cli/.spago
+/cli/.spago2nix

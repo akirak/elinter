@@ -1,9 +1,10 @@
+
 { pkgs ? import <nixpkgs> {},
   system ? builtins.currentSystem,
   emacs ? pkgs.emacs,
   srcDir ? null,
   testDir ? null,
-  packageFile
+  packageFile ? ".melpa-check/packages.dhall"
 }:
 with pkgs.lib;
 let
@@ -292,4 +293,6 @@ in {
   inherit (tasks) byte-compile checkdoc package-lint prepareButtercup buttercup shell;
   # Export dhallUtils for testing purposes
   inherit dhallUtils;
+
+  cli = import ./cli;
 }

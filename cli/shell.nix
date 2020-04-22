@@ -1,0 +1,1 @@
+(import ./deps.nix {}).shell
