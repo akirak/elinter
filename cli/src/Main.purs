@@ -17,4 +17,5 @@ opts :: Parser (Effect Unit)
 opts =
   subparser
     ( command "deps" (info (pure installDeps) (progDesc "Install dependencies"))
+        <> command "config" (info (pure checkConfig) (progDesc "Set the entry point and check the configuration"))
     )
