@@ -2,7 +2,7 @@ module Commands where
 
 import Utils
 import Lib
-import Prelude (Unit, join, pure, ($), (<*>), discard, unlessM, bind, ifM, (<>), unless)
+import Prelude (Unit, join, pure, ($), (<*>), discard, unlessM, bind, ifM, (<>), unless, unit)
 import Data.Array as A
 import Effect (Effect)
 import Effect.Console (log)
@@ -48,3 +48,6 @@ installDeps = do
   enabledEmacsCiCache = do
     conf <- readNixConf
     pure (A.elem "https://emacs-ci.cachix.org" (getSubstituters conf))
+
+checkConfig :: Effect Unit
+checkConfig = pure unit

@@ -8,14 +8,27 @@ import Effect (Effect)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
 import Node.Path as Path
-import Options.Applicative (Parser, command, execParser, idm, info, subparser, helper, progDesc)
+import Options.Applicative (Parser, (<**>), command, short, long, help, hidden, execParser, idm, info, subparser, helper, progDesc, prefs, showHelpOnEmpty, infoOption)
 
 main :: Effect Unit
-main = join $ execParser (info (helper <*> opts) idm)
+main = join $ execParser (info (opts <**> helper <**> showVersion) progInfo)
+
+progInfo = progDesc "CLI frontend for melpa-check, an Emacs Lisp package lint runner"
+
+-- TODO: Make the version number consistent
+versionString = "0.1"
+
+showVersion =
+  infoOption ("melpa-check CLI " <> versionString)
+    ( long "version"
+        <> short 'V'
+        <> help "Show version"
+        <> hidden
+    )
 
 opts :: Parser (Effect Unit)
 opts =
   subparser
     ( command "deps" (info (pure installDeps) (progDesc "Install dependencies"))
-        <> command "config" (info (pure checkConfig) (progDesc "Set the entry point and check the configuration"))
+        <> command "config" (info (pure checkConfig) (progDesc "Set up an entry point and check the configuration"))
     )
