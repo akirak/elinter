@@ -1,277 +1,78 @@
-{ pkgs ? import <nixpkgs> { }, system ? builtins.currentSystem
-, emacs ? pkgs.emacs, srcDir ? null, packageFile ? ".melpa-check/packages.dhall"
-}:
-with pkgs.lib;
+{ emacs, srcDir ? null, packageFile ? ".melpa-check/packages.dhall" }:
+with (import ./nix/lib);
+with builtins;
 let
-  sources = import ./nix/sources.nix;
-  emacs-ci = import (pkgs.fetchFromGitHub sources.nix-emacs-ci) {};
-  emacsVersionToDerivation = version:
-    getAttrsFromPath [ ("emacs-" + replaceStrings "." "-" version) ] emacs-ci;
-  emacsDistribution = assert (isString emacs || isAttrs emacs);
-  # If emacs is a string, assume it is a version
-    if builtins.isString emacs then emacsVersionToDerivation emacs else emacs;
-  emacsWithPackages =
-    (pkgs.emacsPackagesNgGen emacsDistribution).emacsWithPackages;
-  utils = rec {
-    concatShArgs = files: pkgs.lib.foldr (a: b: a + " " + b) "" files;
-    checkdoc = package:
-      assert (builtins.isPath package.src);
-      assert (builtins.pathExists package.src);
-      assert (builtins.all (file:
-        let srcPath = package.src + "/${file}";
-        in builtins.pathExists srcPath) package.files);
-      pkgs.stdenv.mkDerivation {
-        name = package.pname + "-checkdoc";
-        buildInputs = [ emacsDistribution pkgs.coreutils ];
-        shellHook = ''
-          echo
-          echo ==========================================================
-          echo Checkdoc on ${package.pname} package
-          echo ==========================================================
-          cd ${package.src}
-          emacs --batch --no-site-file \
-                --load ${./run-checkdoc.el} \
-                ${concatShArgs package.files}
-          exit $?
-        '';
-      };
+  pkgs = import ./nix/pkgs.nix;
+  # The base Emacs derivation used in this file
+  emacsDerivation = with pkgs.lib;
+    assert (isString emacs || isAttrs emacs);
+    # If emacs is a string, assume it is a version
+    if isString emacs then
+      emacsVersionToDerivation emacs
+    else
+      emacs;
 
-    # Since package-lint requires the internet connection to test
-    # if dependencies are installable, you can only run this command
-    # in nix-shell, and not in nix-build.
-    package-lint = package:
-      pkgs.stdenv.mkDerivation {
-        name = package.pname + "-package-lint";
-        buildInputs = [
-          (emacsWithPackages (epkgs:
-            (package.dependencies epkgs)
-            ++ [ epkgs.melpaPackages.package-lint ]))
-        ];
-        shellHook = let
-          # Assume the items of files never contain space
-          localDeps = pkgs.lib.concatMapStringsSep " " (pkg: pkg.pname)
-            (package.localDependencies or [ ]);
-          mainFile =
-            # package.mainFile can be null if the package is converted
-            # from Dhall, so the null check is necessary.
-            if package ? mainFile && !(isNull package.mainFile) then
-              package.mainFile
-            else
-              "";
-        in ''
-          echo
-          echo ==========================================================
-          echo package-lint on ${package.pname} package
-          echo ==========================================================
-          cd ${package.src}
-          emacs --no-site-file --batch \
-             --eval "(setq explicitly-installed-packages '(${localDeps}))" \
-             --eval "(setq package-lint-main-file \"${mainFile}\")" \
-             -l ${./run-package-lint.el} ${concatShArgs package.files}
-          result=$?
-          echo ----------------------------------------------------------
-          if [[ $result -eq 0 ]]; then
-            echo "No package-lint errors found."
-          else
-            echo "Errors found by package-lint."
-          fi
-          # Prevent from actually entering the shell
-          exit $result
-        '';
-      };
+  # Emacs taking a list of packages as an argument
+  emacsWithPackages_ = emacsWithPackages emacsDerivation;
 
-    melpaBuild = package:
-      pkgs.emacsPackages.melpaBuild {
-        inherit (package) pname version src files recipe;
-        packageRequires = package.dependencies pkgs.emacsPackages;
-      };
+  # Built-in checkers and test drivers
+  checkers = import ./nix/checkers { inherit pkgs emacsDerivation; };
 
-    byte-compile = package:
-      derivation {
-        inherit system;
-        src = srcDir;
-        name = package.pname + "-byte-compile";
-        builder = "${pkgs.bash}/bin/bash";
-        buildInputs =
-          [ pkgs.coreutils (emacsWithPackages package.dependencies) ];
-        args = [ ./byte-compile.sh ];
-        # Only used in the shell script
-        files = concatShArgs package.files;
-        inherit (package) pname;
-        dependencyNames =
-          concatShArgs (package.dependencyNames or [ "unknown" ]);
-        # localDependencyNames = concatShArgs package.localDependencyNames;
-        loadPaths = let
-          dirs = pkgs.lib.unique (map builtins.dirOf package.files);
-          dquote = file: ''"'' + file + ''"'';
-        in "'(${concatShArgs (map dquote dirs)})";
-      };
+  readDhallPackageList = file:
+    parsePackageList srcDir (dhallToNix srcDir file);
 
-    discoverFiles = rootDir: patterns:
-      let
-        drv = pkgs.stdenv.mkDerivation {
-          name = "bath-glob";
-          buildInputs = [ pkgs.bash ];
-          buildCommand = ''
-            shopt -s extglob nullglob
-            cd ${rootDir}
-            echo ${concatShArgs patterns} > $out
-          '';
-        };
-        raw = pkgs.lib.fileContents drv;
-      in filter (str: builtins.pathExists (rootDir + "/${str}"))
-      (pkgs.lib.splitString " " raw);
-
-    buttercup = package:
-      let
-        patterns = package.buttercupTests;
-        testFiles = discoverFiles package.src patterns;
-        noTestsDrv = pkgs.stdenv.mkDerivation {
-          name = package.pname + "-no-buttercup";
-          buildInputs = [ ];
-          shellHook = ''
-            echo "${package.pname} has no tests."
-            exit
-          '';
-        };
-        makeLoadArguments = pkgs.lib.concatMapStringsSep " " (x: "-l " + x);
-        makeTestCommand = file: ''
-          echo "Running tests in ${file}..."
-          emacs --batch --no-site-file \
-              --load package --eval '(setq package-archives nil)' \
-              -f package-initialize \
-              --load buttercup -l ${file} -f buttercup-run
-          r=$?
-          e=$((e + r))
-          echo ----------------------------------------------------------
-        '';
-        testsDrv = pkgs.stdenv.mkDerivation {
-          name = package.pname + "-buttercup";
-          buildInputs = [
-            (emacsWithPackages
-              (epkgs: [ epkgs.melpaPackages.buttercup (melpaBuild package) ]))
-          ];
-          shellHook = ''
-            e=0
-            cd ${package.src}
-            echo ==========================================================
-            echo Buttercup tests on ${package.pname}
-            echo ==========================================================
-            echo "File patterns: ${builtins.concatStringsSep " " patterns}"
-            echo Matched files: ${builtins.concatStringsSep " " testFiles}
-            echo
-            emacs --version
-            echo ----------------------------------------------------------
-            ${pkgs.lib.concatMapStringsSep "\n" makeTestCommand testFiles}
-            if [[ $e -gt 0 ]]; then
-              echo "Some buttercup tests for ${package.pname} have failed."
-              exit 1
-            else
-              echo "All buttercup tests for ${package.pname} have passed."
-              exit 0
-            fi
-          '';
-        };
-      in testsDrv;
-    # if builtins.length nonEmptyTests == 0
-    # then noTestsDrv
-    # else testsDrv;
-
-  };
-  dhallUtils = rec {
-    # Since dhall-nix in nixpkgs is often broken, I will use the
-    easyDhall = import (pkgs.fetchFromGitHub sources.easy-dhall-nix) { };
-    dhallToNix = file:
-      let
-        drv = pkgs.stdenv.mkDerivation {
-          name = "generate-nix-from-dhall";
-
-          buildCommand = ''
-            cd ${srcDir}
-            cd ${builtins.dirOf file}
-            dhall-to-nix < "${builtins.baseNameOf file}" > $out
-          '';
-
-          buildInputs = [ easyDhall.dhall-nix-simple ];
-        };
-      in import "${drv}";
-    parsePackageList = plainPackageList:
-      with pkgs.lib;
-      let
-        localPackages = map (p: p.pname) plainPackageList;
-        localMelpaBuild = epkgs: pkg:
-          epkgs.melpaBuild {
-            inherit (pkg) pname version src files recipe;
-            packageRequires = pkg.dependencies epkgs;
-          };
-        f = self:
-          builtins.listToAttrs (forEach plainPackageList (x: {
-            name = x.pname;
-            value = x // {
-              src = srcDir;
-              recipe = pkgs.writeText "recipe" x.recipe;
-              dependencies = epkgs:
-                forEach x.dependencies (depName:
-                  if builtins.elem depName localPackages then
-                    localMelpaBuild epkgs self."${depName}"
-                  else
-                    epkgs.melpaPackages."${depName}");
-              localDependencies =
-                forEach x.localDependencies (depName: self."${depName}");
-              # Only used for information to the user
-              dependencyNames = x.dependencies;
-            };
-          }));
-      in fix f;
-    readDhallPackageList = file: parsePackageList (dhallToNix file);
-  };
-  packages = assert (builtins.isString packageFile);
+  # A collection of local packages as an attr set
+  packages =
+    with pkgs.lib;
+    assert (builtins.isString packageFile);
     let packagePath = srcDir + "/${packageFile}";
-    in assert builtins.pathExists packagePath;
+    in assert pathExists packagePath;
     if hasSuffix ".dhall" packageFile then
-      dhallUtils.readDhallPackageList packageFile
+      readDhallPackageList packageFile
       # Nix
     else
       import packagePath { inherit pkgs; };
-  forEachPackage = pkgs.lib.forEach (pkgs.lib.attrValues packages);
-  mapPackage = f: pkgs.lib.mapAttrs (name: package: f package) packages;
-  tasks = rec {
-    byte-compile = forEachPackage utils.byte-compile;
 
-    checkdoc = mapPackage utils.checkdoc // utils.checkdoc
-      (builtins.head (pkgs.lib.attrValues packages) // {
-        pname = (builtins.head (pkgs.lib.attrValues packages)).pname + "-all";
-        files = builtins.concatLists (forEachPackage (p: p.files));
-      });
+  # Apply a function on each package
+  forEachPackage =
+    with pkgs.lib;
+    forEach (attrValues packages);
 
-    package-lint = mapPackage utils.package-lint;
+  # Generate an attr set from packages with a function applied on each value
+  mapPackage =
+    f: with pkgs.lib; mapAttrs (name: package: f package) packages;
 
-    # A task to silent build output in buttercup.
-    # To be run by nix-build with --no-build-output as a preparation step.
-    # onlyBuild = forEachPackage utils.melpaBuild;
-    prepareButtercup = forEachPackage (package:
-      emacsWithPackages
-      (epkgs: [ epkgs.melpaPackages.buttercup (utils.melpaBuild package) ]));
-
-    buttercup = mapPackage utils.buttercup;
-
-    shell = let
-      individuals = mapPackage (package:
-        pkgs.mkShell {
-          buildInputs =
-            [ (emacsWithPackages (epkgs: [ (utils.melpaBuild package) ])) ];
-        });
-      all = pkgs.mkShell {
-        buildInputs = [ (emacsWithPackages (epkgs: byte-compile)) ];
-      };
-      onlyAll = { inherit all; };
-    in all // individuals // onlyAll;
-  };
 in {
-  inherit (tasks)
-    byte-compile checkdoc package-lint prepareButtercup buttercup shell;
-  # Export dhallUtils for testing purposes
-  inherit dhallUtils;
+
+  byte-compile = forEachPackage checkers.byte-compile;
+
+  checkdoc = mapPackage checkers.checkdoc // checkers.checkdoc
+    (head (attrValues packages) // {
+      pname = (head (attrValues packages)).pname + "-all";
+      files = concatLists (forEachPackage (p: p.files));
+    });
+
+  package-lint = mapPackage checkers.package-lint;
+
+  # A task to silent build output in buttercup.
+  # To be run by nix-build with --no-build-output as a preparation step.
+  prepareButtercup = forEachPackage (package:
+    emacsWithPackages_
+    (epkgs: [ epkgs.melpaPackages.buttercup (checkers.melpaBuild package) ]));
+
+  buttercup = mapPackage checkers.buttercup;
+
+  shell = let
+    mkShellWithEmacsPackages = packages:
+      mkShell {
+        buildInputs =
+          [ (emacsWithPackages_ (epkgs: (forEachPackage checkers.melpaBuild))) ];
+      };
+    individuals = mapPackage (package: mkShellWithEmacsPackages [ package ]);
+    all = mkShellWithEmacsPackages packages;
+    onlyAll = { inherit all; };
+  in all // individuals // onlyAll;
 
   cli = import ./cli;
+
 }
