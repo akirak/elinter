@@ -1,5 +1,5 @@
 { pkgs ? import <nixpkgs> { }, system ? builtins.currentSystem
-, emacs ? pkgs.emacs, srcDir ? null, testDir ? null
+, emacs ? pkgs.emacs, srcDir ? null
 , packageFile ? ".melpa-check/packages.dhall" }:
 with pkgs.lib;
 let
