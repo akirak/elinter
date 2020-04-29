@@ -4,6 +4,7 @@
 with pkgs.lib;
 let
   emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages;
+  sources = import ./nix/sources.nix;
   utils = rec {
     concatShArgs = files: pkgs.lib.foldr (a: b: a + " " + b) "" files;
     checkdoc = package:
@@ -172,15 +173,7 @@ let
   };
   dhallUtils = rec {
     # Since dhall-nix in nixpkgs is often broken, I will use the
-    # binary provided by the source repo.
-    # See https://github.com/dhall-lang/dhall-haskell/issues/1624
-    easyDhall = import (pkgs.fetchFromGitHub {
-      owner = "justinwoo";
-      repo = "easy-dhall-nix";
-      rev = "35bca5ba56b7b3f8684aa0afbb65608159beb5ce";
-      # date = 2020-04-04T12:53:43+02:00;
-      sha256 = "16l71qzzfkv4sbxl03r291nswsrkr3g13viqkma2s8r5vy9la3al";
-    }) { };
+    easyDhall = import (pkgs.fetchFromGitHub sources.easy-dhall-nix) { };
     dhallToNix = file:
       let
         drv = pkgs.stdenv.mkDerivation {
