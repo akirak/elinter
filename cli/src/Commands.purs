@@ -1,13 +1,14 @@
 module Commands where
 
 import Utils
-import Lib
-import Prelude (Unit, join, pure, ($), (<*>), discard, unlessM, bind, ifM, (<>), unless, unit)
 import Data.Array as A
+import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
+import Lib (emacsCiChannelName, emacsCiUrl)
 import Node.Path as Path
+import Prelude (Unit, bind, const, discard, ifM, pure, unit, unless, unlessM, ($), (<>))
 
 installDeps :: Effect Unit
 installDeps = do
@@ -49,5 +50,9 @@ installDeps = do
     conf <- readNixConf
     pure (A.elem "https://emacs-ci.cachix.org" (getSubstituters conf))
 
-checkConfig :: Effect Unit
-checkConfig = pure unit
+type ConfigOpts
+  = { configFile :: Maybe String
+    }
+
+checkConfig :: ConfigOpts -> Effect Unit
+checkConfig opts = pure unit

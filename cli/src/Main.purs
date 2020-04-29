@@ -1,34 +1,51 @@
 module Main where
 
-import Utils (callProcess, hasExecutable, getSubstituters, readNixConf, getNixChannels, getHomeDirectory, logTextFileContent)
 import Commands
-import Prelude (Unit, join, pure, ($), (<*>), discard, unlessM, bind, ifM, (<>), unless)
-import Data.Array as A
+import Control.Applicative ((<$>))
+import Data.Maybe (Maybe, optional)
 import Effect (Effect)
-import Effect.Console (log)
-import Effect.Exception (error, throwException)
-import Node.Path as Path
-import Options.Applicative (Parser, (<**>), command, short, long, help, hidden, execParser, idm, info, subparser, helper, progDesc, prefs, showHelpOnEmpty, infoOption)
+import Options.Applicative (InfoMod, Parser, command, execParser, help, helper, hidden, info, infoOption, long, metavar, progDesc, short, strOption, subparser, (<**>))
+import Prelude (Unit, join, pure, ($), (<>))
+import Record.Extra (sequenceRecord)
+
+-- TODO: Make the version number consistent
+versionString :: String
+versionString = "0.1"
 
 main :: Effect Unit
 main = join $ execParser (info (opts <**> helper <**> showVersion) progInfo)
+  where
+  progInfo = progDesc "CLI frontend for melpa-check, an Emacs Lisp package lint runner"
 
-progInfo = progDesc "CLI frontend for melpa-check, an Emacs Lisp package lint runner"
-
--- TODO: Make the version number consistent
-versionString = "0.1"
-
-showVersion =
-  infoOption ("melpa-check CLI " <> versionString)
-    ( long "version"
-        <> short 'V'
-        <> help "Show version"
-        <> hidden
-    )
+  showVersion =
+    infoOption ("melpa-check CLI " <> versionString)
+      ( long "version"
+          <> short 'V'
+          <> help "Show version"
+          <> hidden
+      )
 
 opts :: Parser (Effect Unit)
 opts =
   subparser
     ( command "deps" (info (pure installDeps) (progDesc "Install dependencies"))
-        <> command "config" (info (pure checkConfig) (progDesc "Set up an entry point and check the configuration"))
+        <> command "config" (info (checkConfig <$> configOpts) (progDesc "Set up an entry point and check the configuration"))
+    -- TODO: lint
+    -- TODO: byte-compile
+    -- TODO: test
     )
+  where
+  configOpts =
+    sequenceRecord
+      { configFile: mFile
+      }
+
+  mFile :: Parser (Maybe String)
+  mFile =
+    optional
+      $ strOption
+          ( long "file"
+              <> short 'f'
+              <> metavar "FILE"
+              <> help "Path to configuration file/directory"
+          )
