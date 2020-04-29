@@ -23,6 +23,18 @@
         "url": "https://github.com/nmattia/niv/archive/f73bf8d584148677b01859677a63191c31911eae.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "nix-emacs-ci": {
+        "branch": "master",
+        "description": "Emacs installations for continuous integration",
+        "homepage": null,
+        "owner": "purcell",
+        "repo": "nix-emacs-ci",
+        "rev": "ec1995913f281e974d55fcf66bf78fa2dba36731",
+        "sha256": "0a4yafx6zxwbdy0p7r3m8v9vnrn2n8y2v2wzibjmk6cm1k9n5rhm",
+        "type": "tarball",
+        "url": "https://github.com/purcell/nix-emacs-ci/archive/ec1995913f281e974d55fcf66bf78fa2dba36731.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "nixpkgs": {
         "branch": "nixos-19.09",
         "description": "A read-only mirror of NixOS/nixpkgs tracking the released channels. Send issues and PRs to",

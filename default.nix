@@ -1,10 +1,17 @@
 { pkgs ? import <nixpkgs> { }, system ? builtins.currentSystem
-, emacs ? pkgs.emacs, srcDir ? null
-, packageFile ? ".melpa-check/packages.dhall" }:
+, emacs ? pkgs.emacs, srcDir ? null, packageFile ? ".melpa-check/packages.dhall"
+}:
 with pkgs.lib;
 let
-  emacsWithPackages = (pkgs.emacsPackagesNgGen emacs).emacsWithPackages;
   sources = import ./nix/sources.nix;
+  emacs-ci = import (pkgs.fetchFromGitHub sources.nix-emacs-ci) {};
+  emacsVersionToDerivation = version:
+    getAttrsFromPath [ ("emacs-" + replaceStrings "." "-" version) ] emacs-ci;
+  emacsDistribution = assert (isString emacs || isAttrs emacs);
+  # If emacs is a string, assume it is a version
+    if builtins.isString emacs then emacsVersionToDerivation emacs else emacs;
+  emacsWithPackages =
+    (pkgs.emacsPackagesNgGen emacsDistribution).emacsWithPackages;
   utils = rec {
     concatShArgs = files: pkgs.lib.foldr (a: b: a + " " + b) "" files;
     checkdoc = package:
@@ -15,7 +22,7 @@ let
         in builtins.pathExists srcPath) package.files);
       pkgs.stdenv.mkDerivation {
         name = package.pname + "-checkdoc";
-        buildInputs = [ emacs pkgs.coreutils ];
+        buildInputs = [ emacsDistribution pkgs.coreutils ];
         shellHook = ''
           echo
           echo ==========================================================
