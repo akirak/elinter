@@ -28,14 +28,6 @@ installDeps = do
   ifM enabledEmacsCiCache
     (log "Build cache for emacs-ci is already turned on.")
     $ callProcess "cachix" [ "use", "emacs-ci" ]
-  -- Add the Nix channel for emacs-ci
-  nixChannels <- getNixChannels
-  let
-    hasEmacsCi = A.elem (emacsCiUrl <> " " <> emacsCiChannelName) nixChannels
-  unless hasEmacsCi
-    $ do
-        callProcess "nix-channel" [ "--add", emacsCiUrl, emacsCiChannelName ]
-        callProcess "nix-channel" [ "--update" ]
   -- Show information of the environment
   log "=================================================="
   log "Version information"

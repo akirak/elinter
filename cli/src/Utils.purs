@@ -138,12 +138,6 @@ getHomeDirectory = do
     Just home -> pure home
     Nothing -> throwException $ error "No HOME environment variable"
 
-getNixChannels :: Effect (Array String)
-getNixChannels = do
-  home <- getHomeDirectory
-  map (split (Pattern "\n"))
-    $ FS.readTextFile UTF8 (Path.concat [ home, ".nix-channels" ])
-
 logTextFileContent :: String -> Effect Unit
 logTextFileContent filepath = do
   log ""
