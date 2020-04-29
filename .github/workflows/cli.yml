@@ -8,21 +8,6 @@ on:
     - 'README.*'
 
 jobs:
-  test-install:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install nix
-      uses: cachix/install-nix-action@v8
-    - uses: actions/checkout@v2
-    - name: Install
-      run: nix-env -iA cli -f .
-    - run: command -v melpa-check
-    - run: melpa-check --version
-    - run: melpa-check config -f tests
-    - run: melpa-check lint
-    - run: melpa-check byte-compile -e 26.2
-    - run: melpa-check test -e 26.3
-    - run: melpa-check test -e snapshot
   build:
     runs-on: ubuntu-latest
     steps:
@@ -42,3 +27,18 @@ jobs:
         cp result/index.js dist.js
     - name: Check if the HEAD version is up-to-date
       run: git diff-tree HEAD -- cli/dist.js
+  test-install:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install nix
+      uses: cachix/install-nix-action@v8
+    - uses: actions/checkout@v2
+    - name: Install
+      run: nix-env -iA cli.gh-action -f .
+    - run: command -v melpa-check
+    - run: melpa-check --version
+    - run: melpa-check config -f tests
+    - run: melpa-check lint
+    - run: melpa-check byte-compile -e 26.2
+    - run: melpa-check test -e 26.3
+    - run: melpa-check test -e snapshot
