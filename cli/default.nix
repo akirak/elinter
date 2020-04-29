@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> { } }:
 let
   deps = (import ./deps.nix) { inherit pkgs; };
   spago = deps.spago;
@@ -8,7 +8,7 @@ let
   spagoPkgs = import ./spago-packages.nix { inherit pkgs; };
 
   base = {
-    name ="melpa-check";
+    name = "melpa-check";
     version = "0.1";
     src = ./.;
   };
@@ -16,10 +16,15 @@ let
   dists = {
     cli-with-node = pkgs.stdenv.mkDerivation (base // {
 
-      buildInputs = [purs pkgs.makeWrapper];
+      buildInputs = [ purs pkgs.makeWrapper ];
 
       buildPhase = ''
-        cd ${spagoPkgs.mkBuildProjectOutput { inherit purs; src = ./.; }}
+        cd ${
+          spagoPkgs.mkBuildProjectOutput {
+            inherit purs;
+            src = ./.;
+          }
+        }
         ${spago}/bin/spago bundle-app --main Main --no-install --no-build --to $out/index.js
       '';
 
@@ -33,9 +38,7 @@ let
         chmod +x $target
 
         wrapProgram $target \
-          --prefix PATH : ${pkgs.lib.makeBinPath [
-          pkgs.nodejs
-        ]}
+          --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nodejs ]}
       '';
     });
 
@@ -51,13 +54,8 @@ let
         >>$target echo "require('${./dist.js}')";
 
         chmod +x $target
-      '';    
-    });   
+      '';
+    });
   };
 
-in
-dists.cli-with-node
-//
-{
-  gh-action = dists.cli-for-github-action;
-}
+in dists.cli-with-node // { gh-action = dists.cli-for-github-action; }
