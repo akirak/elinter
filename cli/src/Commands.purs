@@ -6,7 +6,6 @@ import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
-import Lib (emacsCiChannelName, emacsCiUrl)
 import Node.Path as Path
 import Prelude (Unit, bind, const, discard, ifM, pure, unit, unless, unlessM, ($), (<>))
 
@@ -47,4 +46,9 @@ type ConfigOpts
     }
 
 checkConfig :: ConfigOpts -> Effect Unit
-checkConfig opts = pure unit
+checkConfig opts = do
+  case opts.configFile of
+    Nothing -> pure unit
+    Just path -> setConfigPath path
+  config <- getConfigPath
+  error

@@ -16,12 +16,14 @@ import Effect.Console (log)
 import Effect.Exception (error, throwException)
 import Node.ChildProcess as CP
 import Node.Encoding (Encoding(UTF8))
-import Node.FS.Stats (isFile)
+import Node.FS (SymlinkType(DirLink, FileLink))
+import Node.FS.Stats (isFile, isDirectory)
 import Node.FS.Sync as FS
+import Node.Path (FilePath)
 import Node.Path as Path
 import Node.Process (lookupEnv)
 import Partial.Unsafe (unsafePartial)
-import Prelude (bind, pure, Unit, unit, ($), (>>>), (>>=), join, (<$>), (<*>), (<<<), map, discard)
+import Prelude (Unit, bind, discard, join, map, pure, unit, unlessM, ($), (<$>), (<*>), (<<<), (<>), (>>=), (>>>))
 
 callProcess :: String -> Array String -> Effect Unit
 callProcess cmd args = do
@@ -146,3 +148,20 @@ logTextFileContent filepath = do
   log "--------------------------------------------------"
   content <- FS.readTextFile UTF8 filepath
   log content
+
+makeSymbolicLink :: FilePath -> FilePath -> Effect Unit
+makeSymbolicLink src dest = do
+  realDest <- Path.resolve [ dest ] src
+  unlessM (FS.exists realDest)
+    $ throwException
+    $ error
+    $ realDest
+    <> " does not exist"
+  stat <- FS.stat realDest
+  let
+    linkType =
+      if isFile stat then
+        FileLink
+      else
+        DirLink
+  FS.symlink src dest linkType
