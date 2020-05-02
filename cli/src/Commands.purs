@@ -1,13 +1,14 @@
 module Commands where
 
-import Utils
 import Data.Array as A
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
+import Lib (doesConfigExist, getConfigPath, nixShell, setConfigPath)
 import Node.Path as Path
-import Prelude (Unit, bind, const, discard, ifM, pure, unit, unless, unlessM, ($), (<>))
+import Prelude (Unit, bind, discard, ifM, pure, unit, unlessM, ($), (<>))
+import Utils (callProcess, getHomeDirectory, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
 
 installDeps :: Effect Unit
 installDeps = do
@@ -34,7 +35,6 @@ installDeps = do
   callProcess "nix-env" [ "--version" ]
   callProcess "cachix" [ "--version" ]
   home <- getHomeDirectory
-  logTextFileContent $ Path.concat [ home, ".nix-channels" ]
   logTextFileContent $ Path.concat [ home, ".config", "nix", "nix.conf" ]
   where
   enabledEmacsCiCache = do
@@ -49,6 +49,21 @@ checkConfig :: ConfigOpts -> Effect Unit
 checkConfig opts = do
   case opts.configFile of
     Nothing -> pure unit
-    Just path -> setConfigPath path
-  config <- getConfigPath
-  error
+    Just path -> do
+      log $ "Set the configuration path to " <> path
+      setConfigPath path
+  configPath <- getConfigPath
+  unlessM (doesConfigExist configPath)
+    $ throwException
+    $ error
+    $ "Config file does not exist at "
+    <> configPath
+  log $ "Configuration is found at " <> configPath
+  let
+    nixOptions =
+      { nixFile: configPath
+      }
+
+    nixShell' = nixShell nixOptions
+  -- Use nix-instantiate?
+  nixShell' {} "meta"

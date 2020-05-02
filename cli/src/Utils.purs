@@ -17,13 +17,13 @@ import Effect.Exception (error, throwException)
 import Node.ChildProcess as CP
 import Node.Encoding (Encoding(UTF8))
 import Node.FS (SymlinkType(DirLink, FileLink))
-import Node.FS.Stats (isFile, isDirectory)
+import Node.FS.Stats (Stats, isDirectory, isFile)
 import Node.FS.Sync as FS
 import Node.Path (FilePath)
 import Node.Path as Path
-import Node.Process (lookupEnv)
+import Node.Process (cwd, lookupEnv)
 import Partial.Unsafe (unsafePartial)
-import Prelude (Unit, bind, discard, join, map, pure, unit, unlessM, ($), (<$>), (<*>), (<<<), (<>), (>>=), (>>>))
+import Prelude (Unit, bind, discard, ifM, join, map, pure, unit, unlessM, ($), (<$>), (<*>), (<<<), (<>), (>>=), (>>>))
 
 callProcess :: String -> Array String -> Effect Unit
 callProcess cmd args = do
@@ -151,17 +151,33 @@ logTextFileContent filepath = do
 
 makeSymbolicLink :: FilePath -> FilePath -> Effect Unit
 makeSymbolicLink src dest = do
-  realDest <- Path.resolve [ dest ] src
-  unlessM (FS.exists realDest)
+  unlessM (FS.exists dest)
     $ throwException
     $ error
-    $ realDest
+    $ dest
     <> " does not exist"
-  stat <- FS.stat realDest
+  stat <- FS.stat dest
   let
     linkType =
       if isFile stat then
         FileLink
       else
         DirLink
-  FS.symlink src dest linkType
+  FS.symlink dest src linkType
+
+withStat :: forall t4. String -> (Stats -> t4) -> Effect t4
+withStat path f = do
+  stat <- FS.stat path
+  pure $ f stat
+
+doesFileExist :: String -> Effect Boolean
+doesFileExist path =
+  ifM (FS.exists path)
+    (withStat path isFile)
+    $ pure false
+
+doesDirectoryExist :: String -> Effect Boolean
+doesDirectoryExist path =
+  ifM (FS.exists path)
+    (withStat path isDirectory)
+    $ pure false

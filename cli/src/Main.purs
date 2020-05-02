@@ -4,7 +4,7 @@ import Commands
 import Control.Applicative ((<$>))
 import Data.Maybe (Maybe, optional)
 import Effect (Effect)
-import Options.Applicative (InfoMod, Parser, command, execParser, help, helper, hidden, info, infoOption, long, metavar, progDesc, short, strOption, subparser, (<**>))
+import Options.Applicative (Parser, command, execParser, help, helper, hidden, info, infoOption, long, metavar, progDesc, short, strOption, subparser, (<**>))
 import Prelude (Unit, join, pure, ($), (<>))
 import Record.Extra (sequenceRecord)
 
