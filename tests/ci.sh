@@ -5,11 +5,11 @@ set -e
 EMACS="${EMACS:-emacs}"
 
 nix-build() {
-    command nix-build --quiet --no-out-link "$@"
+    command nix-build --quiet --no-out-link "$@" --show-trace
 }
 
 nix-shell() {
-    env NIX_BUILD_SHELL=bash nix-shell --pure --quiet "$@"
+    env NIX_BUILD_SHELL=bash nix-shell --pure --quiet "$@" --show-trace
 }
 
 nix-shell -A checkdoc
