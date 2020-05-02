@@ -29,6 +29,7 @@ jobs:
       run: nix-env -iA cli.gh-action -f .
     - run: command -v melpa-check
     - run: melpa-check --version
+    - run: melpa-check deps
     - run: melpa-check config -f tests
     # - run: melpa-check lint
     # - run: melpa-check byte-compile -e 26.2
