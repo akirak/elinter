@@ -1,4 +1,5 @@
-{ emacs, srcDir ? null, packageFile ? ".melpa-check/packages.dhall" }:
+{ emacs ? "snapshot", srcDir ? null, packageFile ? ".melpa-check/packages.dhall"
+}:
 with (import ./nix/lib);
 with builtins;
 let
