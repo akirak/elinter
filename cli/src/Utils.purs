@@ -1,19 +1,24 @@
 module Utils where
 
-import Data.Array ((!!))
+import Control.Monad.Error.Class (throwError)
+import Control.Parallel (parSequence, parSequence_)
+import Data.Array (mapMaybe, (!!))
 import Data.Array as A
 import Data.Array.NonEmpty as NA
-import Data.Either (fromRight)
+import Data.Either (Either(..), either, fromRight)
 import Data.List as L
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Posix.Signal (Signal(..))
 import Data.String (split, Pattern(..), trim)
 import Data.String.Regex (match, regex) as R
 import Data.String.Regex.Flags (noFlags) as R
 import Data.Tuple (Tuple)
 import Data.Tuple as T
 import Effect (Effect)
-import Effect.Console (log)
-import Effect.Exception (error, throwException)
+import Effect.Aff (Aff, attempt, effectCanceler, makeAff)
+import Effect.Class.Console (log, logShow)
+import Effect.Exception (Error, error, throwException)
+import Node.ChildProcess (Exit(..), SpawnOptions, defaultSpawnOptions, inherit)
 import Node.ChildProcess as CP
 import Node.Encoding (Encoding(UTF8))
 import Node.FS (SymlinkType(DirLink, FileLink))
@@ -21,9 +26,9 @@ import Node.FS.Stats (Stats, isDirectory, isFile)
 import Node.FS.Sync as FS
 import Node.Path (FilePath)
 import Node.Path as Path
-import Node.Process (cwd, lookupEnv)
+import Node.Process (exit, lookupEnv)
 import Partial.Unsafe (unsafePartial)
-import Prelude (Unit, bind, discard, ifM, join, map, pure, unit, unlessM, ($), (<$>), (<*>), (<<<), (<>), (>>=), (>>>))
+import Prelude (Unit, bind, const, discard, ifM, join, map, pure, show, unit, unlessM, void, ($), (<$>), (<*>), (<<<), (<>), (>>=), (>>>))
 
 callProcess :: String -> Array String -> Effect Unit
 callProcess cmd args = do
@@ -34,6 +39,26 @@ callProcess cmd args = do
           }
       )
   pure unit
+
+callProcessAsync_ :: SpawnOptions -> String -> Array String -> Aff Unit
+callProcessAsync_ spawnOptions cmd args = do
+  r <-
+    makeAff
+      $ \cb -> do
+          p <- CP.spawn cmd args $ spawnOptions { stdio = inherit }
+          CP.onError p $ cb <<< Left <<< CP.toStandardError
+          CP.onExit p $ cb <<< Right
+          pure <<< effectCanceler <<< void $ CP.kill SIGTERM p
+  case r of
+    Normally 0 -> pure unit
+    _ ->
+      throwError $ error $ "Error " <> show r <> " from command "
+        <> cmd
+        <> " "
+        <> show args
+
+callProcessAsync :: String -> Array String -> Aff Unit
+callProcessAsync = callProcessAsync_ defaultSpawnOptions
 
 hasExecutable :: String -> Effect Boolean
 hasExecutable program = do
@@ -181,3 +206,20 @@ doesDirectoryExist path =
   ifM (FS.exists path)
     (withStat path isDirectory)
     $ pure false
+
+examineAll :: forall t235. Array (Aff t235) -> Aff Unit
+examineAll xs = do
+  results <- parSequence $ map attempt xs
+  case mapMaybe (either Just (const Nothing)) results of
+    [] -> pure unit
+    ys -> do
+      parSequence_
+        $ map logShow ys
+      throwError $ error "One of the computations have failed."
+
+exitOnError :: forall a. Either Error a -> Effect Unit
+exitOnError = either f (const $ pure unit)
+  where
+  f e = do
+    logShow e
+    exit 1

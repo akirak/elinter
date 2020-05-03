@@ -1,10 +1,10 @@
 module Main where
 
 import Commands
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), (<*>))
 import Data.Maybe (Maybe, optional)
 import Effect (Effect)
-import Options.Applicative (Parser, command, execParser, help, helper, hidden, info, infoOption, long, metavar, progDesc, short, strOption, subparser, (<**>))
+import Options.Applicative (Parser, command, execParser, flag, help, helper, hidden, info, infoOption, long, metavar, progDesc, short, strArgument, strOption, subparser, (<**>))
 import Prelude (Unit, join, pure, ($), (<>))
 import Record.Extra (sequenceRecord)
 
@@ -30,7 +30,7 @@ opts =
   subparser
     ( command "deps" (info (pure installDeps) (progDesc "Install dependencies"))
         <> command "config" (info (checkConfig <$> configOpts) (progDesc "Set up an entry point and check the configuration"))
-    -- TODO: lint
+        <> command "lint" (info (runLint <$> lintOpts <*> packageArg) (progDesc "Lint"))
     -- TODO: byte-compile
     -- TODO: test
     )
@@ -38,6 +38,20 @@ opts =
   configOpts =
     sequenceRecord
       { configFile: mFile
+      }
+
+  lintOpts =
+    sequenceRecord
+      { loCheckdoc:
+        flag true false
+          ( long "no-checkdoc"
+              <> help "Don't run checkdoc"
+          )
+      , loPackageLint:
+        flag true false
+          ( long "no-package-lint"
+              <> help "Don't run package-lint"
+          )
       }
 
   mFile :: Parser (Maybe String)
@@ -49,3 +63,5 @@ opts =
               <> metavar "FILE"
               <> help "Path to configuration file/directory"
           )
+
+  packageArg = strArgument (metavar "PACKAGE")

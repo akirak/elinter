@@ -1,14 +1,17 @@
 module Commands where
 
+import Control.MonadZero (guard)
+import Data.Array (catMaybes)
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
+import Effect.Aff (runAff_)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
 import Lib (doesConfigExist, getConfigPath, nixShell, setConfigPath)
 import Node.Path as Path
 import Prelude (Unit, bind, discard, ifM, pure, unit, unlessM, ($), (<>))
-import Utils (callProcess, getHomeDirectory, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
+import Utils (callProcess, examineAll, exitOnError, getHomeDirectory, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
 
 installDeps :: Effect Unit
 installDeps = do
@@ -66,4 +69,33 @@ checkConfig opts = do
 
     nixShell' = nixShell nixOptions
   -- Use nix-instantiate?
-  nixShell' {} "meta"
+  runAff_ exitOnError $ nixShell' {} "meta"
+
+type LintOpts
+  = { loCheckdoc :: Boolean
+    , loPackageLint :: Boolean
+    }
+
+type PackageName
+  = String
+
+runLint :: LintOpts -> PackageName -> Effect Unit
+runLint opts package = do
+  configPath <- getConfigPath
+  let
+    nixOptions =
+      { nixFile: configPath
+      }
+
+    nixShell' = nixShell nixOptions
+
+    tasks =
+      catMaybes
+        [ do
+            guard opts.loCheckdoc
+            pure $ nixShell' {} ("checkdoc." <> package)
+        , do
+            guard opts.loPackageLint
+            pure $ nixShell' {} ("package-lint." <> package)
+        ]
+  runAff_ exitOnError $ examineAll tasks
