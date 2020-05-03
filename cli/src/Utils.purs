@@ -1,23 +1,26 @@
 module Utils where
 
 import Control.Monad.Error.Class (throwError)
-import Control.Parallel (parSequence, parSequence_)
-import Data.Array (mapMaybe, (!!))
+import Data.Array (cons, length, mapMaybe, (!!))
 import Data.Array as A
 import Data.Array.NonEmpty as NA
 import Data.Either (Either(..), either, fromRight)
 import Data.List as L
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Posix.Signal (Signal(..))
-import Data.String (split, Pattern(..), trim)
+import Data.String (Pattern(..), contains, joinWith, split, trim)
 import Data.String.Regex (match, regex) as R
 import Data.String.Regex.Flags (noFlags) as R
+import Data.Traversable (sequence)
 import Data.Tuple (Tuple)
 import Data.Tuple as T
 import Effect (Effect)
 import Effect.Aff (Aff, attempt, effectCanceler, makeAff)
-import Effect.Class.Console (log, logShow)
+import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Class.Console (log)
+import Effect.Class.Console as Console
 import Effect.Exception (Error, error, throwException)
+import Effect.Exception as E
 import Node.ChildProcess (Exit(..), SpawnOptions, defaultSpawnOptions, inherit)
 import Node.ChildProcess as CP
 import Node.Encoding (Encoding(UTF8))
@@ -40,8 +43,16 @@ callProcess cmd args = do
       )
   pure unit
 
+quoteMaybe :: String -> String
+quoteMaybe s
+  | contains (Pattern " ") s = "'" <> s <> "'"
+  | true = s
+
 callProcessAsync_ :: SpawnOptions -> String -> Array String -> Aff Unit
 callProcessAsync_ spawnOptions cmd args = do
+  let
+    command = joinWith " " $ map quoteMaybe (cons cmd args)
+  liftEffect $ log $ "> " <> command
   r <-
     makeAff
       $ \cb -> do
@@ -51,11 +62,12 @@ callProcessAsync_ spawnOptions cmd args = do
           pure <<< effectCanceler <<< void $ CP.kill SIGTERM p
   case r of
     Normally 0 -> pure unit
-    _ ->
-      throwError $ error $ "Error " <> show r <> " from command "
-        <> cmd
-        <> " "
-        <> show args
+    Normally n -> do
+      -- Console.error $ "\nExit code " <> show n
+      throwError $ error $ "Exit code " <> show n <> " from command \"" <> command <> "\""
+    _ -> do
+      -- Console.errorShow r
+      throwError $ error $ show r <> " from command " <> command
 
 callProcessAsync :: String -> Array String -> Aff Unit
 callProcessAsync = callProcessAsync_ defaultSpawnOptions
@@ -209,17 +221,27 @@ doesDirectoryExist path =
 
 examineAll :: forall t235. Array (Aff t235) -> Aff Unit
 examineAll xs = do
-  results <- parSequence $ map attempt xs
+  results <- sequence $ map attempt_ xs
   case mapMaybe (either Just (const Nothing)) results of
     [] -> pure unit
     ys -> do
-      parSequence_
-        $ map logShow ys
-      throwError $ error "One of the computations have failed."
+      let
+        msg =
+          show (length ys) <> "/" <> show (length xs) <> " of the tasks have failed:\n"
+            <> joinWith "\n" (map (\e -> E.message e) ys)
+      throwError $ error msg
+  where
+  attempt_ f = do
+    r <- attempt f
+    log ""
+    pure r
 
 exitOnError :: forall a. Either Error a -> Effect Unit
 exitOnError = either f (const $ pure unit)
   where
   f e = do
-    logShow e
+    printError e
     exit 1
+
+printError :: forall t13. MonadEffect t13 => Error -> t13 Unit
+printError e = Console.error $ E.name e <> ": " <> E.message e
