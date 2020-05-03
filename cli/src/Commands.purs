@@ -3,7 +3,7 @@ module Commands where
 import Control.MonadZero (guard)
 import Data.Array (catMaybes)
 import Data.Array as A
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Effect.Aff (runAff_)
 import Effect.Console (log)
@@ -79,8 +79,8 @@ type LintOpts
 type PackageName
   = String
 
-runLint :: LintOpts -> PackageName -> Effect Unit
-runLint opts package = do
+runLint :: LintOpts -> Maybe PackageName -> Effect Unit
+runLint opts mPackage = do
   configPath <- getConfigPath
   let
     nixOptions =
@@ -89,13 +89,15 @@ runLint opts package = do
 
     nixShell' = nixShell nixOptions
 
+    packageSuffix = maybe "" (\package -> "." <> package) mPackage
+
     tasks =
       catMaybes
         [ do
             guard opts.loCheckdoc
-            pure $ nixShell' {} ("checkdoc." <> package)
+            pure $ nixShell' {} ("checkdoc" <> packageSuffix)
         , do
             guard opts.loPackageLint
-            pure $ nixShell' {} ("package-lint." <> package)
+            pure $ nixShell' {} ("package-lint" <> packageSuffix)
         ]
   runAff_ exitOnError $ examineAll tasks

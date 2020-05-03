@@ -64,4 +64,4 @@ opts =
               <> help "Path to configuration file/directory"
           )
 
-  packageArg = strArgument (metavar "PACKAGE")
+  packageArg = optional $ strArgument (metavar "PACKAGE")
