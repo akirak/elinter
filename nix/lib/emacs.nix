@@ -5,7 +5,7 @@ in
 with pkgs.lib;
 {
   emacsVersionToDerivation = version:
-    getAttrsFromPath [ ("emacs-" + replaceStrings "." "-" version) ] emacs-ci;
+    getAttrFromPath [ ("emacs-" + replaceStrings ["."] ["-"] version) ] emacs-ci;
   emacsWithPackages = emacsDerivation:
     (pkgs.emacsPackagesNgGen emacsDerivation).emacsWithPackages;
 }
