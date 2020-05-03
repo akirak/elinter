@@ -33,6 +33,14 @@ let
 
   firstPackage = head (attrValues packages);
 
+  onlyPackageWithMsg = msg:
+    let packageValues = attrValues packages;
+    in if length packageValues == 1 then head packageValues else abort msg;
+
+  onlyPackage = task:
+    onlyPackageWithMsg
+      "When you run ${task} and there are multiple packages, you have to specify the name of a package.";
+
   # Apply a function on each package
   forEachPackage = with pkgs.lib; forEach (attrValues packages);
 
@@ -62,7 +70,8 @@ in {
       files = concatLists (forEachPackage (p: p.files));
     });
 
-  package-lint = mapPackage checkers.package-lint;
+  package-lint = mapPackage checkers.package-lint
+    // checkers.package-lint (onlyPackage "package-lint");
 
   # A task to silent build output in buttercup.
   # To be run by nix-build with --no-build-output as a preparation step.
@@ -70,7 +79,8 @@ in {
     emacsWithPackages_
     (epkgs: [ epkgs.melpaPackages.buttercup (checkers.melpaBuild package) ]));
 
-  buttercup = mapPackage checkers.buttercup;
+  buttercup = mapPackage checkers.buttercup
+    // checkers.buttercup (onlyPackage "buttercup");
 
   shell = let
     mkShellWithEmacsPackages = packages:
