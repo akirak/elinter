@@ -11,6 +11,18 @@
         "url": "https://github.com/justinwoo/easy-dhall-nix/archive/35bca5ba56b7b3f8684aa0afbb65608159beb5ce.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "easy-purescript-nix": {
+        "branch": "master",
+        "description": "Easy PureScript (and other tools) with Nix",
+        "homepage": "",
+        "owner": "justinwoo",
+        "repo": "easy-purescript-nix",
+        "rev": "d4879bfd2b595d7fbd37da1a7bea5d0361975eb3",
+        "sha256": "0kzwg3mwziwx378kvbzhayy65abvk1axi12zvf2f92cs53iridwh",
+        "type": "tarball",
+        "url": "https://github.com/justinwoo/easy-purescript-nix/archive/d4879bfd2b595d7fbd37da1a7bea5d0361975eb3.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",

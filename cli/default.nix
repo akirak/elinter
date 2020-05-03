@@ -1,48 +1,37 @@
 { pkgs ? import <nixpkgs> { } }:
+with pkgs;
 let
-  deps = (import ./deps.nix) { inherit pkgs; };
-  spago = deps.spago;
-  purs = deps.purs;
-  spago2nix = deps.spago2nix;
-
-  spagoPkgs = import ./spago-packages.nix { inherit pkgs; };
-
+  version = "0.1";
   base = {
+    inherit version;
     name = "melpa-check";
-    version = "0.1";
     src = ./.;
   };
+
+  app = ./dist.js;
 
   dists = {
     cli-with-node = pkgs.stdenv.mkDerivation (base // {
 
-      buildInputs = [ purs pkgs.makeWrapper ];
+      buildInputs = [ makeWrapper ];
 
-      buildPhase = ''
-        cd ${
-          spagoPkgs.mkBuildProjectOutput {
-            inherit purs;
-            src = ./.;
-          }
-        }
-        ${spago}/bin/spago bundle-app --main Main --no-install --no-build --to $out/index.js
-      '';
+      buildPhase = "";
 
       installPhase = ''
         mkdir -p $out/bin
         target=$out/bin/melpa-check
 
         >>$target echo "#!${pkgs.nodejs}/bin/node"
-        >>$target echo "require('$out/index.js')";
+        >>$target echo "require('${app}')";
 
         chmod +x $target
 
         wrapProgram $target \
-          --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nodejs ]}
+          --prefix PATH : ${lib.makeBinPath [ nodejs ]}
       '';
     });
 
-    cli-for-github-action = pkgs.stdenv.mkDerivation (base // {
+    cli-for-github-action = stdenv.mkDerivation (base // {
 
       buildPhase = "";
 
@@ -51,7 +40,7 @@ let
         target=$out/bin/melpa-check
 
         >>$target echo "#!/usr/bin/env node"
-        >>$target echo "require('${./dist.js}')";
+        >>$target echo "require('${app}')";
 
         chmod +x $target
       '';
