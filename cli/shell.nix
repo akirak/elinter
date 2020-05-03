@@ -7,5 +7,6 @@ mkShell {
     spago
     nodejs
     purs
+    gnumake
   ];
 }
