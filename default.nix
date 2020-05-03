@@ -16,6 +16,10 @@ let
   # Built-in checkers and test drivers
   checkers = import ./nix/checkers { inherit pkgs emacsDerivation; };
 
+  prepareButtercup = package:
+    emacsWithPackages_
+    (epkgs: [ epkgs.melpaPackages.buttercup (checkers.melpaBuild package) ]);
+
   readDhallPackageList = file: parsePackageList srcDir (dhallToNix srcDir file);
 
   isDhallProject = pkgs.lib.hasSuffix ".dhall" packageFile;
@@ -75,9 +79,10 @@ in {
 
   # A task to silent build output in buttercup.
   # To be run by nix-build with --no-build-output as a preparation step.
-  prepareButtercup = forEachPackage (package:
-    emacsWithPackages_
-    (epkgs: [ epkgs.melpaPackages.buttercup (checkers.melpaBuild package) ]));
+  prepareButtercup = mapPackage prepareButtercup
+    # Since this command is likely to be called just before 'buttercup',
+    # it can be compatible with it.
+    // prepareButtercup (onlyPackage "prepareButtercup");
 
   buttercup = mapPackage checkers.buttercup
     // checkers.buttercup (onlyPackage "buttercup");
