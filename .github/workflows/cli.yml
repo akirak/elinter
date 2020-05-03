@@ -1,9 +1,9 @@
-name: "Building CLI"
+name: "CLI"
 
 on:
   push:
-    branches:
-    - v3
+    # branches:
+    # - v3
     paths-ignore:
     - 'README.*'
 
@@ -12,28 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Install nix
-      uses: cachix/install-nix-action@v7
-    - uses: actions/checkout@v2
-    - name: Generate latest spago-packages.nix
-      run: |
-        cd cli
-        nix-shell --run 'spago2nix generate'
-    - name: Verify spago-packages.nix
-      run: git diff-tree HEAD -- cli/spago-packages.nix
-    - name: Build
-      run: |
-        cd cli
-        nix build
-        cp result/index.js dist.js
-    - name: Check if the HEAD version is up-to-date
-      run: git diff-tree HEAD -- cli/dist.js
-  test-install:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install nix
-      uses: cachix/install-nix-action@v7
+      uses: cachix/install-nix-action@v8
     - uses: actions/checkout@v2
     - name: Install
       run: nix-env -iA cli.gh-action -f .
     - run: command -v melpa-check
     - run: melpa-check --version
+    - run: melpa-check deps
+    - run: melpa-check config -f tests
+    - run: melpa-check lint hello
+    - run: melpa-check byte-compile -e 26.2
+    - run: melpa-check buttercup -e 26.3 hello
+    - run: melpa-check buttercup -e snapshot hello
+    - run: cd cli; nix-shell --command "make -f build.mk"
+    - name: Check if the HEAD version is up-to-date
+      run: git diff-tree HEAD -- cli/dist.js

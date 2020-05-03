@@ -10,3 +10,4 @@
 /cli/.spago
 /cli/.spago2nix
 /cli/result
+.melpa-check-tmp

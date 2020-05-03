@@ -1,6 +1,7 @@
 ;;; bad-hello.el --- An example package -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2019 Akira Komamura
+;; Version: 0.0
 
 ;;; License:
 
