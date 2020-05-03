@@ -28,13 +28,14 @@ main = join $ execParser (info (opts <**> helper <**> showVersion) progInfo)
 opts :: Parser (Effect Unit)
 opts =
   subparser
-    ( command "deps" (info (pure installDeps) (progDesc "Install dependencies"))
-        <> command "config" (info (checkConfig <$> configOpts) (progDesc "Set up an entry point and check the configuration"))
-        <> command "lint" (info (runLint <$> lintOpts <*> packageArg) (progDesc "Lint"))
-    -- TODO: byte-compile
+    ( command "deps" (info_ (pure installDeps) (progDesc "Install dependencies"))
+        <> command "config" (info_ (checkConfig <$> configOpts) (progDesc "Set up an entry point and check the configuration"))
+        <> command "lint" (info_ (runLint <$> lintOpts <*> packageArg) (progDesc "Run lint (i.e. checkdoc, package-lint, etc.) on a package"))
     -- TODO: test
     )
   where
+  info_ a b = info (a <**> helper) b
+
   configOpts =
     sequenceRecord
       { configFile: mFile
