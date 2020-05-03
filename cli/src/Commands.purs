@@ -4,14 +4,15 @@ import Control.MonadZero (guard)
 import Data.Array (catMaybes)
 import Data.Array as A
 import Data.Maybe (Maybe(..))
+import Data.Traversable (sequence_)
 import Effect (Effect)
 import Effect.Aff (runAff_)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
-import Lib (NixBuildOptions(..), NixOptions(..), NixShellOptions(..), PackageName, defaultNixBuildOptions, defaultNixOptions, defaultNixShellOptions, doesConfigExist, getConfigPath, nixShell, runPackageTasks, setConfigPath)
+import Lib (PackageName, defaultNixBuildOptions, defaultNixOptions, defaultNixShellOptions, doesConfigExist, getConfigPath, nixShell, runPackageTasks, runPackageTasks_, setConfigPath)
 import Node.Path as Path
 import Prelude (Unit, bind, discard, ifM, pure, unit, unlessM, ($), (<>))
-import Utils (callProcess, examineAll, exitOnError, getHomeDirectory, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
+import Utils (callProcess, exitOnError, getHomeDirectory, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
 
 installDeps :: Effect Unit
 installDeps = do
@@ -100,4 +101,26 @@ byteCompile opts mPackage =
             )
             defaultNixBuildOptions
             "byte-compile"
+        ]
+
+type ButtercupOpts
+  = { emacsVersion :: Maybe String
+    }
+
+runButtercup :: ButtercupOpts -> Maybe PackageName -> Effect Unit
+runButtercup opts mPackage = do
+  let
+    nixOptions =
+      defaultNixOptions
+        { emacsVersion = opts.emacsVersion
+        }
+  -- The test task depends on the build task, so they are run separately.
+  runPackageTasks_ sequence_ mPackage
+    $ \builder ->
+        [ builder.nixBuildTask nixOptions
+            ( defaultNixBuildOptions
+                { noBuildOutput = true }
+            )
+            "prepareButtercup"
+        , builder.nixShellTask nixOptions defaultNixShellOptions "buttercup"
         ]

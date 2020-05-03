@@ -32,6 +32,7 @@ opts =
         <> command "config" (info_ (checkConfig <$> configOpts) (progDesc "Set up an entry point and check the configuration"))
         <> command "lint" (info_ (runLint <$> lintOpts <*> packageArg) (progDesc "Run lint (i.e. checkdoc, package-lint, etc.) on a package"))
         <> command "byte-compile" (info_ (byteCompile <$> byteCompileOpts <*> packageArg) (progDesc "Byte-Compile packages"))
+        <> command "buttercup" (info_ (runButtercup <$> buttercupOpts <*> packageArg) (progDesc "Run buttercup tests"))
     )
   where
   info_ a b = info (a <**> helper) b
@@ -56,6 +57,11 @@ opts =
       }
 
   byteCompileOpts =
+    sequenceRecord
+      { emacsVersion: emacsArg
+      }
+
+  buttercupOpts =
     sequenceRecord
       { emacsVersion: emacsArg
       }

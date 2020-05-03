@@ -88,15 +88,19 @@ nixShellOptionsToArray opts =
     ]
 
 type NixBuildOptions
-  = { noOutLink :: Boolean }
+  = { noOutLink :: Boolean
+    , noBuildOutput :: Boolean
+    }
 
 defaultNixBuildOptions :: NixBuildOptions
-defaultNixBuildOptions = { noOutLink: true }
+defaultNixBuildOptions = { noOutLink: true, noBuildOutput: false }
 
 nixBuildOptionsToArray :: NixBuildOptions -> Array String
 nixBuildOptionsToArray opts =
   concat
-    [ if opts.noOutLink then [ "--no-out-link" ] else [] ]
+    [ if opts.noOutLink then [ "--no-out-link" ] else []
+    , if opts.noBuildOutput then [ "--no-build-output" ] else []
+    ]
 
 type AttrPath
   = String
@@ -138,7 +142,17 @@ runPackageTasks ::
   ( TaskBuilder -> Array (Aff a)
   ) ->
   Effect Unit
-runPackageTasks mPackage makeTasks = do
+runPackageTasks = runPackageTasks_ examineAll
+
+runPackageTasks_ ::
+  forall a.
+  (Array (Aff a) -> Aff Unit) ->
+  Maybe PackageName ->
+  ( TaskBuilder ->
+    Array (Aff a)
+  ) ->
+  Effect Unit
+runPackageTasks_ f mPackage makeTasks = do
   configPath <- getConfigPath
   let
     nixShell' = nixShell configPath
@@ -153,4 +167,4 @@ runPackageTasks mPackage makeTasks = do
       }
 
     tasks = makeTasks taskBuilder
-  runAff_ exitOnError $ examineAll tasks
+  runAff_ exitOnError $ f tasks
