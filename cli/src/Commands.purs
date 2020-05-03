@@ -3,12 +3,12 @@ module Commands where
 import Control.MonadZero (guard)
 import Data.Array (catMaybes)
 import Data.Array as A
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (runAff_)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
-import Lib (doesConfigExist, getConfigPath, nixShell, setConfigPath)
+import Lib (NixBuildOptions(..), NixOptions(..), NixShellOptions(..), PackageName, defaultNixBuildOptions, defaultNixOptions, defaultNixShellOptions, doesConfigExist, getConfigPath, nixShell, runPackageTasks, setConfigPath)
 import Node.Path as Path
 import Prelude (Unit, bind, discard, ifM, pure, unit, unlessM, ($), (<>))
 import Utils (callProcess, examineAll, exitOnError, getHomeDirectory, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
@@ -63,41 +63,41 @@ checkConfig opts = do
     <> configPath
   log $ "Configuration is found at " <> configPath
   let
-    nixOptions =
-      { nixFile: configPath
-      }
-
-    nixShell' = nixShell nixOptions
+    nixShell' = nixShell configPath
   -- Use nix-instantiate?
-  runAff_ exitOnError $ nixShell' {} "meta"
+  runAff_ exitOnError $ nixShell' defaultNixOptions defaultNixShellOptions "meta"
 
 type LintOpts
   = { loCheckdoc :: Boolean
     , loPackageLint :: Boolean
     }
 
-type PackageName
-  = String
-
 runLint :: LintOpts -> Maybe PackageName -> Effect Unit
-runLint opts mPackage = do
-  configPath <- getConfigPath
-  let
-    nixOptions =
-      { nixFile: configPath
-      }
+runLint opts mPackage =
+  runPackageTasks mPackage
+    $ \builder ->
+        catMaybes
+          [ do
+              guard opts.loCheckdoc
+              pure $ builder.nixShellTask defaultNixOptions defaultNixShellOptions "checkdoc"
+          , do
+              guard opts.loPackageLint
+              pure $ builder.nixShellTask defaultNixOptions defaultNixShellOptions "package-lint"
+          ]
 
-    nixShell' = nixShell nixOptions
+type ByteCompileOpts
+  = { emacsVersion :: Maybe String
+    }
 
-    packageSuffix = maybe "" (\package -> "." <> package) mPackage
-
-    tasks =
-      catMaybes
-        [ do
-            guard opts.loCheckdoc
-            pure $ nixShell' {} ("checkdoc" <> packageSuffix)
-        , do
-            guard opts.loPackageLint
-            pure $ nixShell' {} ("package-lint" <> packageSuffix)
+byteCompile :: ByteCompileOpts -> Maybe PackageName -> Effect Unit
+byteCompile opts mPackage =
+  runPackageTasks mPackage
+    $ \builder ->
+        [ builder.nixBuildTask
+            ( defaultNixOptions
+                { emacsVersion = opts.emacsVersion
+                }
+            )
+            defaultNixBuildOptions
+            "byte-compile"
         ]
-  runAff_ exitOnError $ examineAll tasks

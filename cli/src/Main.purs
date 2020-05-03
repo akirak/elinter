@@ -31,7 +31,7 @@ opts =
     ( command "deps" (info_ (pure installDeps) (progDesc "Install dependencies"))
         <> command "config" (info_ (checkConfig <$> configOpts) (progDesc "Set up an entry point and check the configuration"))
         <> command "lint" (info_ (runLint <$> lintOpts <*> packageArg) (progDesc "Run lint (i.e. checkdoc, package-lint, etc.) on a package"))
-    -- TODO: test
+        <> command "byte-compile" (info_ (byteCompile <$> byteCompileOpts <*> packageArg) (progDesc "Byte-Compile packages"))
     )
   where
   info_ a b = info (a <**> helper) b
@@ -55,6 +55,11 @@ opts =
           )
       }
 
+  byteCompileOpts =
+    sequenceRecord
+      { emacsVersion: emacsArg
+      }
+
   mFile :: Parser (Maybe String)
   mFile =
     optional
@@ -66,3 +71,8 @@ opts =
           )
 
   packageArg = optional $ strArgument (metavar "PACKAGE")
+
+  emacsArg =
+    optional
+      $ strOption
+          (long "emacs" <> short 'e' <> metavar "VER" <> help "Emacs version to use for the task")
