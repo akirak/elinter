@@ -17,7 +17,8 @@ nix-shell -A checkdoc
 nix-build -A byte-compile
 nix-shell -A package-lint.hello
 nix-shell -A package-lint.hello2
-nix-build -A prepareButtercup --no-build-output
+nix-build -A prepareButtercup.hello --no-build-output
+nix-build -A prepareButtercup.hello2 --no-build-output
 nix-shell -A buttercup.hello
 nix-shell -A buttercup.hello2
 
