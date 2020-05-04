@@ -109,4 +109,17 @@ in {
 
   cli = import ./cli;
 
+  # An exposed API for displaying a list of Emacs versions supported
+  # by emacs-ci.
+  #
+  # You can use this expression as follows:
+  #
+  # > nix-instantiate --eval -A emacsVersions --strict
+  emacsVersions = emacsVersions emacs-ci;
+
+  # An exposed API for displaying a list of package names.
+  #
+  # > nix-instantiate --eval -A packageNames --strict
+  packageNames = forEachPackage (p: p.pname);
+
 }
