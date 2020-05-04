@@ -33,8 +33,13 @@ opts =
         <> command "lint" (info_ (runLint <$> lintOpts <*> packageArg) (progDesc "Run lint (i.e. checkdoc, package-lint, etc.) on a package"))
         <> command "byte-compile" (info_ (byteCompile <$> byteCompileOpts <*> packageArg) (progDesc "Byte-Compile packages"))
         <> command "buttercup" (info_ (runButtercup <$> buttercupOpts <*> packageArg) (progDesc "Run buttercup tests"))
+        <> command "list" (info_ listCommands (progDesc "Display a list of certain things in the project"))
     )
   where
+  listCommands =
+    subparser
+      (command "emacs-versions" (info_ (pure listEmacsVersions) (progDesc "Display a list of Emacs versions")))
+
   info_ a b = info (a <**> helper) b
 
   configOpts =
@@ -45,15 +50,15 @@ opts =
   lintOpts =
     sequenceRecord
       { loCheckdoc:
-        flag true false
-          ( long "no-checkdoc"
-              <> help "Don't run checkdoc"
-          )
+          flag true false
+            ( long "no-checkdoc"
+                <> help "Don't run checkdoc"
+            )
       , loPackageLint:
-        flag true false
-          ( long "no-package-lint"
-              <> help "Don't run package-lint"
-          )
+          flag true false
+            ( long "no-package-lint"
+                <> help "Don't run package-lint"
+            )
       }
 
   byteCompileOpts =

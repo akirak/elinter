@@ -1,12 +1,13 @@
 module Utils where
 
 import Control.Monad.Error.Class (throwError)
-import Data.Array (cons, length, mapMaybe, (!!))
+import Control.Monad.Except (runExcept)
+import Data.Array (cons, length, mapMaybe, updateAt, (!!))
 import Data.Array as A
 import Data.Array.NonEmpty as NA
 import Data.Either (Either(..), either, fromRight)
 import Data.List as L
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
 import Data.Posix.Signal (Signal(..))
 import Data.String (Pattern(..), contains, joinWith, split, trim)
 import Data.String.Regex (match, regex) as R
@@ -21,7 +22,10 @@ import Effect.Class.Console (log)
 import Effect.Class.Console as Console
 import Effect.Exception (Error, error, throwException)
 import Effect.Exception as E
-import Node.ChildProcess (Exit(..), SpawnOptions, defaultSpawnOptions, inherit)
+import Effect.Ref (modify_, new, read)
+import Foreign.Generic (decodeJSON)
+import Foreign.Generic.Class (class Decode)
+import Node.ChildProcess (Exit(..), SpawnOptions, StdIOBehaviour(..), defaultSpawnOptions, inherit)
 import Node.ChildProcess as CP
 import Node.Encoding (Encoding(UTF8))
 import Node.FS (SymlinkType(DirLink, FileLink))
@@ -30,6 +34,7 @@ import Node.FS.Sync as FS
 import Node.Path (FilePath)
 import Node.Path as Path
 import Node.Process (exit, lookupEnv)
+import Node.Stream (onDataString)
 import Partial.Unsafe (unsafePartial)
 import Prelude (Unit, bind, const, discard, ifM, join, map, pure, show, unit, unlessM, void, ($), (<$>), (<*>), (<<<), (<>), (>>=), (>>>))
 
@@ -48,10 +53,13 @@ quoteMaybe s
   | contains (Pattern " ") s = "'" <> s <> "'"
   | true = s
 
+showCommand :: String -> Array String -> String
+showCommand cmd args = joinWith " " $ map quoteMaybe (cons cmd args)
+
 callProcessAsync_ :: SpawnOptions -> String -> Array String -> Aff Unit
 callProcessAsync_ spawnOptions cmd args = do
   let
-    command = joinWith " " $ map quoteMaybe (cons cmd args)
+    command = showCommand cmd args
   liftEffect $ log $ "> " <> command
   r <-
     makeAff
@@ -71,6 +79,41 @@ callProcessAsync_ spawnOptions cmd args = do
 
 callProcessAsync :: String -> Array String -> Aff Unit
 callProcessAsync = callProcessAsync_ defaultSpawnOptions
+
+getProcessOutput :: String -> Array String -> Aff String
+getProcessOutput cmd args = do
+  let
+    stdio = unsafePartial $ fromJust $ updateAt 1 (Just Pipe) inherit
+  { exit, stdout } <-
+    makeAff
+      $ \cb -> do
+          stdoutRef <- new ""
+          p <- CP.spawn cmd args $ defaultSpawnOptions { stdio = stdio }
+          onDataString (CP.stdout p) UTF8 \s ->
+            modify_ (_ <> s) stdoutRef
+          CP.onError p $ cb <<< Left <<< CP.toStandardError
+          CP.onExit p
+            $ \exit -> do
+                stdout <- read stdoutRef
+                cb <<< Right $ { stdout, exit }
+          pure <<< effectCanceler <<< void $ CP.kill SIGTERM p
+  case exit of
+    Normally 0 -> pure stdout
+    Normally n -> do
+      -- Console.error $ "\nExit code " <> show n
+      throwError $ error $ "Exit code " <> show n <> " from command \"" <> showCommand cmd args <> "\""
+    _ -> do
+      -- Console.errorShow r
+      throwError $ error $ show exit <> " from command " <> showCommand cmd args
+
+getProcessOutputAsJson :: forall t249. Decode t249 => String -> Array String -> Aff t249
+getProcessOutputAsJson cmd args = do
+  raw <- getProcessOutput cmd args
+  let
+    r = runExcept $ decodeJSON raw
+  case r of
+    Left e -> throwError $ error $ show e
+    Right a -> pure a
 
 hasExecutable :: String -> Effect Boolean
 hasExecutable program = do
