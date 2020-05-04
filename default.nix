@@ -1,4 +1,5 @@
 { emacs ? "snapshot", srcDir ? null, packageFile ? ".melpa-check/packages.dhall"
+, emacs-ci ? (import ./nix/pkgs.nix).emacs-ci
 }:
 with (import ./nix/lib);
 with builtins;
@@ -8,7 +9,7 @@ let
   emacsDerivation = with pkgs.lib;
     assert (isString emacs || isAttrs emacs);
     # If emacs is a string, assume it is a version
-    if isString emacs then emacsVersionToDerivation emacs else emacs;
+    if isString emacs then emacsVersionToDerivation emacs-ci emacs else emacs;
 
   # Emacs taking a list of packages as an argument
   emacsWithPackages_ = emacsWithPackages emacsDerivation;
@@ -107,5 +108,18 @@ in {
       builtins.abort "Not supporting non-Dhall projects";
 
   cli = import ./cli;
+
+  # An exposed API for displaying a list of Emacs versions supported
+  # by emacs-ci.
+  #
+  # You can use this expression as follows:
+  #
+  # > nix-instantiate --eval -A emacsVersions --strict
+  emacsVersions = emacsVersions emacs-ci;
+
+  # An exposed API for displaying a list of package names.
+  #
+  # > nix-instantiate --eval -A packageNames --strict
+  packageNames = forEachPackage (p: p.pname);
 
 }

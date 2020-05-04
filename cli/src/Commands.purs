@@ -7,12 +7,13 @@ import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence_)
 import Effect (Effect)
 import Effect.Aff (runAff_)
+import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
 import Lib (PackageName, defaultNixBuildOptions, defaultNixOptions, defaultNixShellOptions, doesConfigExist, getConfigPath, nixShell, runPackageTasks, runPackageTasks_, setConfigPath)
 import Node.Path as Path
-import Prelude (Unit, bind, discard, ifM, pure, unit, unlessM, ($), (<>))
-import Utils (callProcess, exitOnError, getHomeDirectory, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
+import Prelude (Unit, bind, discard, ifM, map, pure, unit, unlessM, ($), (<>))
+import Utils (callProcess, exitOnError, getHomeDirectory, getProcessOutputAsJson, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
 
 installDeps :: Effect Unit
 installDeps = do
@@ -124,3 +125,27 @@ runButtercup opts mPackage = do
             "prepareButtercup"
         , builder.nixShellTask nixOptions defaultNixShellOptions "buttercup"
         ]
+
+listEmacsVersions :: Effect Unit
+listEmacsVersions = do
+  configPath <- getConfigPath
+  runAff_ exitOnError
+    $ do
+        versions :: Array String <-
+          getProcessOutputAsJson "nix-instantiate"
+            [ "--eval", "-A", "emacsVersions", "--strict", "--json", configPath
+            ]
+        liftEffect $ sequence_
+          $ map log versions
+
+listPackages :: Effect Unit
+listPackages = do
+  configPath <- getConfigPath
+  runAff_ exitOnError
+    $ do
+        versions :: Array String <-
+          getProcessOutputAsJson "nix-instantiate"
+            [ "--eval", "-A", "packageNames", "--strict", "--json", configPath
+            ]
+        liftEffect $ sequence_
+          $ map log versions
