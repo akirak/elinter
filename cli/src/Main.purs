@@ -38,7 +38,9 @@ opts =
   where
   listCommands =
     subparser
-      (command "emacs-versions" (info_ (pure listEmacsVersions) (progDesc "Display a list of Emacs versions")))
+      ( command "emacs-versions" (info_ (pure listEmacsVersions) (progDesc "Display a list of Emacs versions"))
+          <> command "packages" (info_ (pure listPackages) (progDesc "Display a list of packages under test"))
+      )
 
   info_ a b = info (a <**> helper) b
 

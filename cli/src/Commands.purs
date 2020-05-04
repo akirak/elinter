@@ -137,3 +137,15 @@ listEmacsVersions = do
             ]
         liftEffect $ sequence_
           $ map log versions
+
+listPackages :: Effect Unit
+listPackages = do
+  configPath <- getConfigPath
+  runAff_ exitOnError
+    $ do
+        versions :: Array String <-
+          getProcessOutputAsJson "nix-instantiate"
+            [ "--eval", "-A", "packageNames", "--strict", "--json", configPath
+            ]
+        liftEffect $ sequence_
+          $ map log versions
