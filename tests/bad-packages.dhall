@@ -5,6 +5,7 @@ let Package = S.Package
 in  [ Package::{
       , pname = "bad-hello"
       , version = "0.1"
+      , emacsVersion = "25.1"
       , files = [ "tests/bad-hello.el" ]
       , dependencies = [] : List Text
       , buttercupTests = S.noTests
