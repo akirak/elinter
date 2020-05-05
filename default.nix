@@ -66,7 +66,14 @@ let
 
 in {
 
-  byte-compile = forEachPackage checkers.byte-compile;
+  byte-compile = let
+    packageValues = attrValues packages;
+    default = if length packageValues == 1 then
+      checkers.byte-compile (head packageValues)
+    else {
+      all = checkers.byte-compile;
+    };
+  in mapPackage checkers.byte-compile // default;
 
   checkdoc = mapPackage checkers.checkdoc // checkers.checkdoc (firstPackage
     // {
