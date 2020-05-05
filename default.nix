@@ -1,6 +1,5 @@
 { emacs ? "snapshot", srcDir ? null, packageFile ? ".melpa-check/packages.dhall"
-, emacs-ci ? (import ./nix/pkgs.nix).emacs-ci
-}:
+, emacs-ci ? (import ./nix/pkgs.nix).emacs-ci }:
 with (import ./nix/lib);
 with builtins;
 let
@@ -44,7 +43,7 @@ let
 
   onlyPackage = task:
     onlyPackageWithMsg
-      "When you run ${task} and there are multiple packages, you have to specify the name of a package.";
+    "When you run ${task} and there are multiple packages, you have to specify the name of a package.";
 
   # Apply a function on each package
   forEachPackage = with pkgs.lib; forEach (attrValues packages);

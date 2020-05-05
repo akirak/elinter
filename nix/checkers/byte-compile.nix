@@ -12,7 +12,8 @@ derivation {
   system = builtins.currentSystem;
   name = package.pname + "-byte-compile";
   builder = "${pkgs.bash}/bin/bash";
-  buildInputs = [ pkgs.coreutils (emacsWithPackages emacsDerivation package.dependencies) ];
+  buildInputs =
+    [ pkgs.coreutils (emacsWithPackages emacsDerivation package.dependencies) ];
   args = [ ./byte-compile.sh ];
   # Only used in the shell script
   files = concatShArgs package.files;
