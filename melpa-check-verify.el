@@ -88,5 +88,5 @@
              (kill-emacs 1))))
   (when melpa-check-package-config-errors
     (message "Errors in the package configuration:\n%s"
-             (string-join melpa-check-package-config-errors "\n"))
+             (string-join melpa-check-package-config-errors "\n\n"))
     (kill-emacs 1)))
