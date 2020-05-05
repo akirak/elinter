@@ -8,9 +8,10 @@ let
   testFiles = discoverFiles package.src patterns;
   makeLoadArguments = pkgs.lib.concatMapStringsSep " " (x: "-l " + x);
   shTrueIf = test:
-    if test
-    then "${pkgs.coreutils}/bin/true"
-    else "${pkgs.coreutils}/bin/false";
+    if test then
+      "${pkgs.coreutils}/bin/true"
+    else
+      "${pkgs.coreutils}/bin/false";
   makeTestCommand = file: ''
     echo "Running tests in ${file}..."
     emacs --batch --no-site-file \

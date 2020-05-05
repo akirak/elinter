@@ -17,10 +17,10 @@ let
         '';
       };
       raw = fileContents drv;
-    in
-      if builtins.match "^[[:space:]]*$" raw != null
-      then []
-      else filter (str: pathExists (rootDir + "/${str}")) (splitString " " raw);
+    in if builtins.match "^[[:space:]]*$" raw != null then
+      [ ]
+    else
+      filter (str: pathExists (rootDir + "/${str}")) (splitString " " raw);
 in {
   inherit concatShArgs discoverFiles;
 } // (import ./package.nix) // (import ./dhall.nix) // (import ./emacs.nix)
