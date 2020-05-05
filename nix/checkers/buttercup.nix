@@ -42,6 +42,11 @@ let
       echo
       emacs --version
       echo ----------------------------------------------------------
+      if ${if builtins.length testFiles == 0 then "true" else "false"}
+      then
+        echo "No test files found."
+        exit 0
+      fi
       ${pkgs.lib.concatMapStringsSep "\n" makeTestCommand testFiles}
       if [[ $e -gt 0 ]]; then
         echo "Some buttercup tests for ${package.pname} have failed."
