@@ -38,7 +38,14 @@
                        (file-raw-dependencies (lm-header-multiline "Package-Requires"))
                        (file-dependencies (when file-raw-dependencies
                                             (read file-raw-dependencies)))
-                       (file-emacs-version (car-safe (alist-get 'emacs file-dependencies))))
+                       (file-emacs-version (car-safe (alist-get 'emacs file-dependencies)))
+                       (file-ext-dependencies (mapcar #'symbol-name
+                                                      (cl-remove-if (lambda (name)
+                                                                      (memq name '(emacs org)))
+                                                                    (mapcar #'car file-dependencies))))
+                       (missing-packages (cl-set-difference file-ext-dependencies
+                                                            dependencies
+                                                            :test #'equal)))
                   (when (and file-version
                              (not (equal version file-version)))
                     (add-error "Package version in the header does not match:
@@ -48,7 +55,11 @@
                                  emacsVersion)
                     (add-error "Minimum Emacs version in the header does not match:
   \"%s\" in file %s
-  \"%s\" in package %s" file-emacs-version file emacsVersion pname)))))
+  \"%s\" in package %s" file-emacs-version file emacsVersion pname))
+                  (when missing-packages
+                    (add-error "Missing dependencies:\n  %s (found in file %s but not in the package)"
+                               (string-join missing-packages " ")
+                               file)))))
             ;; Check the recipe
             (unless recipe
               (add-error "Recipe is empty"))
