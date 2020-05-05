@@ -6,6 +6,7 @@
   (require 'lisp-mnt)
   (let* ((pname (alist-get 'pname package))
          (version (alist-get 'version package))
+         (emacsVersion (alist-get 'emacsVersion package))
          (files (alist-get 'files package))
          (dependencies (alist-get 'dependencies package))
          (localDependencies (alist-get 'localDependencies package))
@@ -22,6 +23,7 @@
           (progn
             (cl-check-type pname string)
             (cl-check-type version string)
+            (cl-check-type emacsVersion string)
             (cl-check-type files list)
             (cl-check-type dependencies list)
             (cl-check-type localDependencies list)
@@ -31,12 +33,33 @@
             (dolist (file (if mainFile
                               (list mainFile)
                             files))
-              (let ((file-version (lm-version file)))
-                (when (and file-version
-                           (not (equal version file-version)))
-                  (add-error "Package version in the header does not match:
+              (with-current-buffer (find-file-noselect file)
+                (let* ((file-version (lm-version))
+                       (file-raw-dependencies (lm-header-multiline "Package-Requires"))
+                       (file-dependencies (when file-raw-dependencies
+                                            (read file-raw-dependencies)))
+                       (file-emacs-version (car-safe (alist-get 'emacs file-dependencies)))
+                       (file-ext-dependencies (mapcar #'symbol-name
+                                                      (cl-remove-if (lambda (name)
+                                                                      (memq name '(emacs org)))
+                                                                    (mapcar #'car file-dependencies))))
+                       (missing-packages (cl-set-difference file-ext-dependencies
+                                                            dependencies
+                                                            :test #'equal)))
+                  (when (and file-version
+                             (not (equal version file-version)))
+                    (add-error "Package version in the header does not match:
   \"%s\" in file %s
-  \"%s\" in package %s" file-version file version pname))))
+  \"%s\" in package %s" file-version file version pname))
+                  (unless (equal file-emacs-version
+                                 emacsVersion)
+                    (add-error "Minimum Emacs version in the header does not match:
+  \"%s\" in file %s
+  \"%s\" in package %s" file-emacs-version file emacsVersion pname))
+                  (when missing-packages
+                    (add-error "Missing dependencies:\n  %s (found in file %s but not in the package)"
+                               (string-join missing-packages " ")
+                               file)))))
             ;; Check the recipe
             (unless recipe
               (add-error "Recipe is empty"))
@@ -65,5 +88,5 @@
              (kill-emacs 1))))
   (when melpa-check-package-config-errors
     (message "Errors in the package configuration:\n%s"
-             (string-join melpa-check-package-config-errors "\n"))
+             (string-join melpa-check-package-config-errors "\n\n"))
     (kill-emacs 1)))

@@ -3,6 +3,7 @@ let Package = (../schema.dhall).Package
 in  [ Package::{
       , pname = "hello"
       , version = "0.1"
+      , emacsVersion = "25.1"
       , files = [ "tests/hello.el", "tests/hello-util.el" ]
       , dependencies = [ "dash" ]
       , mainFile = Some "tests/hello.el"
@@ -16,6 +17,7 @@ in  [ Package::{
     , Package::{
       , pname = "hello2"
       , version = "0.1"
+      , emacsVersion = "25.1"
       , files = [ "tests/hello2.el" ]
       , dependencies = [ "hello" ]
       , localDependencies = [ "hello" ]
