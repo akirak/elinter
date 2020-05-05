@@ -6,6 +6,7 @@
   (require 'lisp-mnt)
   (let* ((pname (alist-get 'pname package))
          (version (alist-get 'version package))
+         (emacsVersion (alist-get 'emacsVersion package))
          (files (alist-get 'files package))
          (dependencies (alist-get 'dependencies package))
          (localDependencies (alist-get 'localDependencies package))
@@ -22,6 +23,7 @@
           (progn
             (cl-check-type pname string)
             (cl-check-type version string)
+            (cl-check-type emacsVersion string)
             (cl-check-type files list)
             (cl-check-type dependencies list)
             (cl-check-type localDependencies list)
@@ -31,12 +33,22 @@
             (dolist (file (if mainFile
                               (list mainFile)
                             files))
-              (let ((file-version (lm-version file)))
-                (when (and file-version
-                           (not (equal version file-version)))
-                  (add-error "Package version in the header does not match:
+              (with-current-buffer (find-file-noselect file)
+                (let* ((file-version (lm-version))
+                       (file-raw-dependencies (lm-header-multiline "Package-Requires"))
+                       (file-dependencies (when file-raw-dependencies
+                                            (read file-raw-dependencies)))
+                       (file-emacs-version (car-safe (alist-get 'emacs file-dependencies))))
+                  (when (and file-version
+                             (not (equal version file-version)))
+                    (add-error "Package version in the header does not match:
   \"%s\" in file %s
-  \"%s\" in package %s" file-version file version pname))))
+  \"%s\" in package %s" file-version file version pname))
+                  (unless (equal file-emacs-version
+                                 emacsVersion)
+                    (add-error "Minimum Emacs version in the header does not match:
+  \"%s\" in file %s
+  \"%s\" in package %s" file-emacs-version file emacsVersion pname)))))
             ;; Check the recipe
             (unless recipe
               (add-error "Recipe is empty"))
