@@ -33,6 +33,8 @@
 ;; The logic is based on an implementation in makel:
 ;; <https://gitlab.petton.fr/DamienCassou/makel/blob/master/makel.mk>
 
+(require 'subr-x)
+
 ;;;; Configure package.el
 (setq load-prefer-newer t)
 (require 'package)
@@ -75,7 +77,8 @@
 (message "----------------------------------------------------------")
 (message "Running package-lint on %s..." (string-join command-line-args-left " "))
 (when (> (length command-line-args-left) 1)
-  (message "package-lint-main-file: %s" package-lint-main-file))
+  ;; Use `bound-and-true-p' to avoid an unbound variable error
+  (message "package-lint-main-file: %s" (bound-and-true-p package-lint-main-file)))
 (require 'cl-lib)
 (defvar explicitly-installed-packages)
 (when (boundp 'explicitly-installed-packages)
