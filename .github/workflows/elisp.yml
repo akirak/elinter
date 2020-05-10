@@ -1,0 +1,52 @@
+name: "elisp"
+
+on:
+  push:
+    # branches:
+    # - v3
+    paths-ignore:
+    - 'README.*'
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        emacs:
+          - 26.1
+          - 26.2
+          - 26.3
+          - snapshot
+    steps:
+    - name: Install nix
+      uses: cachix/install-nix-action@v8
+    - uses: actions/checkout@v2
+    - name: Install
+      run: nix-env -iA cli.gh-action -f .
+    - run: melpa-check deps
+    - run: melpa-check config
+    - run: melpa-check lint
+    - run: melpa-check byte-compile -e ${{ matrix.emacs }}
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        emacs:
+          - 24.3
+          - 25.1
+          - 26.1
+          - 26.2
+          - 26.3
+          - snapshot
+    steps:
+    - name: Install nix
+      uses: cachix/install-nix-action@v8
+    - uses: actions/checkout@v2
+    - name: Install
+      run: nix-env -iA cli.gh-action -f .
+    - run: melpa-check deps
+    - run: melpa-check config -f nix/checkers/tests
+    - run: melpa-check lint checkdoc-runner
+    - run: melpa-check byte-compile -e ${{ matrix.emacs }} checkdoc-runner
+    - run: melpa-check lint package-lint-runner
+    - run: melpa-check byte-compile -e ${{ matrix.emacs }} package-lint-checkdoc-runner
