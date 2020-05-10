@@ -1,4 +1,4 @@
-let Package = (./schema.dhall).Package
+let Package = (../../../schema.dhall).Package
 
 in  [ Package::{
       , pname = "package-lint-runner"
