@@ -1,0 +1,29 @@
+name: "elisp-frontend"
+
+on:
+  push:
+    # branches:
+    # - v3
+    paths:
+    - '*.el'
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        emacs:
+          - 26.1
+          - 26.2
+          - 26.3
+          - snapshot
+    steps:
+    - name: Install nix
+      uses: cachix/install-nix-action@v8
+    - uses: actions/checkout@v2
+    - name: Install
+      run: nix-env -iA cli.gh-action -f .
+    - run: melpa-check deps
+    - run: melpa-check config
+    - run: melpa-check lint
+    - run: melpa-check byte-compile -e ${{ matrix.emacs }}

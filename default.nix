@@ -59,7 +59,7 @@ let
         set -e
         cd ${srcDir}
         emacs --no-site-file --batch -l ${./melpa-check-verify.el} \
-        -f melpa-check-batch-check-package-json ${jsonFile}
+        -f melpa-check-verify-package-json-batch ${jsonFile}
         exit $?
       '';
     };
