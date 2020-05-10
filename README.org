@@ -1,2 +1,5 @@
 * melpa-check (formerly emacs-package-checker)
 This branch is currently a work in progress but is going to be HEAD in the near future.
+** Installation
+** Usage
+*** Initializing a project                                          :elisp:
