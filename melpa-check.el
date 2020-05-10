@@ -43,6 +43,7 @@
 (require 'dash)
 (require 'f)
 (require 'project)
+(require 'json)
 (require 'dhall-mode nil t)
 
 (require 'melpa-check-multisel)
