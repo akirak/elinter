@@ -161,15 +161,23 @@ and ALL-FILES."
         ((sexp-to-string
           (sexp)
           (prin1-to-string sexp))
+         (no-slash
+          (dir)
+          (string-remove-suffix "/" dir))
          ;; Build a spec with directories and the wildcard file
          ;; pattern.
          (subdir-files
           ()
-          (if (> (length dirs) 1)
-              ;; Multiple directories
-              `("*.el" (,@dirs))
-            ;; Single directory
-            (format "%s/*.el" (car dirs))))
+          (cond
+           ;; Multiple directories
+           ((> (length dirs) 1)
+            `("*.el" (,@(-map #'no-slash dirs))))
+           ((or (string-empty-p (car dirs))
+                (not (car dirs)))
+            '("*.el"))
+           ;; Single directory
+           (t
+            (list (format "%s/*.el" (no-slash (car dirs)))))))
          ;; If some of the source files are included in a directory
          ;; other than the repository root.
          (in-subdir-p
@@ -181,11 +189,7 @@ and ALL-FILES."
            `(:defaults
              (:exclude
               ,@(-difference all-files files)
-              ,@(cdr (-find
-                      (lambda (x)
-                        (and (listp x)
-                             (eq :exclude (car x))))
-                      melpa-check-package-default-excludes-spec))))))
+              ,@melpa-check-package-default-excludes-spec))))
       (cond
        ;; Multiple packages
        (multi-package
