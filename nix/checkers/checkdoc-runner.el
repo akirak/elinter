@@ -43,11 +43,17 @@
 
 (defun checkdoc-runner--checkdoc-version ()
   "Get the version of checkdoc."
+  ;; These functions are unavailable in relative old versions of
+  ;; Emacs.
   (if (and (fboundp #'find-library-name)
            (fboundp #'lm-header))
       (with-current-buffer (find-file-noselect
                             (find-library-name "checkdoc"))
         (lm-header "Version"))
+    ;; This variable is obsolete as of Emacs 28.1.
+    ;;
+    ;; To silence a byte-compilation error, I will wrap it in
+    ;; `bound-and-true-p'.
     (bound-and-true-p checkdoc-version)))
 
 (defvar checkdoc-runner-version-too-old nil)
