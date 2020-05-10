@@ -58,11 +58,14 @@
             (require 'helm)
             (helm :prompt prompt
                   :sources
-                  (helm-build-sync-source "Candidates"
-                    :candidates candidates
-                    :action (lambda (c)
-                              (or (helm-marked-candidates)
-                                  c))))))
+                  (list (helm-build-sync-source "Select items"
+                          :candidates candidates
+                          :action (lambda (c)
+                                    (or (helm-marked-candidates)
+                                        c)))
+                        (helm-build-sync-source "Commands"
+                          :candidates '("Quit selection")
+                          :action (lambda (_) nil))))))
     (read-sexp (read--expression prompt
                                  (prin1-to-string candidates)))))
 
