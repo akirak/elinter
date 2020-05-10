@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         emacs:
-          - 24.3
           - 25.1
           - 26.1
           - 26.2
