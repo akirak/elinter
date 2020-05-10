@@ -175,9 +175,10 @@
                                             (cons 13 (string-to-list "yn")))
                   (?y t)
                   ((?n 13) nil)))
-         (config-dir (read-string (format "Configuration directory relative from %s [default: .melpa-check]: "
-                                          root)
-                                  nil nil ".melpa-check" nil)))
+         (config-dir (if (yes-or-no-p "Use the default .melpa-check configuration directory? ")
+                         ".melpa-check"
+                       (read-directory-name "Configuration directory: "
+                                            root))))
     (melpa-check--init-project :root (expand-file-name root)
                                :multi multi
                                :config-dir (expand-file-name config-dir root))))
