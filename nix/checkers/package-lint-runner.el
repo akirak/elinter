@@ -42,6 +42,8 @@
                     package-archives "\n"))
 (message "----------------------------------------------------------")
 (message "Running package-lint on %s..." (string-join command-line-args-left " "))
+(when (> (length command-line-args-left) 1)
+  (message "package-lint-main-file: %s" package-lint-main-file))
 (require 'cl-lib)
 (defvar explicitly-installed-packages)
 (when (boundp 'explicitly-installed-packages)
