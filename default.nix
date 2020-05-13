@@ -24,6 +24,20 @@ let
     emacsWithPackages_
     (epkgs: (pkgs.lib.forEach packages_ checkers.melpaBuild));
 
+  shellHookWithPackageInfo = packages_:
+    with pkgs.lib;
+    let
+      setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
+    in ''
+      # An indexed array for storing a list of package names
+      packages=(${
+        builtins.concatStringsSep " " (forEach packages_ (p: p.pname))
+      })
+      # An associative array for storing the minimum Emacs version for each package
+      ${concatMapStringsSep "\n"
+      (p: "packageEmacsVersion[${p.pname}]=${p.emacsVersion}") packages_}
+    '';
+
   readDhallPackageList = file: parsePackageList srcDir (dhallToNix srcDir file);
 
   isDhallProject = pkgs.lib.hasSuffix ".dhall" packageFile;
@@ -121,17 +135,7 @@ in {
       with pkgs.lib;
       pkgs.mkShell {
         buildInputs = [ (emacsWithLocalPackages packages_) ];
-        shellHook =
-          let setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
-          in ''
-            # An indexed array for storing a list of package names
-            packages=(${
-              builtins.concatStringsSep " " (forEach packages_ (p: p.pname))
-            })
-            # An associative array for storing the minimum Emacs version for each package
-            ${concatMapStringsSep "\n"
-            (p: "packageEmacsVersion[${p.pname}]=${p.emacsVersion}") packages_}
-          '';
+        shellHook = shellHookWithPackageInfo packages_;
       };
   in allOrOne mkShellWithEmacsPackages;
 
@@ -143,17 +147,7 @@ in {
       with pkgs.lib;
       pkgs.mkShell {
         buildInputs = [ ];
-        shellHook =
-          let setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
-          in ''
-            # An indexed array for storing a list of package names
-            packages=(${
-              builtins.concatStringsSep " " (forEach packages_ (p: p.pname))
-            })
-            # An associative array for storing the minimum Emacs version for each package
-            ${concatMapStringsSep "\n"
-            (p: "packageEmacsVersion[${p.pname}]=${p.emacsVersion}") packages_}
-          '';
+        shellHook = shellHookWithPackageInfo packages_;
       };
   in allOrOne mkShellWithPackageInfo;
 
