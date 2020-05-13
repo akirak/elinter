@@ -20,6 +20,10 @@ let
     emacsWithPackages_
     (epkgs: [ epkgs.melpaPackages.buttercup (checkers.melpaBuild package) ]);
 
+  emacsWithLocalPackages = packages_:
+    emacsWithPackages_
+    (epkgs: (pkgs.lib.forEach packages_ checkers.melpaBuild));
+
   readDhallPackageList = file: parsePackageList srcDir (dhallToNix srcDir file);
 
   isDhallProject = pkgs.lib.hasSuffix ".dhall" packageFile;
@@ -50,6 +54,22 @@ let
 
   # Generate an attr set from packages with a function applied on each value
   mapPackage = f: with pkgs.lib; mapAttrs (name: package: f package) packages;
+
+  # Generate an attr set for both individual packages and all packages.
+  #
+  # Each package name points to a derivation on a package, and "all"
+  # points to a derivation on all packages.
+  #
+  # Also defaults to all.
+  #
+  # f should be a function which generates a (shell) derivation from a
+  # list of package values.
+  allOrOne = f:
+    let
+      individuals = mapPackage (package: f [ package ]);
+      all = f (builtins.attrValues packages);
+      onlyAll = { inherit all; };
+    in individuals // onlyAll // all;
 
   verifyJsonPackageList = jsonFile:
     pkgs.stdenv.mkDerivation {
@@ -94,17 +114,26 @@ in {
   buttercup = mapPackage checkers.buttercup
     // checkers.buttercup (onlyPackage "buttercup");
 
+  prepareShell = allOrOne emacsWithLocalPackages;
+
   shell = let
-    mkShellWithEmacsPackages = packages:
-      mkShell {
-        buildInputs = [
-          (emacsWithPackages_ (epkgs: (forEachPackage checkers.melpaBuild)))
-        ];
+    mkShellWithEmacsPackages = packages_:
+      with pkgs.lib;
+      pkgs.mkShell {
+        buildInputs = [ (emacsWithLocalPackages packages_) ];
+        shellHook =
+          let setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
+          in ''
+            # An indexed array for storing a list of package names
+            packages=(${
+              builtins.concatStringsSep " " (forEach packages_ (p: p.pname))
+            })
+            # An associative array for storing the minimum Emacs version for each package
+            ${concatMapStringsSep "\n"
+            (p: "packageEmacsVersion[${p.pname}]=${p.emacsVersion}") packages_}
+          '';
       };
-    individuals = mapPackage (package: mkShellWithEmacsPackages [ package ]);
-    all = mkShellWithEmacsPackages packages;
-    onlyAll = { inherit all; };
-  in all // individuals // onlyAll;
+  in allOrOne mkShellWithEmacsPackages;
 
   meta = assert (builtins.isAttrs packages);
     assert (builtins.length (builtins.attrValues packages) > 0);
