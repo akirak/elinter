@@ -26,8 +26,18 @@ let
 
   shellHookWithPackageInfo = packages_:
     with pkgs.lib;
+    with builtins;
     let
       setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
+      # Example:
+      # > nix-shell default.nix -A shellWithoutBuild --run 'for p in $packages; do echo $p; packageEmacsVersions $p; done'
+      allEmacsVersions = sort (v1: v2:
+        if v1 == "snapshot" then
+          false
+        else if v2 == "snapshot" then
+          true
+        else
+          compareVersions v1 v2 < 0) (emacsVersions emacs-ci);
     in ''
       # An indexed array for storing a list of package names
       packages=(${
@@ -36,6 +46,32 @@ let
       # An associative array for storing the minimum Emacs version for each package
       ${concatMapStringsSep "\n"
       (p: "packageEmacsVersion[${p.pname}]=${p.emacsVersion}") packages_}
+
+      allEmacsVersions=(${builtins.concatStringsSep " " allEmacsVersions})
+
+      # Print a list of available Emacs versions since $1.
+      emacsVersionsAfter() {
+        local start="$1"
+        local count=''${#allEmacsVersions[*]}
+        local started=0
+
+        for i in $(seq 1 $count); do
+          local ver=''${allEmacsVersions[$i]}
+          if [[ $ver = $start ]]; then
+            started=1
+          fi
+          if [[ $started -eq 0 ]]; then
+            continue
+          fi
+          echo $ver
+        done
+      }
+
+      # Print a list of Emacs versions supported by package $1.
+      packageEmacsVersions() {
+        local package="$1"
+        emacsVersionsAfter ''${packageEmacsVersion[$package]}
+      }
     '';
 
   readDhallPackageList = file: parsePackageList srcDir (dhallToNix srcDir file);
