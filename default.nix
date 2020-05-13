@@ -135,6 +135,28 @@ in {
       };
   in allOrOne mkShellWithEmacsPackages;
 
+  # Example:
+  #
+  # > nix-shell default.nix -A shellWithoutBuild --run 'set -e; for p in ${packages[*]}; do nix-build -A byte-compile.$p; done'
+  shellWithoutBuild = let
+    mkShellWithPackageInfo = packages_:
+      with pkgs.lib;
+      pkgs.mkShell {
+        buildInputs = [ ];
+        shellHook =
+          let setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
+          in ''
+            # An indexed array for storing a list of package names
+            packages=(${
+              builtins.concatStringsSep " " (forEach packages_ (p: p.pname))
+            })
+            # An associative array for storing the minimum Emacs version for each package
+            ${concatMapStringsSep "\n"
+            (p: "packageEmacsVersion[${p.pname}]=${p.emacsVersion}") packages_}
+          '';
+      };
+  in allOrOne mkShellWithPackageInfo;
+
   meta = assert (builtins.isAttrs packages);
     assert (builtins.length (builtins.attrValues packages) > 0);
     if isDhallProject then
