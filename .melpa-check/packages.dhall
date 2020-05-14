@@ -12,6 +12,7 @@ in  [ Package::{
         , "melpa-check-verify.el"
         ]
       , dependencies = [ "f", "dash", "s", "helm", "dhall-mode" ]
+      , buttercupTests = [ "*-test?(s).el" ]
       , mainFile = Some "melpa-check.el"
       , recipe =
           ''
