@@ -13,7 +13,7 @@ import Effect.Exception (error, throwException)
 import Lib (PackageName, defaultNixBuildOptions, defaultNixOptions, defaultNixShellOptions, doesConfigExist, getConfigPath, nixShell, runPackageTasks, runPackageTasks_, setConfigPath)
 import Node.Path as Path
 import Prelude (Unit, bind, discard, ifM, map, pure, unit, unlessM, ($), (<>))
-import Utils (callProcess, exitOnError, getHomeDirectory, getProcessOutputAsJson, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
+import Utils (callProcess, examineAll, exitOnError, getHomeDirectory, getProcessOutputAsJson, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
 
 installDeps :: Effect Unit
 installDeps = do
@@ -149,3 +149,41 @@ listPackages = do
             ]
         liftEffect $ sequence_
           $ map log versions
+
+type AllOpts
+  = { emacsVersion :: Maybe String
+    }
+
+runAll :: AllOpts -> Effect Unit
+runAll opts = do
+  configPath <- getConfigPath
+  let
+    nixOpts =
+      { quiet: true
+      -- It doesn't mattter here, since we won't start Emacs in the parent shell
+      , emacsVersion: Nothing
+      }
+
+    nixShOpts command =
+      { clearEnv: false -- Inherit environment variables such as NIX_PATH
+      , runNonInteractiveCommand: Just command
+      , runInteractiveCommand: Nothing
+      }
+
+    run command = nixShell configPath nixOpts (nixShOpts command) "shellWithoutBuild"
+
+    defaultArgs = case opts.emacsVersion of
+      Just version -> "--argstr emacs " <> version <> " "
+      Nothing -> ""
+
+    buildAll arg = "set -e; for p in $packages; do melpaCheckNixBuild " <> defaultArgs <> arg <> "; done"
+
+    shellAll arg = "set -e; for p in $packages; do melpaCheckNixShell " <> defaultArgs <> arg <> "; done"
+  runAff_ exitOnError
+    $ examineAll
+        [ run $ shellAll "-A checkdoc.$p"
+        , run $ shellAll "-A package-lint.$p"
+        , run $ buildAll "-A byte-compile.$p"
+        , run $ buildAll "-A prepareButtercup.$p --no-build-output"
+        , run $ shellAll "-A buttercup.$p"
+        ]

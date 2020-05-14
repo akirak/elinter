@@ -20,6 +20,72 @@ let
     emacsWithPackages_
     (epkgs: [ epkgs.melpaPackages.buttercup (checkers.melpaBuild package) ]);
 
+  emacsWithLocalPackages = packages_:
+    emacsWithPackages_
+    (epkgs: (pkgs.lib.forEach packages_ checkers.melpaBuild));
+
+  shellHookWithPackageInfo = packages_:
+    with pkgs.lib;
+    with builtins;
+    let
+      setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
+      # Example:
+      # > nix-shell default.nix -A shellWithoutBuild --run 'for p in $packages; do echo $p; packageEmacsVersions $p; done'
+      allEmacsVersions = sort (v1: v2:
+        if v1 == "snapshot" then
+          false
+        else if v2 == "snapshot" then
+          true
+        else
+          compareVersions v1 v2 < 0) (emacsVersions emacs-ci);
+    in ''
+      # An indexed array for storing a list of package names
+      packages=(${
+        builtins.concatStringsSep " " (forEach packages_ (p: p.pname))
+      })
+      # An associative array for storing the minimum Emacs version for each package
+      ${concatMapStringsSep "\n"
+      (p: "packageEmacsVersion[${p.pname}]=${p.emacsVersion}") packages_}
+
+      allEmacsVersions=(${builtins.concatStringsSep " " allEmacsVersions})
+
+      # Print a list of available Emacs versions since $1.
+      emacsVersionsAfter() {
+        local start="$1"
+        local count=''${#allEmacsVersions[*]}
+        local started=0
+
+        for i in $(seq 1 $count); do
+          local ver=''${allEmacsVersions[$i]}
+          if [[ $ver = $start ]]; then
+            started=1
+          fi
+          if [[ $started -eq 0 ]]; then
+            continue
+          fi
+          echo $ver
+        done
+      }
+
+      # Print a list of Emacs versions supported by package $1.
+      packageEmacsVersions() {
+        local package="$1"
+        emacsVersionsAfter ''${packageEmacsVersion[$package]}
+      }
+
+      melpaCheckFile() {
+        readlink -e .melpa-check-tmp || readlink -e .melpa-check
+      }
+
+      melpaCheckNixBuild() {
+        nix-build --quiet --no-out-link "$@" `melpaCheckFile`
+      }
+
+      melpaCheckNixShell() {
+        NIX_BUILD_SHELL=bash nix-shell --pure --quiet "$@" `melpaCheckFile`
+      }
+    '';
+
   readDhallPackageList = file: parsePackageList srcDir (dhallToNix srcDir file);
 
   isDhallProject = pkgs.lib.hasSuffix ".dhall" packageFile;
@@ -50,6 +116,22 @@ let
 
   # Generate an attr set from packages with a function applied on each value
   mapPackage = f: with pkgs.lib; mapAttrs (name: package: f package) packages;
+
+  # Generate an attr set for both individual packages and all packages.
+  #
+  # Each package name points to a derivation on a package, and "all"
+  # points to a derivation on all packages.
+  #
+  # Also defaults to all.
+  #
+  # f should be a function which generates a (shell) derivation from a
+  # list of package values.
+  allOrOne = f:
+    let
+      individuals = mapPackage (package: f [ package ]);
+      all = f (builtins.attrValues packages);
+      onlyAll = { inherit all; };
+    in individuals // onlyAll // all;
 
   verifyJsonPackageList = jsonFile:
     pkgs.stdenv.mkDerivation {
@@ -94,17 +176,29 @@ in {
   buttercup = mapPackage checkers.buttercup
     // checkers.buttercup (onlyPackage "buttercup");
 
+  prepareShell = allOrOne emacsWithLocalPackages;
+
   shell = let
-    mkShellWithEmacsPackages = packages:
-      mkShell {
-        buildInputs = [
-          (emacsWithPackages_ (epkgs: (forEachPackage checkers.melpaBuild)))
-        ];
+    mkShellWithEmacsPackages = packages_:
+      with pkgs.lib;
+      pkgs.mkShell {
+        buildInputs = [ (emacsWithLocalPackages packages_) ];
+        shellHook = shellHookWithPackageInfo packages_;
       };
-    individuals = mapPackage (package: mkShellWithEmacsPackages [ package ]);
-    all = mkShellWithEmacsPackages packages;
-    onlyAll = { inherit all; };
-  in all // individuals // onlyAll;
+  in allOrOne mkShellWithEmacsPackages;
+
+  # Example:
+  #
+  # > nix-shell default.nix -A shellWithoutBuild --run 'set -e; for p in ${packages[*]}; do nix-build -A byte-compile.$p; done'
+  shellWithoutBuild = let
+    mkShellWithPackageInfo = packages_:
+      with pkgs.lib;
+      pkgs.mkShell {
+        # Allow running nix-build/nix-shell inside the shell
+        buildInputs = [ pkgs.nix ];
+        shellHook = shellHookWithPackageInfo packages_;
+      };
+  in allOrOne mkShellWithPackageInfo;
 
   meta = assert (builtins.isAttrs packages);
     assert (builtins.length (builtins.attrValues packages) > 0);
