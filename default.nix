@@ -72,6 +72,18 @@ let
         local package="$1"
         emacsVersionsAfter ''${packageEmacsVersion[$package]}
       }
+
+      melpaCheckFile() {
+        readlink -e .melpa-check-tmp || readlink -e .melpa-check
+      }
+
+      melpaCheckNixBuild() {
+        nix-build --quiet --no-out-link "$@" `melpaCheckFile`
+      }
+
+      melpaCheckNixShell() {
+        NIX_BUILD_SHELL=bash nix-shell --pure --quiet "$@" `melpaCheckFile`
+      }
     '';
 
   readDhallPackageList = file: parsePackageList srcDir (dhallToNix srcDir file);
@@ -182,7 +194,8 @@ in {
     mkShellWithPackageInfo = packages_:
       with pkgs.lib;
       pkgs.mkShell {
-        buildInputs = [ ];
+        # Allow running nix-build/nix-shell inside the shell
+        buildInputs = [ pkgs.nix ];
         shellHook = shellHookWithPackageInfo packages_;
       };
   in allOrOne mkShellWithPackageInfo;
