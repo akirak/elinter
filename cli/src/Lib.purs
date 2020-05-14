@@ -76,15 +76,23 @@ nixOptionsToArray opts =
 
 type NixShellOptions
   = { clearEnv :: Boolean
+    , runNonInteractiveCommand :: Maybe String
+    , runInteractiveCommand :: Maybe String
     }
 
 defaultNixShellOptions :: NixShellOptions
-defaultNixShellOptions = { clearEnv: true }
+defaultNixShellOptions =
+  { clearEnv: true
+  , runNonInteractiveCommand: Nothing
+  , runInteractiveCommand: Nothing
+  }
 
 nixShellOptionsToArray :: NixShellOptions -> Array String
 nixShellOptionsToArray opts =
   concat
     [ if opts.clearEnv then [ "--pure" ] else []
+    , maybe [] (\command -> [ "--run", command ]) opts.runNonInteractiveCommand
+    , maybe [] (\command -> [ "--command", command ]) opts.runInteractiveCommand
     ]
 
 type NixBuildOptions

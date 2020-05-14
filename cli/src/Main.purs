@@ -34,6 +34,7 @@ opts =
         <> command "byte-compile" (info_ (byteCompile <$> byteCompileOpts <*> packageArg) (progDesc "Byte-Compile packages"))
         <> command "buttercup" (info_ (runButtercup <$> buttercupOpts <*> packageArg) (progDesc "Run buttercup tests"))
         <> command "list" (info_ listCommands (progDesc "Display a list of certain things in the project"))
+        <> command "all" (info_ (runAll <$> allOpts) (progDesc "Run all tasks on all packages"))
     )
   where
   listCommands =
@@ -69,6 +70,11 @@ opts =
       }
 
   buttercupOpts =
+    sequenceRecord
+      { emacsVersion: emacsArg
+      }
+
+  allOpts =
     sequenceRecord
       { emacsVersion: emacsArg
       }
