@@ -433,13 +433,10 @@ With a universal prefix, reset the configuration directory to DIR."
     (when (f-exists-p ci-config-file)
       (find-file ci-config-file)
       (user-error "File already exists: %s" ci-config-file))
-    (let ((buffer (find-file-noselect ci-config-file)))
-      (unwind-protect
-          (with-current-buffer buffer
-            (insert melpa-check-github-actions-config-template)
-            (save-buffer)
-            (switch-to-buffer (current-buffer)))
-        (error (kill-buffer buffer))))))
+    (with-current-buffer (find-file-noselect ci-config-file)
+      (insert melpa-check-github-actions-config-template)
+      (save-buffer)
+      (switch-to-buffer (current-buffer)))))
 
 (defun melpa-check-generate-ci-config ()
   "Generate configuration files for CI."
