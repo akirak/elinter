@@ -462,15 +462,49 @@ With a universal prefix, reset the configuration directory to DIR."
         (dolist (dir (alist-get 'directories data))
           (unless (f-directory-p (f-join root dir))
             (make-directory (f-join root dir) t)))
+        ;; To convert the configuration to YAML, you need to access
+        ;; objects with number indices
         (dolist (i (number-sequence 0 (1- (length filenames))))
-          (let* ((outfile (f-join root (nth i filenames))))
-            (with-current-buffer (create-file-buffer outfile)
-              (setq buffer-file-name outfile)
-              (insert src)
-              (melpa-check--yq-on-buffer "-M" "-y" (format ".files | .[%d] | .content" i))
-              (set-auto-mode)
-              (save-buffer)
-              (switch-to-buffer (current-buffer)))))))))
+          (when-let
+              (skipped
+               (catch 'skip
+                 (let* ((outfile (f-join root (nth i filenames)))
+                        (buf (find-buffer-visiting outfile)))
+                   ;; If there is an open buffer and it's modified,
+                   ;; ask if the user wants to discard the changes
+                   (when (buffer-modified-p buf)
+                     (if (yes-or-no-p (format-message
+                                       "Already visiting %s and it's modified. Discard the changes?"
+                                       (f-short outfile)))
+                         (progn
+                           (with-current-buffer buf
+                             (set-buffer-modified-p nil))
+                           (kill-buffer buf))
+                       (throw 'skip outfile)))
+                   ;; If the buffer has been killed, set the variable to nil
+                   (when (and buf (not (buffer-live-p buf)))
+                     (setq buf nil))
+                   (with-current-buffer (or buf
+                                            (find-file-noselect outfile))
+                     ;; If the buffer has an existing content,
+                     ;; ask if the user wants to replace it
+                     (widen)
+                     (when (> (buffer-size) 0)
+                       (if (yes-or-no-p (format-message
+                                         "Replace content in %s? " (f-short outfile)))
+                           (erase-buffer)
+                         (throw 'skip outfile)))
+                     ;; Insert the JSON representation of the Dhall configuration
+                     ;; and convert it to YAML using yq
+                     (insert src)
+                     (melpa-check--yq-on-buffer "-M" "-y" (format ".files | .[%d] | .content" i))
+                     (set-auto-mode)
+                     (save-buffer)
+                     ;; Display the buffer so the user can edit it
+                     (switch-to-buffer (current-buffer))
+                     nil))))
+            (message "Skipped generating CI configuration to %s"
+                     (f-short skipped))))))))
 
 ;;;; Utility functions
 
