@@ -10,13 +10,6 @@ on:
 jobs:
   frontend:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        emacs:
-          - 26.1
-          - 26.2
-          - 26.3
-          - snapshot
     steps:
     - name: Install nix
       uses: cachix/install-nix-action@v8
@@ -25,5 +18,5 @@ jobs:
       run: nix-env -iA cli.gh-action -f .
     - run: melpa-check deps
     - run: melpa-check config
-    - run: melpa-check lint
-    - run: melpa-check byte-compile -e ${{ matrix.emacs }}
+    - run: melpa-check lint -e latest
+    - run: melpa-check byte-compile -e all
