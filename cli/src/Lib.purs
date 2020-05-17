@@ -102,7 +102,21 @@ generateInternalBlock funcName expName mOptions (Just AllSupportedVersions) (Jus
     <> package
     <> "\ndone"
 
-generateInternalBlock _ _ _ (Just AllSupportedVersions) Nothing = "echo 'You have to specify a package name to run it on all supported versions.'; exit 2"
+generateInternalBlock funcName expName mOptions (Just AllSupportedVersions) Nothing =
+  "if [[ ${#packages[*]} -eq 1 ]]; then\n"
+    <> "  p=${packages[0]}\n"
+    <> "  for v in `packageEmacsVersions $p`; do\n"
+    <> "  "
+    <> funcName
+    <> maybe "" (\args -> " " <> args) mOptions
+    <> " --argstr emacs $v -A "
+    <> expName
+    <> "\n  done\n"
+    <> "else\n"
+    <> "  echo 'You have to specify a package name to run it on all supported versions'\n"
+    <> "  echo 'when you have multiple packages.'\n"
+    <> "  exit 2\n"
+    <> "fi"
 
 generateInternalBlock funcName expName mOptions (Just MinimumSupported) (Just package) =
   funcName
