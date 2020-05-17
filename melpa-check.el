@@ -65,6 +65,14 @@
   "Executable file for niv."
   :type 'file)
 
+(defcustom melpa-check-yq-executable "yq"
+  "Executable file for yq."
+  :type 'file)
+
+(defcustom melpa-check-dhall-to-json-executable "dhall-to-json"
+  "Executable file for dhall-to-json."
+  :type 'file)
+
 (defcustom melpa-check-schema-url
   "https://raw.githubusercontent.com/akirak/melpa-check/v3/schema.dhall"
   "Source URL of schema.dhall."
@@ -73,6 +81,17 @@
 (defcustom melpa-check-skip-test-files t
   "Whether to exclude test files when you select files of a package."
   :type 'boolean)
+
+(defcustom melpa-check-github-actions-config-template
+  "let Actions = FIXME
+
+let packages = ../packages.dhall
+
+let config = Actions.MultiFileCiConfig::{ }
+
+in  Actions.buildMultiFileCiWorkflows config packages"
+  "Default content of Dhall CI configuration for GitHub Actions."
+  :type 'string)
 
 ;;;; Variables
 
@@ -400,6 +419,58 @@ With a universal prefix, reset the configuration directory to DIR."
                     command)
   (compile command))
 
+;;;; Initialize CI configuration
+(defun melpa-check-init-github-actions ()
+  "Initialize CI configuration for GitHub Actions."
+  (interactive)
+  (let* ((root (or (melpa-check--project-root)
+                   (user-error "Initialize a Git repository first")))
+         (config-dir (melpa-check--config-dir root))
+         (ci-config-dir (f-join config-dir "ci"))
+         (ci-config-file (f-join ci-config-dir "github.dhall")))
+    (unless (f-directory-p ci-config-dir)
+      (make-directory ci-config-dir))
+    (when (f-exists-p ci-config-file)
+      (user-error "File already exists: %s" ci-config-file))
+    (let ((buffer (find-file-noselect ci-config-file)))
+      (unwind-protect
+          (with-current-buffer buffer
+            (insert melpa-check-github-actions-config-template)
+            (save-buffer)
+            (switch-to-buffer (current-buffer)))
+        (error (kill-buffer buffer))))))
+
+(defun melpa-check-generate-ci-config ()
+  "Generate configuration files for CI."
+  (interactive)
+  (let* ((root (or (melpa-check--project-root)
+                   (user-error "Initialize a Git repository first")))
+         (config-dir (melpa-check--config-dir root))
+         (ci-config-dir (f-join config-dir "ci"))
+         (files (directory-files ci-config-dir t (rx ".dhall" eol))))
+    (dolist (ci-config-file files)
+      (let* ((src (melpa-check--dhall-to-json ci-config-file))
+             (json-object-type 'alist)
+             (json-array-type 'list)
+             (data (with-temp-buffer
+                     (insert src)
+                     (goto-char (point-min))
+                     (json-read)))
+             (filenames (->> (alist-get 'files data)
+                             (--map (alist-get 'fileName it)))))
+        (dolist (dir (alist-get 'directories data))
+          (unless (f-directory-p (f-join root dir))
+            (make-directory (f-join root dir) t)))
+        (dolist (i (number-sequence 0 (1- (length filenames))))
+          (let* ((outfile (f-join root (nth i filenames))))
+            (with-current-buffer (create-file-buffer outfile)
+              (setq buffer-file-name outfile)
+              (insert src)
+              (melpa-check--yq-on-buffer "-M" "-y" (format ".files | .[%d] | .content" i))
+              (set-auto-mode)
+              (save-buffer)
+              (switch-to-buffer (current-buffer)))))))))
+
 ;;;; Utility functions
 
 ;;;;; Project files
@@ -408,6 +479,16 @@ With a universal prefix, reset the configuration directory to DIR."
   "Return the version control root of the current file, if any."
   (pcase (project-current)
     (`(vc . ,root) root)))
+
+(defun melpa-check--config-dir (root)
+  "Get the configuration directory in an existing project ROOT."
+  (cond
+   ((f-symlink-p (f-join root ".melpa-check-tmp"))
+    (file-truename ".melpa-check-tmp"))
+   ((f-directory-p (f-join root ".melpa-check"))
+    (f-join root ".melpa-check"))
+   (t
+    (user-error "First initialize a project using melpa-check-init-project"))))
 
 (defun melpa-check--elisp-files ()
   "Recursively retrieve elisp sources files in the directory."
@@ -458,6 +539,50 @@ With a universal prefix, reset the configuration directory to DIR."
   (let ((json-object-type 'alist)
         (json-array-type 'list))
     (json-read-from-string str)))
+
+(defun melpa-check--build-maybe-nix-command (executable
+                                             default-executable
+                                             nix-shell-args
+                                             &rest args)
+  "Build a command possibly run inside \"nix-shell\".
+
+This returns a list of a command and arguments which can be
+wrapped with \"nix-shell\" if EXECUTABLE is unavailable.
+
+In that case, DEFAULT-EXECUTABLE is used as the executable name,
+and NIX-SHELL-ARGS which is a list of strings are passed to
+\"nix-shell\" program.
+
+In any case, ARGS will be passed to the program."
+  (if (or (f-executable-p executable)
+          (executable-find executable))
+      (cons executable args)
+    `("nix-shell"
+      ,@nix-shell-args
+      "--command"
+      ,(mapconcat #'shell-quote-argument
+                  (cons default-executable args)
+                  " "))))
+
+(defun melpa-check--yq-on-buffer (&rest args)
+  "Replace the buffer content with the output of yq, with ARGS."
+  (-let (((cmd . args2) (apply #'melpa-check--build-maybe-nix-command
+                               melpa-check-yq-executable "yq"
+                               '("-p" "yq")
+                               args)))
+    (apply #'call-process-region (point-min) (point-max)
+           cmd
+           'delete t nil
+           args2)))
+
+(defun melpa-check--dhall-to-json (file)
+  "Run \"dhall-to-json\" program on FILE."
+  (-let (((cmd . args) (melpa-check--build-maybe-nix-command
+                        melpa-check-dhall-to-json-executable
+                        "dhall-to-json"
+                        '("-A" "dhall-json-simple" "https://github.com/justinwoo/easy-dhall-nix/archive/master.tar.gz")
+                        "--file" file)))
+    (apply #'melpa-check--read-process cmd args)))
 
 ;;;;; Nix
 
