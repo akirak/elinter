@@ -6,6 +6,8 @@ on:
     # - v3
     paths:
     - 'nix/checkers/*.el'
+    - '**/*.js'
+    - '**/*.nix'
 
 jobs:
   ci:
