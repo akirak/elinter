@@ -87,7 +87,10 @@
 
 let packages = ../packages.dhall
 
-let config = Actions.MultiFileCiConfig::{ }
+-- Alternatively, you can use 'Actions.MultiFileCiConfig.default'
+let config = Actions.MultiFileCiConfig::{
+-- Add your preferences here
+}
 
 in  Actions.buildMultiFileCiWorkflows config packages"
   "Default content of Dhall CI configuration for GitHub Actions."
