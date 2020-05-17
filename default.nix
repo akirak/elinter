@@ -164,6 +164,11 @@ in {
   package-lint = mapPackage checkers.package-lint
     // checkers.package-lint (onlyPackage "package-lint");
 
+  preparePackageLint = mapPackage checkers.preparePackageLint
+                       # Since this command is likely to be called just before 'package-lint',
+    # it can be compatible with it.
+    // checkers.preparePackageLint (onlyPackage "preparePackageLint");
+
   # A task to silent build output in buttercup.
   # To be run by nix-build with --no-build-output as a preparation step.
   prepareButtercup = mapPackage checkers.prepareButtercup
