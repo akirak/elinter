@@ -6,6 +6,8 @@ on:
     # - v3
     paths:
     - '*.el'
+    - '**/*.js'
+    - '**/*.yml'
 
 jobs:
   frontend:
