@@ -165,7 +165,7 @@ checkdocCommand = generateInternalBlock innerShell "checkdoc" Nothing
 packageLintCommand :: Maybe EmacsVersion -> Maybe String -> String
 packageLintCommand mVer mPackage =
   generateInternalBlock innerBuilder "preparePackageLint" (Just "--no-build-output") mVer mPackage
-    <> " && "
+    <> " >/dev/null && "
     <> generateInternalBlock innerShell "package-lint" Nothing mVer mPackage
 
 byteCompileCommand :: Maybe EmacsVersion -> Maybe String -> String
@@ -174,5 +174,5 @@ byteCompileCommand = generateInternalBlock innerBuilder "byte-compile" Nothing
 buttercupCommand :: Maybe EmacsVersion -> Maybe String -> String
 buttercupCommand mVer mPackage =
   generateInternalBlock innerBuilder "prepareButtercup" (Just "--no-build-output") mVer mPackage
-    <> " && "
+    <> " >/dev/null && "
     <> generateInternalBlock innerShell "buttercup" Nothing mVer mPackage
