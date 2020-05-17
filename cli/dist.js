@@ -7579,7 +7579,7 @@ var PS = {};
   };
   var runAll = function (opts) {
       var withAllPackages = function (cmd) {
-          return "for p in $packages; do\x0a" + (cmd(opts.emacsVersion)(new Data_Maybe.Just("$p")) + "\x0adone");
+          return "for p in ${packages[*]}; do\x0a" + (cmd(opts.emacsVersion)(new Data_Maybe.Just("$p")) + "\x0adone");
       };
       return Lib.runInNixShell(Data_Functor.map(Data_Functor.functorArray)(withAllPackages)([ Lib.checkdocCommand, Lib.packageLintCommand, Lib.byteCompileCommand, Lib.buttercupCommand ]));
   };
