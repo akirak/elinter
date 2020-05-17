@@ -90,7 +90,7 @@ let MultiFileCiConfig =
         , testOn = [ OS.ubuntu-latest ]
         , testEmacsVersion = "all"
         , fileNameFn = λ(pname : Text) → pname
-        , actionNameFn = λ(pname : Text) → pname ++ " (melpa-check)"
+        , actionNameFn = λ(pname : Text) → pname ++ " CI"
         , skipTests = False
         }
       }
