@@ -7427,8 +7427,8 @@ var PS = {};
       return function __do() {
           Control_Monad.whenM(Effect.monadEffect)(Node_FS_Sync.exists(tempConfigPath))(function __do() {
               var stat = Node_FS_Sync.stat(tempConfigPath)();
-              var $9 = Node_FS_Stats.isSymbolicLink(stat);
-              if ($9) {
+              var $6 = Node_FS_Stats.isSymbolicLink(stat);
+              if ($6) {
                   return Node_FS_Sync.unlink(tempConfigPath)();
               };
               return Effect_Exception.throwException(Effect_Exception.error(tempConfigPath + " already exists and is not a symbolic link"))();
@@ -7438,34 +7438,38 @@ var PS = {};
   };
   var innerShell = "melpaCheckNixShell";
   var innerBuilder = "melpaCheckNixBuild";
-  var generateInternalBlock = function (v) {
-      return function (v1) {
-          return function (v2) {
-              return function (v3) {
-                  return function (v4) {
-                      if (v3 instanceof Data_Maybe.Just && (v3.value0 instanceof AllSupportedVersions && v4 instanceof Data_Maybe.Just)) {
-                          return "for v in `packageEmacsVersions " + (v4.value0 + ("`; do\x0a" + ("  " + (v + (Data_Maybe.maybe("")(function (args) {
+  var generateInternalBlock = function (funcName) {
+      return function (expName) {
+          return function (mOptions) {
+              return function (v) {
+                  return function (v1) {
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof AllSupportedVersions && v1 instanceof Data_Maybe.Just)) {
+                          return "for v in `packageEmacsVersions " + (v1.value0 + ("`; do\x0a" + ("  " + (funcName + (Data_Maybe.maybe("")(function (args) {
                               return " " + args;
-                          })(v2) + (" --argstr emacs $v -A " + (v1 + ("." + (v4.value0 + "\x0adone")))))))));
+                          })(mOptions) + (" --argstr emacs $v -A " + (expName + ("." + (v1.value0 + "\x0adone")))))))));
                       };
-                      if (v3 instanceof Data_Maybe.Just && (v3.value0 instanceof AllSupportedVersions && v4 instanceof Data_Maybe.Nothing)) {
-                          return "echo 'You have to specify a package name to run it on all supported versions.'; exit 2";
-                      };
-                      if (v3 instanceof Data_Maybe.Just && (v3.value0 instanceof MinimumSupported && v4 instanceof Data_Maybe.Just)) {
-                          return v + (Data_Maybe.maybe("")(function (args) {
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof AllSupportedVersions && v1 instanceof Data_Maybe.Nothing)) {
+                          return "if [[ ${#packages[*]} -eq 1 ]]; then\x0a" + ("  p=${packages[0]}\x0a" + ("  for v in `packageEmacsVersions $p`; do\x0a" + ("  " + (funcName + (Data_Maybe.maybe("")(function (args) {
                               return " " + args;
-                          })(v2) + (" --argstr emacs ${packageEmacsVersion[" + (v4.value0 + ("]}" + (" -A " + (v1 + ("." + v4.value0)))))));
+                          })(mOptions) + (" --argstr emacs $v -A " + (expName + ("\x0a  done\x0a" + ("else\x0a" + ("  echo 'You have to specify a package name to run it on all supported versions'\x0a" + ("  echo 'when you have multiple packages.'\x0a" + ("  exit 2\x0a" + "fi"))))))))))));
                       };
-                      if (v3 instanceof Data_Maybe.Just && (v3.value0 instanceof MinimumSupported && v4 instanceof Data_Maybe.Nothing)) {
-                          return "echo 'You have to specify a package name to run it on the minimum supported version.'; exit 2";
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof MinimumSupported && v1 instanceof Data_Maybe.Just)) {
+                          return funcName + (Data_Maybe.maybe("")(function (args) {
+                              return " " + args;
+                          })(mOptions) + (" --argstr emacs ${packageEmacsVersion[" + (v1.value0 + ("]}" + (" -A " + (expName + ("." + v1.value0)))))));
                       };
-                      return v + (Data_Maybe.maybe("")(function (args) {
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof MinimumSupported && v1 instanceof Data_Maybe.Nothing)) {
+                          return "if [[ ${#packages[*]} -eq 1 ]]; then\x0a" + ("  p=${packages[0]}\x0a" + ("  " + (funcName + (Data_Maybe.maybe("")(function (args) {
+                              return " " + args;
+                          })(mOptions) + (" --argstr emacs ${packageEmacsVersion[$p]}" + (" -A " + (expName + ("\x0a" + ("else\x0a" + ("  echo 'You have to specify a package name to run it on the minimum supported version.'\x0a" + ("  echo 'when you have multiple packages.'\x0a" + ("  exit 2\x0a" + "fi"))))))))))));
+                      };
+                      return funcName + (Data_Maybe.maybe("")(function (args) {
                           return " " + args;
-                      })(v2) + (Data_Maybe.maybe("")(function (ver) {
+                      })(mOptions) + (Data_Maybe.maybe("")(function (ver) {
                           return " --argstr emacs " + toVersionArg(ver);
-                      })(v3) + (" -A " + (v1 + Data_Maybe.maybe("")(function ($$package) {
+                      })(v) + (" -A " + (expName + Data_Maybe.maybe("")(function ($$package) {
                           return "." + $$package;
-                      })(v4)))));
+                      })(v1)))));
                   };
               };
           };
@@ -14638,6 +14642,14 @@ var PS = {};
 (function($PS) {
   // Generated by purs version 0.13.6
   "use strict";
+  $PS["Version"] = $PS["Version"] || {};
+  var exports = $PS["Version"];
+  var versionString = "0.1";
+  exports["versionString"] = versionString;
+})(PS);
+(function($PS) {
+  // Generated by purs version 0.13.6
+  "use strict";
   $PS["Main"] = $PS["Main"] || {};
   var exports = $PS["Main"];
   var Commands = $PS["Commands"];
@@ -14655,8 +14667,8 @@ var PS = {};
   var Options_Applicative_Extra = $PS["Options.Applicative.Extra"];
   var Options_Applicative_Internal_Utils = $PS["Options.Applicative.Internal.Utils"];
   var Options_Applicative_Types = $PS["Options.Applicative.Types"];
-  var Record_Extra = $PS["Record.Extra"];                
-  var versionString = "0.1";
+  var Record_Extra = $PS["Record.Extra"];
+  var Version = $PS["Version"];                
   var readEmacsVersion = Control_Bind.bind(Options_Applicative_Types.readMBind)(Options_Applicative_Types.readerAsk)(function (raw) {
       if (raw === "snapshot") {
           return Control_Applicative.pure(Options_Applicative_Types.readMApplicative)(Lib.Snapshot.value);
@@ -14716,11 +14728,10 @@ var PS = {};
       return Options_Applicative_Builder.subparser(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("deps")(info_(Control_Applicative.pure(Options_Applicative_Types.parserApplicative)(Commands.installDeps))(Options_Applicative_Builder.progDesc("Install dependencies"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("config")(info_(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.checkConfig)(configOpts))(Options_Applicative_Builder.progDesc("Set up an entry point and check the configuration"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("lint")(info_(Control_Apply.apply(Options_Applicative_Types.parserApply)(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.runLint)(lintOpts))(packageArg))(Options_Applicative_Builder.progDesc("Run lint (i.e. checkdoc, package-lint, etc.) on a package"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("byte-compile")(info_(Control_Apply.apply(Options_Applicative_Types.parserApply)(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.byteCompile)(byteCompileOpts))(packageArg))(Options_Applicative_Builder.progDesc("Byte-Compile packages"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("buttercup")(info_(Control_Apply.apply(Options_Applicative_Types.parserApply)(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.runButtercup)(buttercupOpts))(packageArg))(Options_Applicative_Builder.progDesc("Run buttercup tests"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("list")(info_(listCommands)(Options_Applicative_Builder.progDesc("Display a list of certain things in the project"))))(Options_Applicative_Builder.command("all")(info_(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.runAll)(allOpts))(Options_Applicative_Builder.progDesc("Run all tasks on all packages"))))))))));
   })();
   var main = (function () {
-      var showVersion = Options_Applicative_Builder.infoOption("melpa-check CLI " + versionString)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.optionFieldsHasName)("version"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["short"](Options_Applicative_Builder_Internal.optionFieldsHasName)("V"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.help("Show version"))(Options_Applicative_Builder.hidden))));
+      var showVersion = Options_Applicative_Builder.infoOption("melpa-check CLI " + Version.versionString)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.optionFieldsHasName)("version"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["short"](Options_Applicative_Builder_Internal.optionFieldsHasName)("V"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.help("Show version"))(Options_Applicative_Builder.hidden))));
       var progInfo = Options_Applicative_Builder.progDesc("CLI frontend for melpa-check, an Emacs Lisp package lint runner");
       return Control_Bind.join(Effect.bindEffect)(Options_Applicative_Extra.execParser(Options_Applicative_Builder.info(Options_Applicative_Internal_Utils.apApplyFlipped(Options_Applicative_Types.parserApply)(Options_Applicative_Internal_Utils.apApplyFlipped(Options_Applicative_Types.parserApply)(opts)(Options_Applicative_Extra.helper))(showVersion))(progInfo)));
   })();
-  exports["versionString"] = versionString;
   exports["main"] = main;
   exports["opts"] = opts;
   exports["readEmacsVersion"] = readEmacsVersion;
