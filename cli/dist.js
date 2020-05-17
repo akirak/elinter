@@ -7475,7 +7475,11 @@ var PS = {};
           };
       };
   };
-  var packageLintCommand = generateInternalBlock(innerShell)("package-lint")(Data_Maybe.Nothing.value);
+  var packageLintCommand = function (mVer) {
+      return function (mPackage) {
+          return generateInternalBlock(innerBuilder)("preparePackageLint")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" >/dev/null && " + generateInternalBlock(innerShell)("package-lint")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+      };
+  };
   var doesConfigExist = function (path) {
       return Control_Bind.ifM(Effect.bindEffect)(Utils.doesDirectoryExist(path))(Utils.doesFileExist(Node_Path.concat([ path, "default.nix" ])))(Utils.doesFileExist(path));
   };
@@ -7515,7 +7519,7 @@ var PS = {};
   var byteCompileCommand = generateInternalBlock(innerBuilder)("byte-compile")(Data_Maybe.Nothing.value);
   var buttercupCommand = function (mVer) {
       return function (mPackage) {
-          return generateInternalBlock(innerBuilder)("prepareButtercup")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" && " + generateInternalBlock(innerShell)("buttercup")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+          return generateInternalBlock(innerBuilder)("prepareButtercup")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" >/dev/null && " + generateInternalBlock(innerShell)("buttercup")(Data_Maybe.Nothing.value)(mVer)(mPackage));
       };
   };
   exports["Release"] = Release;

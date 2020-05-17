@@ -28,10 +28,6 @@ let
   # Built-in checkers and test drivers
   checkers = import ./nix/checkers { inherit pkgs emacsDerivation; };
 
-  prepareButtercup = package:
-    emacsWithPackages_
-    (epkgs: [ epkgs.melpaPackages.buttercup (checkers.melpaBuild package) ]);
-
   emacsWithLocalPackages = packages_:
     emacsWithPackages_
     (epkgs: (pkgs.lib.forEach packages_ checkers.melpaBuild));
@@ -168,12 +164,17 @@ in {
   package-lint = mapPackage checkers.package-lint
     // checkers.package-lint (onlyPackage "package-lint");
 
+  preparePackageLint = mapPackage checkers.preparePackageLint
+                       # Since this command is likely to be called just before 'package-lint',
+    # it can be compatible with it.
+    // checkers.preparePackageLint (onlyPackage "preparePackageLint");
+
   # A task to silent build output in buttercup.
   # To be run by nix-build with --no-build-output as a preparation step.
-  prepareButtercup = mapPackage prepareButtercup
+  prepareButtercup = mapPackage checkers.prepareButtercup
     # Since this command is likely to be called just before 'buttercup',
     # it can be compatible with it.
-    // prepareButtercup (onlyPackage "prepareButtercup");
+    // checkers.prepareButtercup (onlyPackage "prepareButtercup");
 
   buttercup = mapPackage checkers.buttercup
     // checkers.buttercup (onlyPackage "buttercup");

@@ -22,12 +22,11 @@ let
     e=$((e + r))
     echo ----------------------------------------------------------
   '';
+  emacsWithPackagesDrv = (emacsWithPackages emacsDerivation
+    (epkgs: [ epkgs.melpaPackages.buttercup (melpaBuild package) ]));
   testsDrv = pkgs.stdenv.mkDerivation {
     name = package.pname + "-buttercup";
-    buildInputs = [
-      (emacsWithPackages emacsDerivation
-        (epkgs: [ epkgs.melpaPackages.buttercup (melpaBuild package) ]))
-    ];
+    buildInputs = [ emacsWithPackagesDrv ];
     shellHook = ''
       e=0
       cd ${package.src}
@@ -57,4 +56,6 @@ let
       fi
     '';
   };
-in testsDrv
+in testsDrv // {
+  inherit emacsWithPackagesDrv;
+}

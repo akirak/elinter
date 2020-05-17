@@ -4,8 +4,10 @@ on:
   push:
     # branches:
     # - v3
-    paths-ignore:
-    - 'README.*'
+    paths:
+    - '**/*.js'
+    - 'tests/*.el'
+    - '**/*.nix'
 
 jobs:
   build:

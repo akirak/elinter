@@ -58,10 +58,22 @@
 
 (defvar checkdoc-runner-version-too-old nil)
 (unless (boundp 'checkdoc-create-error-function)
-  (message "Checkdoc version is too old.
+  (message "Your checkdoc version is too old.
 Use a version that supports `checkdoc-create-error-function'.
+
+To prevent this error message, please use Emacs 26.1 or later
+to run checkdoc via melpa-check.
+
 Continuing anyway")
   (setq checkdoc-runner-version-too-old t))
+;; Advice `checkdoc-create-error' in older versions of Emacs
+;; to call `checkdoc-create-error-function'.
+(when (version< emacs-version "26.1")
+  (defvar checkdoc-create-error-function nil)
+  (advice-add #'checkdoc-create-error
+              :override
+              (lambda (text start end &optional unfixable)
+                (funcall checkdoc-create-error-function text start end unfixable))))
 
 (defvar checkdoc-runner-error-targets nil)
 

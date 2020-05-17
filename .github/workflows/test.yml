@@ -2,8 +2,10 @@ name: "Tests"
 
 on:
   push:
-    paths-ignore:
-    - 'README.*'
+    paths:
+    - '**/*.nix'
+    - 'tests/*.*'
+    - 'nix/checkers/*.el'
 
 jobs:
   build:
