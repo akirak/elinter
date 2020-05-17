@@ -60,7 +60,8 @@ callProcessAsync_ :: SpawnOptions -> String -> Array String -> Aff Unit
 callProcessAsync_ spawnOptions cmd args = do
   let
     command = showCommand cmd args
-  liftEffect $ log $ "> " <> command
+  -- Suppress logging.
+  -- liftEffect $ log $ "> " <> command
   r <-
     makeAff
       $ \cb -> do
