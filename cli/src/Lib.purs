@@ -129,7 +129,21 @@ generateInternalBlock funcName expName mOptions (Just MinimumSupported) (Just pa
     <> "."
     <> package
 
-generateInternalBlock _ _ _ (Just MinimumSupported) Nothing = "echo 'You have to specify a package name to run it on the minimum supported version.'; exit 2"
+generateInternalBlock funcName expName mOptions (Just MinimumSupported) Nothing =
+  "if [[ ${#packages[*]} -eq 1 ]]; then\n"
+    <> "  p=${packages[0]}\n"
+    <> "  "
+    <> funcName
+    <> maybe "" (\args -> " " <> args) mOptions
+    <> " --argstr emacs ${packageEmacsVersion[$p]}"
+    <> " -A "
+    <> expName
+    <> "\n"
+    <> "else\n"
+    <> "  echo 'You have to specify a package name to run it on the minimum supported version.'\n"
+    <> "  echo 'when you have multiple packages.'\n"
+    <> "  exit 2\n"
+    <> "fi"
 
 generateInternalBlock funcName expName mOptions mVer mPackage =
   funcName
