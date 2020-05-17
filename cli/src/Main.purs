@@ -1,5 +1,6 @@
 module Main where
 
+import Version (versionString)
 import Commands
 import Control.Applicative ((<$>), (<*>))
 import Data.Maybe (Maybe, optional)
@@ -9,10 +10,6 @@ import Options.Applicative (Parser, ReadM, command, execParser, flag, help, help
 import Options.Applicative.Types (readerAsk)
 import Prelude (Unit, join, pure, ($), (<>), bind)
 import Record.Extra (sequenceRecord)
-
--- TODO: Make the version number consistent
-versionString :: String
-versionString = "0.1"
 
 main :: Effect Unit
 main = join $ execParser (info (opts <**> helper <**> showVersion) progInfo)
