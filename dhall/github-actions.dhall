@@ -68,7 +68,7 @@ let OS = < ubuntu-latest | macos-latest >
 let Step =
       < Uses : { uses : Text } | Run : { name : Optional Text, run : Text } >
 
-let Job = { runs_on : List OS, steps : List Step }
+let Job = { runs-on : List OS, steps : List Step }
 
 let Workflow = { name : Text, on : On.Type, jobs : { lint : Job, tests : Job } }
 
@@ -145,7 +145,7 @@ let toMultiFileCiWorkflow =
               [ withEmacsVersion config.lintEmacsVersion "Lint" "lint" ]
 
         let lint =
-              { runs_on = config.lintOn
+              { runs-on = config.lintOn
               , steps = concat Step [ initSteps, lintSteps ]
               }
 
@@ -171,7 +171,7 @@ let toMultiFileCiWorkflow =
               else  [] : List Step
 
         let tests =
-              { runs_on = config.testOn
+              { runs-on = config.testOn
               , steps = concat Step [ initSteps, buildSteps, testSteps ]
               }
 
