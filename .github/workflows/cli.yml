@@ -24,6 +24,9 @@ jobs:
     - run: melpa-check byte-compile -e 26.2
     - run: melpa-check buttercup -e 26.3 hello
     - run: melpa-check buttercup -e snapshot hello
-    - run: cd cli; nix-shell --command "make -f build.mk"
+    - run: |
+        cd cli
+        nix-shell --command "make -f build.mk check-version" emacs.nix
+        nix-shell --command "make -f build.mk ci-build"
     - name: Check if the HEAD version is up-to-date
       run: git diff-tree HEAD -- cli/dist.js
