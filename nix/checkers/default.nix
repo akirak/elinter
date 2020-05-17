@@ -4,4 +4,6 @@ config: {
   byte-compile = import ./byte-compile.nix config;
   melpaBuild = import ./melpa-build.nix config;
   buttercup = import ./buttercup.nix config;
+  prepareButtercup = package:
+    (import ./buttercup.nix config package).emacsWithPackagesDrv;
 }
