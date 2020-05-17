@@ -1,6 +1,5 @@
 module Lib where
 
-import Data.Array (concat)
 import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, runAff_)
@@ -13,8 +12,27 @@ import Node.FS.Sync as FS
 import Node.Path (FilePath)
 import Node.Path as Path
 import Node.Process (cwd, getEnv)
-import Prelude (Unit, bind, discard, ifM, pure, whenM, ($), (<>))
+import Prelude (Unit, bind, discard, ifM, map, pure, whenM, ($), (<>))
 import Utils (callProcessAsync_, doesDirectoryExist, doesFileExist, examineAll, exitOnError, makeSymbolicLink)
+
+data EmacsVersion
+  = Release String
+  | Snapshot
+  | AllSupportedVersions
+  | LatestRelease
+  | MinimumSupported
+
+toVersionArg :: EmacsVersion -> String
+toVersionArg (Release ver) = ver
+
+toVersionArg Snapshot = "snapshot"
+
+toVersionArg LatestRelease = "latest"
+
+-- This should cause an error in Nix
+toVersionArg MinimumSupported = "ERROR"
+
+toVersionArg AllSupportedVersions = "ERROR"
 
 getConfigPath :: Effect FilePath
 getConfigPath = do
@@ -52,127 +70,78 @@ doesConfigExist path = do
     (doesFileExist (Path.concat [ path, "default.nix" ]))
     $ doesFileExist path
 
-type NixOptions
-  = { quiet :: Boolean
-    , emacsVersion :: Maybe String
-    }
-
-defaultNixOptions :: NixOptions
-defaultNixOptions =
-  { quiet: true, emacsVersion: Nothing
-  }
-
-nixOptionsToArray :: NixOptions -> Array String
-nixOptionsToArray opts =
-  concat
-    [ if opts.quiet then
-        [ "--quiet" ]
-      else
-        []
-    , case opts.emacsVersion of
-        Just version -> [ "--argstr", "emacs", version ]
-        Nothing -> []
-    ]
-
-type NixShellOptions
-  = { clearEnv :: Boolean
-    , runNonInteractiveCommand :: Maybe String
-    , runInteractiveCommand :: Maybe String
-    }
-
-defaultNixShellOptions :: NixShellOptions
-defaultNixShellOptions =
-  { clearEnv: true
-  , runNonInteractiveCommand: Nothing
-  , runInteractiveCommand: Nothing
-  }
-
-nixShellOptionsToArray :: NixShellOptions -> Array String
-nixShellOptionsToArray opts =
-  concat
-    [ if opts.clearEnv then [ "--pure" ] else []
-    , maybe [] (\command -> [ "--run", command ]) opts.runNonInteractiveCommand
-    , maybe [] (\command -> [ "--command", command ]) opts.runInteractiveCommand
-    ]
-
-type NixBuildOptions
-  = { noOutLink :: Boolean
-    , noBuildOutput :: Boolean
-    }
-
-defaultNixBuildOptions :: NixBuildOptions
-defaultNixBuildOptions = { noOutLink: true, noBuildOutput: false }
-
-nixBuildOptionsToArray :: NixBuildOptions -> Array String
-nixBuildOptionsToArray opts =
-  concat
-    [ if opts.noOutLink then [ "--no-out-link" ] else []
-    , if opts.noBuildOutput then [ "--no-build-output" ] else []
-    ]
-
-type AttrPath
+type PackageName
   = String
 
-nixShell :: FilePath -> NixOptions -> NixShellOptions -> String -> Aff Unit
-nixShell nixFile nixOpts nixShOpts attrPath = do
+runInNixShell :: Array String -> Effect Unit
+runInNixShell = runInNixShell_ examineAll
+
+runInNixShell_ :: forall t106. (Array (Aff Unit) -> Aff t106) -> Array String -> Effect Unit
+runInNixShell_ f commands = do
+  configPath <- getConfigPath
   origEnv <- liftEffect getEnv
   let
     env = insert "NIX_BUILD_SHELL" "bash" origEnv
 
     spawnOptions = defaultSpawnOptions { env = Just env }
-  callProcessAsync_ spawnOptions "nix-shell"
-    $ nixShellOptionsToArray nixShOpts
-    <> [ "-A", attrPath ]
-    <> nixOptionsToArray nixOpts
-    <> [ nixFile ]
 
-nixBuild :: FilePath -> NixOptions -> NixBuildOptions -> String -> Aff Unit
-nixBuild nixFile nixOpts nixBuildOpts attrPath = do
-  let
-    spawnOptions = defaultSpawnOptions
-  callProcessAsync_ spawnOptions "nix-build"
-    $ nixBuildOptionsToArray nixBuildOpts
-    <> [ "-A", attrPath ]
-    <> nixOptionsToArray nixOpts
-    <> [ nixFile ]
+    run command =
+      callProcessAsync_ spawnOptions "nix-shell"
+        [ "--quiet", configPath, "-A", "shellWithoutBuild", "--run", "set -e; " <> command ]
+  runAff_ exitOnError $ f $ map run commands
 
-type TaskBuilder
-  = { nixShellTask :: NixOptions -> NixShellOptions -> String -> Aff Unit
-    , nixBuildTask :: NixOptions -> NixBuildOptions -> String -> Aff Unit
-    }
+generateInternalBlock :: String -> String -> Maybe String -> Maybe EmacsVersion -> Maybe String -> String
+generateInternalBlock funcName expName mOptions (Just AllSupportedVersions) (Just package) =
+  "for v in `packageEmacsVersions " <> package <> "`; do\n"
+    <> "  "
+    <> funcName
+    <> maybe "" (\args -> " " <> args) mOptions
+    <> " --argstr emacs $v -A "
+    <> expName
+    <> "."
+    <> package
+    <> "\ndone"
 
-type PackageName
-  = String
+generateInternalBlock _ _ _ (Just AllSupportedVersions) Nothing = "echo 'You have to specify a package name to run it on all supported versions.'; exit 2"
 
-runPackageTasks ::
-  forall a.
-  Maybe PackageName ->
-  ( TaskBuilder -> Array (Aff a)
-  ) ->
-  Effect Unit
-runPackageTasks = runPackageTasks_ examineAll
+generateInternalBlock funcName expName mOptions (Just MinimumSupported) (Just package) =
+  funcName
+    <> maybe "" (\args -> " " <> args) mOptions
+    <> " --argstr emacs ${packageEmacsVersion["
+    <> package
+    <> "]}"
+    <> " -A "
+    <> expName
+    <> "."
+    <> package
 
-runPackageTasks_ ::
-  forall a.
-  (Array (Aff a) -> Aff Unit) ->
-  Maybe PackageName ->
-  ( TaskBuilder ->
-    Array (Aff a)
-  ) ->
-  Effect Unit
-runPackageTasks_ f mPackage makeTasks = do
-  configPath <- getConfigPath
-  let
-    nixShell' = nixShell configPath
+generateInternalBlock _ _ _ (Just MinimumSupported) Nothing = "echo 'You have to specify a package name to run it on the minimum supported version.'; exit 2"
 
-    nixBuild' = nixBuild configPath
+generateInternalBlock funcName expName mOptions mVer mPackage =
+  funcName
+    <> maybe "" (\args -> " " <> args) mOptions
+    <> maybe "" (\ver -> " --argstr emacs " <> toVersionArg ver) mVer
+    <> " -A "
+    <> expName
+    <> maybe "" (\package -> "." <> package) mPackage
 
-    packageSuffix = maybe "" (\package -> "." <> package) mPackage
+innerBuilder :: String
+innerBuilder = "melpaCheckNixBuild"
 
-    taskBuilder =
-      { nixShellTask: \opts shOpts name -> nixShell' opts shOpts (name <> packageSuffix)
-      , nixBuildTask: \opts bldOpts name -> nixBuild' opts bldOpts (name <> packageSuffix)
-      }
+innerShell :: String
+innerShell = "melpaCheckNixShell"
 
-    tasks = makeTasks taskBuilder
-  runAff_ exitOnError $ f tasks
+checkdocCommand :: Maybe EmacsVersion -> Maybe String -> String
+checkdocCommand = generateInternalBlock innerShell "checkdoc" Nothing
+
+packageLintCommand :: Maybe EmacsVersion -> Maybe String -> String
+packageLintCommand = generateInternalBlock innerShell "package-lint" Nothing
+
+byteCompileCommand :: Maybe EmacsVersion -> Maybe String -> String
+byteCompileCommand = generateInternalBlock innerBuilder "byte-compile" Nothing
+
+buttercupCommand :: Maybe EmacsVersion -> Maybe String -> String
+buttercupCommand mVer mPackage =
+  generateInternalBlock innerBuilder "prepareButtercup" (Just "--no-build-output") mVer mPackage
+    <> " && "
+    <> generateInternalBlock innerShell "buttercup" Nothing mVer mPackage

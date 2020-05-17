@@ -10,10 +10,13 @@ import Effect.Aff (runAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
-import Lib (PackageName, defaultNixBuildOptions, defaultNixOptions, defaultNixShellOptions, doesConfigExist, getConfigPath, nixShell, runPackageTasks, runPackageTasks_, setConfigPath)
+import Foreign.Object (insert)
+import Lib (EmacsVersion, PackageName, buttercupCommand, byteCompileCommand, checkdocCommand, doesConfigExist, getConfigPath, packageLintCommand, runInNixShell, setConfigPath)
+import Node.ChildProcess (defaultSpawnOptions)
 import Node.Path as Path
+import Node.Process (getEnv)
 import Prelude (Unit, bind, discard, ifM, map, pure, unit, unlessM, ($), (<>))
-import Utils (callProcess, examineAll, exitOnError, getHomeDirectory, getProcessOutputAsJson, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
+import Utils (callProcess, callProcessAsync_, exitOnError, getHomeDirectory, getProcessOutputAsJson, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
 
 installDeps :: Effect Unit
 installDeps = do
@@ -64,67 +67,50 @@ checkConfig opts = do
     $ "Config file does not exist at "
     <> configPath
   log $ "Configuration is found at " <> configPath
+  origEnv <- liftEffect getEnv
   let
-    nixShell' = nixShell configPath
-  -- Use nix-instantiate?
-  runAff_ exitOnError $ nixShell' defaultNixOptions defaultNixShellOptions "meta"
+    env = insert "NIX_BUILD_SHELL" "bash" origEnv
+
+    spawnOptions = defaultSpawnOptions { env = Just env }
+  runAff_ exitOnError
+    $ callProcessAsync_ spawnOptions "nix-shell"
+        [ "--quiet", configPath, "-A", "meta" ]
 
 type LintOpts
   = { loCheckdoc :: Boolean
     , loPackageLint :: Boolean
+    , loEmacsVersion :: Maybe EmacsVersion
     }
 
 runLint :: LintOpts -> Maybe PackageName -> Effect Unit
 runLint opts mPackage =
-  runPackageTasks mPackage
-    $ \builder ->
-        catMaybes
-          [ do
-              guard opts.loCheckdoc
-              pure $ builder.nixShellTask defaultNixOptions defaultNixShellOptions "checkdoc"
-          , do
-              guard opts.loPackageLint
-              pure $ builder.nixShellTask defaultNixOptions defaultNixShellOptions "package-lint"
-          ]
+  runInNixShell
+    $ catMaybes
+        [ do
+            guard opts.loCheckdoc
+            pure $ checkdocCommand opts.loEmacsVersion mPackage
+        , do
+            guard opts.loPackageLint
+            pure $ packageLintCommand opts.loEmacsVersion mPackage
+        ]
 
 type ByteCompileOpts
-  = { emacsVersion :: Maybe String
+  = { emacsVersion :: Maybe EmacsVersion
     }
 
 byteCompile :: ByteCompileOpts -> Maybe PackageName -> Effect Unit
 byteCompile opts mPackage =
-  runPackageTasks mPackage
-    $ \builder ->
-        [ builder.nixBuildTask
-            ( defaultNixOptions
-                { emacsVersion = opts.emacsVersion
-                }
-            )
-            defaultNixBuildOptions
-            "byte-compile"
-        ]
+  runInNixShell
+    [ byteCompileCommand opts.emacsVersion mPackage
+    ]
 
 type ButtercupOpts
-  = { emacsVersion :: Maybe String
+  = { emacsVersion :: Maybe EmacsVersion
     }
 
 runButtercup :: ButtercupOpts -> Maybe PackageName -> Effect Unit
 runButtercup opts mPackage = do
-  let
-    nixOptions =
-      defaultNixOptions
-        { emacsVersion = opts.emacsVersion
-        }
-  -- The test task depends on the build task, so they are run separately.
-  runPackageTasks_ sequence_ mPackage
-    $ \builder ->
-        [ builder.nixBuildTask nixOptions
-            ( defaultNixBuildOptions
-                { noBuildOutput = true }
-            )
-            "prepareButtercup"
-        , builder.nixShellTask nixOptions defaultNixShellOptions "buttercup"
-        ]
+  runInNixShell [ buttercupCommand opts.emacsVersion mPackage ]
 
 listEmacsVersions :: Effect Unit
 listEmacsVersions = do
@@ -151,39 +137,20 @@ listPackages = do
           $ map log versions
 
 type AllOpts
-  = { emacsVersion :: Maybe String
+  = { emacsVersion :: Maybe EmacsVersion
     }
 
 runAll :: AllOpts -> Effect Unit
 runAll opts = do
-  configPath <- getConfigPath
   let
-    nixOpts =
-      { quiet: true
-      -- It doesn't mattter here, since we won't start Emacs in the parent shell
-      , emacsVersion: Nothing
-      }
-
-    nixShOpts command =
-      { clearEnv: false -- Inherit environment variables such as NIX_PATH
-      , runNonInteractiveCommand: Just command
-      , runInteractiveCommand: Nothing
-      }
-
-    run command = nixShell configPath nixOpts (nixShOpts command) "shellWithoutBuild"
-
-    defaultArgs = case opts.emacsVersion of
-      Just version -> "--argstr emacs " <> version <> " "
-      Nothing -> ""
-
-    buildAll arg = "set -e; for p in $packages; do melpaCheckNixBuild " <> defaultArgs <> arg <> "; done"
-
-    shellAll arg = "set -e; for p in $packages; do melpaCheckNixShell " <> defaultArgs <> arg <> "; done"
-  runAff_ exitOnError
-    $ examineAll
-        [ run $ shellAll "-A checkdoc.$p"
-        , run $ shellAll "-A package-lint.$p"
-        , run $ buildAll "-A byte-compile.$p"
-        , run $ buildAll "-A prepareButtercup.$p --no-build-output"
-        , run $ shellAll "-A buttercup.$p"
+    withAllPackages cmd =
+      "for p in $packages; do\n"
+        <> cmd opts.emacsVersion (Just "$p")
+        <> "\ndone"
+  runInNixShell
+    $ map withAllPackages
+        [ checkdocCommand
+        , packageLintCommand
+        , byteCompileCommand
+        , buttercupCommand
         ]
