@@ -431,6 +431,7 @@ With a universal prefix, reset the configuration directory to DIR."
     (unless (f-directory-p ci-config-dir)
       (make-directory ci-config-dir))
     (when (f-exists-p ci-config-file)
+      (find-file ci-config-file)
       (user-error "File already exists: %s" ci-config-file))
     (let ((buffer (find-file-noselect ci-config-file)))
       (unwind-protect
