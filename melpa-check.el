@@ -83,7 +83,7 @@
   :type 'boolean)
 
 (defcustom melpa-check-github-actions-config-template
-  "let Actions = FIXME
+  "let Actions = https://raw.githubusercontent.com/akirak/melpa-check/v3/dhall/github-actions.dhall
 
 let packages = ../packages.dhall
 
