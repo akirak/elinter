@@ -103,7 +103,7 @@ let installNix = uses "cachix/install-nix-action@v8"
 
 let checkout = uses "actions/checkout@v1"
 
-let configPackage = uses "akirak/emacs-package@master"
+let configPackage = uses "akirak/emacs-package@v1"
 
 let runWithName =
         λ(name : Text)
