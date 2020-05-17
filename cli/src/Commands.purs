@@ -144,7 +144,7 @@ runAll :: AllOpts -> Effect Unit
 runAll opts = do
   let
     withAllPackages cmd =
-      "for p in $packages; do\n"
+      "for p in ${packages[*]}; do\n"
         <> cmd opts.emacsVersion (Just "$p")
         <> "\ndone"
   runInNixShell
