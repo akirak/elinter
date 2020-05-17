@@ -1,5 +1,15 @@
-let pkgs = import ../pkgs.nix;
-in with pkgs.lib; {
+let
+  pkgs = import ../pkgs.nix;
+
+  compareEmacsVersions = v1: v2:
+    if v1 == "snapshot" then
+      false
+    else if v2 == "snapshot" then
+      true
+    else
+      builtins.compareVersions v1 v2 < 0;
+
+in with pkgs.lib; rec {
   emacsVersionToDerivation = emacs-ci: version:
     getAttrFromPath [ ("emacs-" + replaceStrings [ "." ] [ "-" ] version) ]
     emacs-ci;
@@ -13,4 +23,8 @@ in with pkgs.lib; {
 
   emacsWithPackages = emacsDerivation:
     (pkgs.emacsPackagesNgGen emacsDerivation).emacsWithPackages;
+
+  inherit compareEmacsVersions;
+
+  sortEmacsVersions = sort compareEmacsVersions;
 }
