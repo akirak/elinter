@@ -613,23 +613,6 @@ var PS = {};
     return l.slice().reverse();
   };
 
-  exports.concat = function (xss) {
-    if (xss.length <= 10000) {
-      // This method is faster, but it crashes on big arrays.
-      // So we use it when can and fallback to simple variant otherwise.
-      return Array.prototype.concat.apply([], xss);
-    }
-
-    var result = [];
-    for (var i = 0, l = xss.length; i < l; i++) {
-      var xs = xss[i];
-      for (var j = 0, m = xs.length; j < m; j++) {
-        result.push(xs[j]);
-      }
-    }
-    return result;
-  };
-
   exports.filter = function (f) {
     return function (xs) {
       return xs.filter(f);
@@ -1930,7 +1913,6 @@ var PS = {};
   exports["length"] = $foreign.length;
   exports["cons"] = $foreign.cons;
   exports["reverse"] = $foreign.reverse;
-  exports["concat"] = $foreign.concat;
   exports["filter"] = $foreign.filter;
   exports["slice"] = $foreign.slice;
   exports["drop"] = $foreign.drop;
@@ -7180,7 +7162,7 @@ var PS = {};
                   if (r instanceof Data_Either.Right) {
                       return Control_Applicative.pure(Effect_Aff.applicativeAff)(r.value0);
                   };
-                  throw new Error("Failed pattern match at Utils (line 114, column 3 - line 116, column 22): " + [ r.constructor.name ]);
+                  throw new Error("Failed pattern match at Utils (line 115, column 3 - line 117, column 22): " + [ r.constructor.name ]);
               });
           };
       };
@@ -7193,7 +7175,7 @@ var PS = {};
       if (mPath instanceof Data_Maybe.Just) {
           return Data_String_Common.split(":")(mPath.value0);
       };
-      throw new Error("Failed pattern match at Utils (line 159, column 3 - line 161, column 55): " + [ mPath.constructor.name ]);
+      throw new Error("Failed pattern match at Utils (line 160, column 3 - line 162, column 55): " + [ mPath.constructor.name ]);
   };
   var getHomeDirectory = function __do() {
       var mHome = Node_Process.lookupEnv("HOME")();
@@ -7203,7 +7185,7 @@ var PS = {};
       if (mHome instanceof Data_Maybe.Nothing) {
           return Effect_Exception.throwException(Effect_Exception.error("No HOME environment variable"))();
       };
-      throw new Error("Failed pattern match at Utils (line 219, column 3 - line 221, column 69): " + [ mHome.constructor.name ]);
+      throw new Error("Failed pattern match at Utils (line 220, column 3 - line 222, column 69): " + [ mHome.constructor.name ]);
   };
   var getNixConfFile = function __do() {
       var xdgConf = Node_Process.lookupEnv("XDG_CONFIG_HOME")();
@@ -7214,7 +7196,7 @@ var PS = {};
           var home = getHomeDirectory();
           return Node_Path.concat([ home, ".config", "nix", "nix.conf" ]);
       };
-      throw new Error("Failed pattern match at Utils (line 210, column 3 - line 214, column 64): " + [ xdgConf.constructor.name ]);
+      throw new Error("Failed pattern match at Utils (line 211, column 3 - line 215, column 64): " + [ xdgConf.constructor.name ]);
   };
   var readNixConf = function __do() {
       var confFile = getNixConfFile();
@@ -7241,7 +7223,7 @@ var PS = {};
                       return Data_Maybe.Nothing.value;
                   };
               };
-              throw new Error("Failed pattern match at Utils (line 135, column 18 - line 144, column 21): " + [ mPath.constructor.name ]);
+              throw new Error("Failed pattern match at Utils (line 136, column 18 - line 145, column 21): " + [ mPath.constructor.name ]);
           };
       };
       var $32 = Node_Path.isAbsolute(program);
@@ -7303,34 +7285,32 @@ var PS = {};
       return function (cmd) {
           return function (args) {
               var command = showCommand(cmd)(args);
-              return Control_Bind.discard(Control_Bind.discardUnit)(Effect_Aff.bindAff)(Effect_Class.liftEffect(Effect_Aff.monadEffectAff)(Effect_Class_Console.log(Effect_Class.monadEffectEffect)("> " + command)))(function () {
-                  return Control_Bind.bind(Effect_Aff.bindAff)(Effect_Aff.makeAff(function (cb) {
-                      return function __do() {
-                          var p = Node_ChildProcess.spawn(cmd)(args)({
-                              cwd: spawnOptions.cwd,
-                              stdio: Node_ChildProcess.inherit,
-                              env: spawnOptions.env,
-                              detached: spawnOptions.detached,
-                              uid: spawnOptions.uid,
-                              gid: spawnOptions.gid
-                          })();
-                          Node_ChildProcess.onError(p)(function ($48) {
-                              return cb(Data_Either.Left.create(Node_ChildProcess.toStandardError($48)));
-                          })();
-                          Node_ChildProcess.onExit(p)(function ($49) {
-                              return cb(Data_Either.Right.create($49));
-                          })();
-                          return Effect_Aff.effectCanceler(Data_Functor["void"](Effect.functorEffect)(Node_ChildProcess.kill(Data_Posix_Signal.SIGTERM.value)(p)));
-                      };
-                  }))(function (r) {
-                      if (r instanceof Node_ChildProcess.Normally && r.value0 === 0) {
-                          return Control_Applicative.pure(Effect_Aff.applicativeAff)(Data_Unit.unit);
-                      };
-                      if (r instanceof Node_ChildProcess.Normally) {
-                          return Control_Monad_Error_Class.throwError(Effect_Aff.monadThrowAff)(Effect_Exception.error("Exit code " + (Data_Show.show(Data_Show.showInt)(r.value0) + (" from command \"" + (command + "\"")))));
-                      };
-                      return Control_Monad_Error_Class.throwError(Effect_Aff.monadThrowAff)(Effect_Exception.error(Data_Show.show(Node_ChildProcess.showExit)(r) + (" from command " + command)));
-                  });
+              return Control_Bind.bind(Effect_Aff.bindAff)(Effect_Aff.makeAff(function (cb) {
+                  return function __do() {
+                      var p = Node_ChildProcess.spawn(cmd)(args)({
+                          cwd: spawnOptions.cwd,
+                          stdio: Node_ChildProcess.inherit,
+                          env: spawnOptions.env,
+                          detached: spawnOptions.detached,
+                          uid: spawnOptions.uid,
+                          gid: spawnOptions.gid
+                      })();
+                      Node_ChildProcess.onError(p)(function ($48) {
+                          return cb(Data_Either.Left.create(Node_ChildProcess.toStandardError($48)));
+                      })();
+                      Node_ChildProcess.onExit(p)(function ($49) {
+                          return cb(Data_Either.Right.create($49));
+                      })();
+                      return Effect_Aff.effectCanceler(Data_Functor["void"](Effect.functorEffect)(Node_ChildProcess.kill(Data_Posix_Signal.SIGTERM.value)(p)));
+                  };
+              }))(function (r) {
+                  if (r instanceof Node_ChildProcess.Normally && r.value0 === 0) {
+                      return Control_Applicative.pure(Effect_Aff.applicativeAff)(Data_Unit.unit);
+                  };
+                  if (r instanceof Node_ChildProcess.Normally) {
+                      return Control_Monad_Error_Class.throwError(Effect_Aff.monadThrowAff)(Effect_Exception.error("Exit code " + (Data_Show.show(Data_Show.showInt)(r.value0) + (" from command \"" + (command + "\"")))));
+                  };
+                  return Control_Monad_Error_Class.throwError(Effect_Aff.monadThrowAff)(Effect_Exception.error(Data_Show.show(Node_ChildProcess.showExit)(r) + (" from command " + command)));
               });
           };
       };
@@ -7374,9 +7354,8 @@ var PS = {};
   var exports = $PS["Lib"];
   var Control_Bind = $PS["Control.Bind"];
   var Control_Monad = $PS["Control.Monad"];
-  var Data_Array = $PS["Data.Array"];
+  var Data_Functor = $PS["Data.Functor"];
   var Data_Maybe = $PS["Data.Maybe"];
-  var Data_Semigroup = $PS["Data.Semigroup"];
   var Effect = $PS["Effect"];
   var Effect_Aff = $PS["Effect.Aff"];
   var Effect_Class = $PS["Effect.Class"];
@@ -7388,13 +7367,68 @@ var PS = {};
   var Node_Path = $PS["Node.Path"];
   var Node_Process = $PS["Node.Process"];
   var Utils = $PS["Utils"];                
+  var Release = (function () {
+      function Release(value0) {
+          this.value0 = value0;
+      };
+      Release.create = function (value0) {
+          return new Release(value0);
+      };
+      return Release;
+  })();
+  var Snapshot = (function () {
+      function Snapshot() {
+
+      };
+      Snapshot.value = new Snapshot();
+      return Snapshot;
+  })();
+  var AllSupportedVersions = (function () {
+      function AllSupportedVersions() {
+
+      };
+      AllSupportedVersions.value = new AllSupportedVersions();
+      return AllSupportedVersions;
+  })();
+  var LatestRelease = (function () {
+      function LatestRelease() {
+
+      };
+      LatestRelease.value = new LatestRelease();
+      return LatestRelease;
+  })();
+  var MinimumSupported = (function () {
+      function MinimumSupported() {
+
+      };
+      MinimumSupported.value = new MinimumSupported();
+      return MinimumSupported;
+  })();
+  var toVersionArg = function (v) {
+      if (v instanceof Release) {
+          return v.value0;
+      };
+      if (v instanceof Snapshot) {
+          return "snapshot";
+      };
+      if (v instanceof LatestRelease) {
+          return "latest";
+      };
+      if (v instanceof MinimumSupported) {
+          return "ERROR";
+      };
+      if (v instanceof AllSupportedVersions) {
+          return "ERROR";
+      };
+      throw new Error("Failed pattern match at Lib (line 25, column 1 - line 25, column 39): " + [ v.constructor.name ]);
+  };
   var tempConfigPath = ".melpa-check-tmp";
   var setConfigPath = function (path) {
       return function __do() {
           Control_Monad.whenM(Effect.monadEffect)(Node_FS_Sync.exists(tempConfigPath))(function __do() {
               var stat = Node_FS_Sync.stat(tempConfigPath)();
-              var $1 = Node_FS_Stats.isSymbolicLink(stat);
-              if ($1) {
+              var $6 = Node_FS_Stats.isSymbolicLink(stat);
+              if ($6) {
                   return Node_FS_Sync.unlink(tempConfigPath)();
               };
               return Effect_Exception.throwException(Effect_Exception.error(tempConfigPath + " already exists and is not a symbolic link"))();
@@ -7402,91 +7436,48 @@ var PS = {};
           return Utils.makeSymbolicLink(tempConfigPath)(path)();
       };
   };
-  var nixShellOptionsToArray = function (opts) {
-      return Data_Array.concat([ (function () {
-          if (opts.clearEnv) {
-              return [ "--pure" ];
-          };
-          return [  ];
-      })(), Data_Maybe.maybe([  ])(function (command) {
-          return [ "--run", command ];
-      })(opts.runNonInteractiveCommand), Data_Maybe.maybe([  ])(function (command) {
-          return [ "--command", command ];
-      })(opts.runInteractiveCommand) ]);
-  };
-  var nixOptionsToArray = function (opts) {
-      return Data_Array.concat([ (function () {
-          if (opts.quiet) {
-              return [ "--quiet" ];
-          };
-          return [  ];
-      })(), (function () {
-          if (opts.emacsVersion instanceof Data_Maybe.Just) {
-              return [ "--argstr", "emacs", opts.emacsVersion.value0 ];
-          };
-          if (opts.emacsVersion instanceof Data_Maybe.Nothing) {
-              return [  ];
-          };
-          throw new Error("Failed pattern match at Lib (line 72, column 7 - line 74, column 22): " + [ opts.emacsVersion.constructor.name ]);
-      })() ]);
-  };
-  var nixShell = function (nixFile) {
-      return function (nixOpts) {
-          return function (nixShOpts) {
-              return function (attrPath) {
-                  return Control_Bind.bind(Effect_Aff.bindAff)(Effect_Class.liftEffect(Effect_Aff.monadEffectAff)(Node_Process.getEnv))(function (origEnv) {
-                      var env = Foreign_Object.insert("NIX_BUILD_SHELL")("bash")(origEnv);
-                      var spawnOptions = {
-                          env: new Data_Maybe.Just(env),
-                          cwd: Node_ChildProcess.defaultSpawnOptions.cwd,
-                          detached: Node_ChildProcess.defaultSpawnOptions.detached,
-                          gid: Node_ChildProcess.defaultSpawnOptions.gid,
-                          stdio: Node_ChildProcess.defaultSpawnOptions.stdio,
-                          uid: Node_ChildProcess.defaultSpawnOptions.uid
+  var innerShell = "melpaCheckNixShell";
+  var innerBuilder = "melpaCheckNixBuild";
+  var generateInternalBlock = function (funcName) {
+      return function (expName) {
+          return function (mOptions) {
+              return function (v) {
+                  return function (v1) {
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof AllSupportedVersions && v1 instanceof Data_Maybe.Just)) {
+                          return "for v in `packageEmacsVersions " + (v1.value0 + ("`; do\x0a" + ("  " + (funcName + (Data_Maybe.maybe("")(function (args) {
+                              return " " + args;
+                          })(mOptions) + (" --argstr emacs $v -A " + (expName + ("." + (v1.value0 + "\x0adone")))))))));
                       };
-                      return Utils.callProcessAsync_(spawnOptions)("nix-shell")(Data_Semigroup.append(Data_Semigroup.semigroupArray)(nixShellOptionsToArray(nixShOpts))(Data_Semigroup.append(Data_Semigroup.semigroupArray)([ "-A", attrPath ])(Data_Semigroup.append(Data_Semigroup.semigroupArray)(nixOptionsToArray(nixOpts))([ nixFile ]))));
-                  });
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof AllSupportedVersions && v1 instanceof Data_Maybe.Nothing)) {
+                          return "if [[ ${#packages[*]} -eq 1 ]]; then\x0a" + ("  p=${packages[0]}\x0a" + ("  for v in `packageEmacsVersions $p`; do\x0a" + ("  " + (funcName + (Data_Maybe.maybe("")(function (args) {
+                              return " " + args;
+                          })(mOptions) + (" --argstr emacs $v -A " + (expName + ("\x0a  done\x0a" + ("else\x0a" + ("  echo 'You have to specify a package name to run it on all supported versions'\x0a" + ("  echo 'when you have multiple packages.'\x0a" + ("  exit 2\x0a" + "fi"))))))))))));
+                      };
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof MinimumSupported && v1 instanceof Data_Maybe.Just)) {
+                          return funcName + (Data_Maybe.maybe("")(function (args) {
+                              return " " + args;
+                          })(mOptions) + (" --argstr emacs ${packageEmacsVersion[" + (v1.value0 + ("]}" + (" -A " + (expName + ("." + v1.value0)))))));
+                      };
+                      if (v instanceof Data_Maybe.Just && (v.value0 instanceof MinimumSupported && v1 instanceof Data_Maybe.Nothing)) {
+                          return "if [[ ${#packages[*]} -eq 1 ]]; then\x0a" + ("  p=${packages[0]}\x0a" + ("  " + (funcName + (Data_Maybe.maybe("")(function (args) {
+                              return " " + args;
+                          })(mOptions) + (" --argstr emacs ${packageEmacsVersion[$p]}" + (" -A " + (expName + ("\x0a" + ("else\x0a" + ("  echo 'You have to specify a package name to run it on the minimum supported version.'\x0a" + ("  echo 'when you have multiple packages.'\x0a" + ("  exit 2\x0a" + "fi"))))))))))));
+                      };
+                      return funcName + (Data_Maybe.maybe("")(function (args) {
+                          return " " + args;
+                      })(mOptions) + (Data_Maybe.maybe("")(function (ver) {
+                          return " --argstr emacs " + toVersionArg(ver);
+                      })(v) + (" -A " + (expName + Data_Maybe.maybe("")(function ($$package) {
+                          return "." + $$package;
+                      })(v1)))));
+                  };
               };
           };
       };
   };
-  var nixBuildOptionsToArray = function (opts) {
-      return Data_Array.concat([ (function () {
-          if (opts.noOutLink) {
-              return [ "--no-out-link" ];
-          };
-          return [  ];
-      })(), (function () {
-          if (opts.noBuildOutput) {
-              return [ "--no-build-output" ];
-          };
-          return [  ];
-      })() ]);
-  };
-  var nixBuild = function (nixFile) {
-      return function (nixOpts) {
-          return function (nixBuildOpts) {
-              return function (attrPath) {
-                  return Utils.callProcessAsync_(Node_ChildProcess.defaultSpawnOptions)("nix-build")(Data_Semigroup.append(Data_Semigroup.semigroupArray)(nixBuildOptionsToArray(nixBuildOpts))(Data_Semigroup.append(Data_Semigroup.semigroupArray)([ "-A", attrPath ])(Data_Semigroup.append(Data_Semigroup.semigroupArray)(nixOptionsToArray(nixOpts))([ nixFile ]))));
-              };
-          };
-      };
-  };
+  var packageLintCommand = generateInternalBlock(innerShell)("package-lint")(Data_Maybe.Nothing.value);
   var doesConfigExist = function (path) {
       return Control_Bind.ifM(Effect.bindEffect)(Utils.doesDirectoryExist(path))(Utils.doesFileExist(Node_Path.concat([ path, "default.nix" ])))(Utils.doesFileExist(path));
-  };
-  var defaultNixShellOptions = {
-      clearEnv: true,
-      runNonInteractiveCommand: Data_Maybe.Nothing.value,
-      runInteractiveCommand: Data_Maybe.Nothing.value
-  };
-  var defaultNixOptions = {
-      quiet: true,
-      emacsVersion: Data_Maybe.Nothing.value
-  };
-  var defaultNixBuildOptions = {
-      noOutLink: true,
-      noBuildOutput: false
   };
   var defaultConfigPath = ".melpa-check";
   var getConfigPath = function __do() {
@@ -7498,48 +7489,48 @@ var PS = {};
       };
       return Node_Path.concat([ workDir, defaultConfigPath ]);
   };
-  var runPackageTasks_ = function (f) {
-      return function (mPackage) {
-          return function (makeTasks) {
-              return function __do() {
-                  var configPath = getConfigPath();
-                  var packageSuffix = Data_Maybe.maybe("")(function ($$package) {
-                      return "." + $$package;
-                  })(mPackage);
-                  var nixShell$prime = nixShell(configPath);
-                  var nixBuild$prime = nixBuild(configPath);
-                  var taskBuilder = {
-                      nixShellTask: function (opts) {
-                          return function (shOpts) {
-                              return function (name) {
-                                  return nixShell$prime(opts)(shOpts)(name + packageSuffix);
-                              };
-                          };
-                      },
-                      nixBuildTask: function (opts) {
-                          return function (bldOpts) {
-                              return function (name) {
-                                  return nixBuild$prime(opts)(bldOpts)(name + packageSuffix);
-                              };
-                          };
-                      }
-                  };
-                  var tasks = makeTasks(taskBuilder);
-                  return Effect_Aff.runAff_(Utils.exitOnError)(f(tasks))();
+  var runInNixShell_ = function (f) {
+      return function (commands) {
+          return function __do() {
+              var configPath = getConfigPath();
+              var origEnv = Effect_Class.liftEffect(Effect_Class.monadEffectEffect)(Node_Process.getEnv)();
+              var env = Foreign_Object.insert("NIX_BUILD_SHELL")("bash")(origEnv);
+              var spawnOptions = {
+                  env: new Data_Maybe.Just(env),
+                  cwd: Node_ChildProcess.defaultSpawnOptions.cwd,
+                  detached: Node_ChildProcess.defaultSpawnOptions.detached,
+                  gid: Node_ChildProcess.defaultSpawnOptions.gid,
+                  stdio: Node_ChildProcess.defaultSpawnOptions.stdio,
+                  uid: Node_ChildProcess.defaultSpawnOptions.uid
               };
+              var run = function (command) {
+                  return Utils.callProcessAsync_(spawnOptions)("nix-shell")([ "--quiet", configPath, "-A", "shellWithoutBuild", "--run", "set -e; " + command ]);
+              };
+              return Effect_Aff.runAff_(Utils.exitOnError)(f(Data_Functor.map(Data_Functor.functorArray)(run)(commands)))();
           };
       };
   };
-  var runPackageTasks = runPackageTasks_(Utils.examineAll);
+  var runInNixShell = runInNixShell_(Utils.examineAll);
+  var checkdocCommand = generateInternalBlock(innerShell)("checkdoc")(Data_Maybe.Nothing.value);
+  var byteCompileCommand = generateInternalBlock(innerBuilder)("byte-compile")(Data_Maybe.Nothing.value);
+  var buttercupCommand = function (mVer) {
+      return function (mPackage) {
+          return generateInternalBlock(innerBuilder)("prepareButtercup")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" && " + generateInternalBlock(innerShell)("buttercup")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+      };
+  };
+  exports["Release"] = Release;
+  exports["Snapshot"] = Snapshot;
+  exports["AllSupportedVersions"] = AllSupportedVersions;
+  exports["LatestRelease"] = LatestRelease;
+  exports["MinimumSupported"] = MinimumSupported;
   exports["getConfigPath"] = getConfigPath;
   exports["setConfigPath"] = setConfigPath;
   exports["doesConfigExist"] = doesConfigExist;
-  exports["defaultNixOptions"] = defaultNixOptions;
-  exports["defaultNixShellOptions"] = defaultNixShellOptions;
-  exports["defaultNixBuildOptions"] = defaultNixBuildOptions;
-  exports["nixShell"] = nixShell;
-  exports["runPackageTasks"] = runPackageTasks;
-  exports["runPackageTasks_"] = runPackageTasks_;
+  exports["runInNixShell"] = runInNixShell;
+  exports["checkdocCommand"] = checkdocCommand;
+  exports["packageLintCommand"] = packageLintCommand;
+  exports["byteCompileCommand"] = byteCompileCommand;
+  exports["buttercupCommand"] = buttercupCommand;
 })(PS);
 (function($PS) {
   // Generated by purs version 0.13.6
@@ -7562,68 +7553,31 @@ var PS = {};
   var Effect_Console = $PS["Effect.Console"];
   var Effect_Exception = $PS["Effect.Exception"];
   var Foreign_Generic_Class = $PS["Foreign.Generic.Class"];
+  var Foreign_Object = $PS["Foreign.Object"];
   var Lib = $PS["Lib"];
+  var Node_ChildProcess = $PS["Node.ChildProcess"];
   var Node_Path = $PS["Node.Path"];
+  var Node_Process = $PS["Node.Process"];
   var Utils = $PS["Utils"];                
   var runLint = function (opts) {
       return function (mPackage) {
-          return Lib.runPackageTasks(mPackage)(function (builder) {
-              return Data_Array.catMaybes([ Control_Bind.discard(Control_Bind.discardUnit)(Data_Maybe.bindMaybe)(Control_MonadZero.guard(Data_Maybe.monadZeroMaybe)(opts.loCheckdoc))(function () {
-                  return Control_Applicative.pure(Data_Maybe.applicativeMaybe)(builder.nixShellTask(Lib.defaultNixOptions)(Lib.defaultNixShellOptions)("checkdoc"));
-              }), Control_Bind.discard(Control_Bind.discardUnit)(Data_Maybe.bindMaybe)(Control_MonadZero.guard(Data_Maybe.monadZeroMaybe)(opts.loPackageLint))(function () {
-                  return Control_Applicative.pure(Data_Maybe.applicativeMaybe)(builder.nixShellTask(Lib.defaultNixOptions)(Lib.defaultNixShellOptions)("package-lint"));
-              }) ]);
-          });
+          return Lib.runInNixShell(Data_Array.catMaybes([ Control_Bind.discard(Control_Bind.discardUnit)(Data_Maybe.bindMaybe)(Control_MonadZero.guard(Data_Maybe.monadZeroMaybe)(opts.loCheckdoc))(function () {
+              return Control_Applicative.pure(Data_Maybe.applicativeMaybe)(Lib.checkdocCommand(opts.loEmacsVersion)(mPackage));
+          }), Control_Bind.discard(Control_Bind.discardUnit)(Data_Maybe.bindMaybe)(Control_MonadZero.guard(Data_Maybe.monadZeroMaybe)(opts.loPackageLint))(function () {
+              return Control_Applicative.pure(Data_Maybe.applicativeMaybe)(Lib.packageLintCommand(opts.loEmacsVersion)(mPackage));
+          }) ]));
       };
   };
   var runButtercup = function (opts) {
       return function (mPackage) {
-          var nixOptions = {
-              emacsVersion: opts.emacsVersion,
-              quiet: Lib.defaultNixOptions.quiet
-          };
-          return Lib.runPackageTasks_(Data_Foldable.sequence_(Effect_Aff.applicativeAff)(Data_Foldable.foldableArray))(mPackage)(function (builder) {
-              return [ builder.nixBuildTask(nixOptions)({
-                  noOutLink: Lib.defaultNixBuildOptions.noOutLink,
-                  noBuildOutput: true
-              })("prepareButtercup"), builder.nixShellTask(nixOptions)(Lib.defaultNixShellOptions)("buttercup") ];
-          });
+          return Lib.runInNixShell([ Lib.buttercupCommand(opts.emacsVersion)(mPackage) ]);
       };
   };
   var runAll = function (opts) {
-      return function __do() {
-          var configPath = Lib.getConfigPath();
-          var nixShOpts = function (command) {
-              return {
-                  clearEnv: false,
-                  runNonInteractiveCommand: new Data_Maybe.Just(command),
-                  runInteractiveCommand: Data_Maybe.Nothing.value
-              };
-          };
-          var nixOpts = {
-              quiet: true,
-              emacsVersion: Data_Maybe.Nothing.value
-          };
-          var run = function (command) {
-              return Lib.nixShell(configPath)(nixOpts)(nixShOpts(command))("shellWithoutBuild");
-          };
-          var defaultArgs = (function () {
-              if (opts.emacsVersion instanceof Data_Maybe.Just) {
-                  return "--argstr emacs " + (opts.emacsVersion.value0 + " ");
-              };
-              if (opts.emacsVersion instanceof Data_Maybe.Nothing) {
-                  return "";
-              };
-              throw new Error("Failed pattern match at Commands (line 175, column 19 - line 177, column 20): " + [ opts.emacsVersion.constructor.name ]);
-          })();
-          var shellAll = function (arg) {
-              return "set -e; for p in $packages; do melpaCheckNixShell " + (defaultArgs + (arg + "; done"));
-          };
-          var buildAll = function (arg) {
-              return "set -e; for p in $packages; do melpaCheckNixBuild " + (defaultArgs + (arg + "; done"));
-          };
-          return Effect_Aff.runAff_(Utils.exitOnError)(Utils.examineAll([ run(shellAll("-A checkdoc.$p")), run(shellAll("-A package-lint.$p")), run(buildAll("-A byte-compile.$p")), run(buildAll("-A prepareButtercup.$p --no-build-output")), run(shellAll("-A buttercup.$p")) ]))();
+      var withAllPackages = function (cmd) {
+          return "for p in $packages; do\x0a" + (cmd(opts.emacsVersion)(new Data_Maybe.Just("$p")) + "\x0adone");
       };
+      return Lib.runInNixShell(Data_Functor.map(Data_Functor.functorArray)(withAllPackages)([ Lib.checkdocCommand, Lib.packageLintCommand, Lib.byteCompileCommand, Lib.buttercupCommand ]));
   };
   var listPackages = function __do() {
       var configPath = Lib.getConfigPath();
@@ -7665,23 +7619,27 @@ var PS = {};
                   Effect_Console.log("Set the configuration path to " + opts.configFile.value0)();
                   return Lib.setConfigPath(opts.configFile.value0)();
               };
-              throw new Error("Failed pattern match at Commands (line 55, column 3 - line 59, column 25): " + [ opts.configFile.constructor.name ]);
+              throw new Error("Failed pattern match at Commands (line 58, column 3 - line 62, column 25): " + [ opts.configFile.constructor.name ]);
           })();
           var configPath = Lib.getConfigPath();
           Control_Monad.unlessM(Effect.monadEffect)(Lib.doesConfigExist(configPath))(Effect_Exception.throwException(Effect_Exception.error("Config file does not exist at " + configPath)))();
           Effect_Console.log("Configuration is found at " + configPath)();
-          var nixShell$prime = Lib.nixShell(configPath);
-          return Effect_Aff.runAff_(Utils.exitOnError)(nixShell$prime(Lib.defaultNixOptions)(Lib.defaultNixShellOptions)("meta"))();
+          var origEnv = Effect_Class.liftEffect(Effect_Class.monadEffectEffect)(Node_Process.getEnv)();
+          var env = Foreign_Object.insert("NIX_BUILD_SHELL")("bash")(origEnv);
+          var spawnOptions = {
+              env: new Data_Maybe.Just(env),
+              cwd: Node_ChildProcess.defaultSpawnOptions.cwd,
+              detached: Node_ChildProcess.defaultSpawnOptions.detached,
+              gid: Node_ChildProcess.defaultSpawnOptions.gid,
+              stdio: Node_ChildProcess.defaultSpawnOptions.stdio,
+              uid: Node_ChildProcess.defaultSpawnOptions.uid
+          };
+          return Effect_Aff.runAff_(Utils.exitOnError)(Utils.callProcessAsync_(spawnOptions)("nix-shell")([ "--quiet", configPath, "-A", "meta" ]))();
       };
   };
   var byteCompile = function (opts) {
       return function (mPackage) {
-          return Lib.runPackageTasks(mPackage)(function (builder) {
-              return [ builder.nixBuildTask({
-                  quiet: Lib.defaultNixOptions.quiet,
-                  emacsVersion: opts.emacsVersion
-              })(Lib.defaultNixBuildOptions)("byte-compile") ];
-          });
+          return Lib.runInNixShell([ Lib.byteCompileCommand(opts.emacsVersion)(mPackage) ]);
       };
   };
   exports["installDeps"] = installDeps;
@@ -14684,6 +14642,14 @@ var PS = {};
 (function($PS) {
   // Generated by purs version 0.13.6
   "use strict";
+  $PS["Version"] = $PS["Version"] || {};
+  var exports = $PS["Version"];
+  var versionString = "0.1";
+  exports["versionString"] = versionString;
+})(PS);
+(function($PS) {
+  // Generated by purs version 0.13.6
+  "use strict";
   $PS["Main"] = $PS["Main"] || {};
   var exports = $PS["Main"];
   var Commands = $PS["Commands"];
@@ -14695,31 +14661,50 @@ var PS = {};
   var Data_Semigroup = $PS["Data.Semigroup"];
   var Data_Symbol = $PS["Data.Symbol"];
   var Effect = $PS["Effect"];
+  var Lib = $PS["Lib"];
   var Options_Applicative_Builder = $PS["Options.Applicative.Builder"];
   var Options_Applicative_Builder_Internal = $PS["Options.Applicative.Builder.Internal"];
   var Options_Applicative_Extra = $PS["Options.Applicative.Extra"];
   var Options_Applicative_Internal_Utils = $PS["Options.Applicative.Internal.Utils"];
   var Options_Applicative_Types = $PS["Options.Applicative.Types"];
-  var Record_Extra = $PS["Record.Extra"];                
-  var versionString = "0.1";
+  var Record_Extra = $PS["Record.Extra"];
+  var Version = $PS["Version"];                
+  var readEmacsVersion = Control_Bind.bind(Options_Applicative_Types.readMBind)(Options_Applicative_Types.readerAsk)(function (raw) {
+      if (raw === "snapshot") {
+          return Control_Applicative.pure(Options_Applicative_Types.readMApplicative)(Lib.Snapshot.value);
+      };
+      if (raw === "latest") {
+          return Control_Applicative.pure(Options_Applicative_Types.readMApplicative)(Lib.LatestRelease.value);
+      };
+      if (raw === "minimum") {
+          return Control_Applicative.pure(Options_Applicative_Types.readMApplicative)(Lib.MinimumSupported.value);
+      };
+      if (raw === "all") {
+          return Control_Applicative.pure(Options_Applicative_Types.readMApplicative)(Lib.AllSupportedVersions.value);
+      };
+      return Control_Applicative.pure(Options_Applicative_Types.readMApplicative)(new Lib.Release(raw));
+  });
   var opts = (function () {
       var packageArg = Data_Maybe.optional(Options_Applicative_Types.parserAlternative)(Options_Applicative_Builder.strArgument(Options_Applicative_Builder.metavar(Options_Applicative_Builder_Internal.argumentFieldsHasMetavar)("PACKAGE")));
       var mFile = Data_Maybe.optional(Options_Applicative_Types.parserAlternative)(Options_Applicative_Builder.strOption(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.optionFieldsHasName)("file"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["short"](Options_Applicative_Builder_Internal.optionFieldsHasName)("f"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.metavar(Options_Applicative_Builder_Internal.optionFieldsHasMetavar)("FILE"))(Options_Applicative_Builder.help("Path to configuration file/directory"))))));
-      var lintOpts = Record_Extra.sequenceRecord()(Record_Extra.sequenceRecordCons(new Data_Symbol.IsSymbol(function () {
-          return "loCheckdoc";
-      }))()(Options_Applicative_Types.parserApply)(Record_Extra.sequenceRecordSingle(new Data_Symbol.IsSymbol(function () {
-          return "loPackageLint";
-      }))()(Options_Applicative_Types.parserFunctor)()())()())({
-          loCheckdoc: Options_Applicative_Builder.flag(true)(false)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.flagFieldsHasName)("no-checkdoc"))(Options_Applicative_Builder.help("Don't run checkdoc"))),
-          loPackageLint: Options_Applicative_Builder.flag(true)(false)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.flagFieldsHasName)("no-package-lint"))(Options_Applicative_Builder.help("Don't run package-lint")))
-      });
       var info_ = function (a) {
           return function (b) {
               return Options_Applicative_Builder.info(Options_Applicative_Internal_Utils.apApplyFlipped(Options_Applicative_Types.parserApply)(a)(Options_Applicative_Extra.helper))(b);
           };
       };
       var listCommands = Options_Applicative_Builder.subparser(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("emacs-versions")(info_(Control_Applicative.pure(Options_Applicative_Types.parserApplicative)(Commands.listEmacsVersions))(Options_Applicative_Builder.progDesc("Display a list of Emacs versions"))))(Options_Applicative_Builder.command("packages")(info_(Control_Applicative.pure(Options_Applicative_Types.parserApplicative)(Commands.listPackages))(Options_Applicative_Builder.progDesc("Display a list of packages under test")))));
-      var emacsArg = Data_Maybe.optional(Options_Applicative_Types.parserAlternative)(Options_Applicative_Builder.strOption(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.optionFieldsHasName)("emacs"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["short"](Options_Applicative_Builder_Internal.optionFieldsHasName)("e"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.metavar(Options_Applicative_Builder_Internal.optionFieldsHasMetavar)("VER"))(Options_Applicative_Builder.help("Emacs version to use for the task"))))));
+      var emacsArg = Data_Maybe.optional(Options_Applicative_Types.parserAlternative)(Options_Applicative_Builder.option(readEmacsVersion)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.optionFieldsHasName)("emacs"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["short"](Options_Applicative_Builder_Internal.optionFieldsHasName)("e"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.metavar(Options_Applicative_Builder_Internal.optionFieldsHasMetavar)("[RELEASE|snapshot|latest|minimum|all]"))(Options_Applicative_Builder.help("Emacs version to use for the task"))))));
+      var lintOpts = Record_Extra.sequenceRecord()(Record_Extra.sequenceRecordCons(new Data_Symbol.IsSymbol(function () {
+          return "loCheckdoc";
+      }))()(Options_Applicative_Types.parserApply)(Record_Extra.sequenceRecordCons(new Data_Symbol.IsSymbol(function () {
+          return "loEmacsVersion";
+      }))()(Options_Applicative_Types.parserApply)(Record_Extra.sequenceRecordSingle(new Data_Symbol.IsSymbol(function () {
+          return "loPackageLint";
+      }))()(Options_Applicative_Types.parserFunctor)()())()())()())({
+          loCheckdoc: Options_Applicative_Builder.flag(true)(false)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.flagFieldsHasName)("no-checkdoc"))(Options_Applicative_Builder.help("Don't run checkdoc"))),
+          loPackageLint: Options_Applicative_Builder.flag(true)(false)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.flagFieldsHasName)("no-package-lint"))(Options_Applicative_Builder.help("Don't run package-lint"))),
+          loEmacsVersion: emacsArg
+      });
       var configOpts = Record_Extra.sequenceRecord()(Record_Extra.sequenceRecordSingle(new Data_Symbol.IsSymbol(function () {
           return "configFile";
       }))()(Options_Applicative_Types.parserFunctor)()())({
@@ -14743,12 +14728,12 @@ var PS = {};
       return Options_Applicative_Builder.subparser(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("deps")(info_(Control_Applicative.pure(Options_Applicative_Types.parserApplicative)(Commands.installDeps))(Options_Applicative_Builder.progDesc("Install dependencies"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("config")(info_(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.checkConfig)(configOpts))(Options_Applicative_Builder.progDesc("Set up an entry point and check the configuration"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("lint")(info_(Control_Apply.apply(Options_Applicative_Types.parserApply)(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.runLint)(lintOpts))(packageArg))(Options_Applicative_Builder.progDesc("Run lint (i.e. checkdoc, package-lint, etc.) on a package"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("byte-compile")(info_(Control_Apply.apply(Options_Applicative_Types.parserApply)(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.byteCompile)(byteCompileOpts))(packageArg))(Options_Applicative_Builder.progDesc("Byte-Compile packages"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("buttercup")(info_(Control_Apply.apply(Options_Applicative_Types.parserApply)(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.runButtercup)(buttercupOpts))(packageArg))(Options_Applicative_Builder.progDesc("Run buttercup tests"))))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.command("list")(info_(listCommands)(Options_Applicative_Builder.progDesc("Display a list of certain things in the project"))))(Options_Applicative_Builder.command("all")(info_(Data_Functor.map(Options_Applicative_Types.parserFunctor)(Commands.runAll)(allOpts))(Options_Applicative_Builder.progDesc("Run all tasks on all packages"))))))))));
   })();
   var main = (function () {
-      var showVersion = Options_Applicative_Builder.infoOption("melpa-check CLI " + versionString)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.optionFieldsHasName)("version"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["short"](Options_Applicative_Builder_Internal.optionFieldsHasName)("V"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.help("Show version"))(Options_Applicative_Builder.hidden))));
+      var showVersion = Options_Applicative_Builder.infoOption("melpa-check CLI " + Version.versionString)(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["long"](Options_Applicative_Builder_Internal.optionFieldsHasName)("version"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder["short"](Options_Applicative_Builder_Internal.optionFieldsHasName)("V"))(Data_Semigroup.append(Options_Applicative_Builder_Internal.modSemigroup)(Options_Applicative_Builder.help("Show version"))(Options_Applicative_Builder.hidden))));
       var progInfo = Options_Applicative_Builder.progDesc("CLI frontend for melpa-check, an Emacs Lisp package lint runner");
       return Control_Bind.join(Effect.bindEffect)(Options_Applicative_Extra.execParser(Options_Applicative_Builder.info(Options_Applicative_Internal_Utils.apApplyFlipped(Options_Applicative_Types.parserApply)(Options_Applicative_Internal_Utils.apApplyFlipped(Options_Applicative_Types.parserApply)(opts)(Options_Applicative_Extra.helper))(showVersion))(progInfo)));
   })();
-  exports["versionString"] = versionString;
   exports["main"] = main;
   exports["opts"] = opts;
+  exports["readEmacsVersion"] = readEmacsVersion;
 })(PS);
 PS["Main"].main();

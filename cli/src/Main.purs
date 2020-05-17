@@ -1,16 +1,15 @@
 module Main where
 
+import Version (versionString)
 import Commands
 import Control.Applicative ((<$>), (<*>))
 import Data.Maybe (Maybe, optional)
 import Effect (Effect)
-import Options.Applicative (Parser, command, execParser, flag, help, helper, hidden, info, infoOption, long, metavar, progDesc, short, strArgument, strOption, subparser, (<**>))
-import Prelude (Unit, join, pure, ($), (<>))
+import Lib (EmacsVersion(..))
+import Options.Applicative (Parser, ReadM, command, execParser, flag, help, helper, hidden, info, infoOption, long, metavar, option, progDesc, short, strArgument, strOption, subparser, (<**>))
+import Options.Applicative.Types (readerAsk)
+import Prelude (Unit, join, pure, ($), (<>), bind)
 import Record.Extra (sequenceRecord)
-
--- TODO: Make the version number consistent
-versionString :: String
-versionString = "0.1"
 
 main :: Effect Unit
 main = join $ execParser (info (opts <**> helper <**> showVersion) progInfo)
@@ -62,6 +61,7 @@ opts =
             ( long "no-package-lint"
                 <> help "Don't run package-lint"
             )
+      , loEmacsVersion: emacsArg
       }
 
   byteCompileOpts =
@@ -93,5 +93,16 @@ opts =
 
   emacsArg =
     optional
-      $ strOption
-          (long "emacs" <> short 'e' <> metavar "VER" <> help "Emacs version to use for the task")
+      $ option readEmacsVersion
+          (long "emacs" <> short 'e' <> metavar "[RELEASE|snapshot|latest|minimum|all]" <> help "Emacs version to use for the task")
+
+readEmacsVersion :: ReadM EmacsVersion
+readEmacsVersion = do
+  raw <- readerAsk
+  case raw of
+    "snapshot" -> pure Snapshot
+    "latest" -> pure LatestRelease
+    "minimum" -> pure MinimumSupported
+    "all" -> pure AllSupportedVersions
+    -- Otherwise it is considered a release version (XX.X)
+    _ -> pure $ Release raw

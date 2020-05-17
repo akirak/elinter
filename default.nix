@@ -4,11 +4,23 @@ with (import ./nix/lib);
 with builtins;
 let
   pkgs = import ./nix/pkgs.nix;
+
+  # Example:
+  # > nix-shell default.nix -A shellWithoutBuild --run 'for p in $packages; do echo $p; packageEmacsVersions $p; done'
+  allEmacsVersions = sortEmacsVersions (emacsVersions emacs-ci);
+
+  latestEmacsVersion = with pkgs.lib;
+    last (builtins.filter (v: v != "snapshot") allEmacsVersions);
+
   # The base Emacs derivation used in this file
   emacsDerivation = with pkgs.lib;
     assert (isString emacs || isAttrs emacs);
     # If emacs is a string, assume it is a version
-    if isString emacs then emacsVersionToDerivation emacs-ci emacs else emacs;
+    if isString emacs then
+      emacsVersionToDerivation emacs-ci
+      (if emacs == "latest" then latestEmacsVersion else emacs)
+    else
+      emacs;
 
   # Emacs taking a list of packages as an argument
   emacsWithPackages_ = emacsWithPackages emacsDerivation;
@@ -27,17 +39,7 @@ let
   shellHookWithPackageInfo = packages_:
     with pkgs.lib;
     with builtins;
-    let
-      setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
-      # Example:
-      # > nix-shell default.nix -A shellWithoutBuild --run 'for p in $packages; do echo $p; packageEmacsVersions $p; done'
-      allEmacsVersions = sort (v1: v2:
-        if v1 == "snapshot" then
-          false
-        else if v2 == "snapshot" then
-          true
-        else
-          compareVersions v1 v2 < 0) (emacsVersions emacs-ci);
+    let setEmacsVersion = p: "emacsVersion[${p.pname}]=${p.emacsVersion}";
     in ''
       # An indexed array for storing a list of package names
       packages=(${
