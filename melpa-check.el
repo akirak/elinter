@@ -258,8 +258,9 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
     (let ((schema-out (f-join relative "schema.dhall")))
       (if melpa-check-dont-use-niv
           (melpa-check--url-copy-file melpa-check-schema-url schema-out t)
-        (let ((src (melpa-check--nix-eval
-                    "\"${(import ./nix/sources.nix).melpa-check}/schema.dhall\"")))
+        (let* ((melpa-check-root (melpa-check--nix-build-expr
+                                  "toString (import ./nix/sources.nix).melpa-check"))
+               (src (f-join melpa-check-root "schema.dhall")))
           (melpa-check--copy-file src schema-out t))))
     ;; Create a package configuration
     (with-temp-buffer
@@ -583,7 +584,9 @@ With a universal prefix, reset the configuration directory to DIR."
     (melpa-check--log "Reading output from \"%s\"" command)
     (with-temp-buffer
       (let ((status (apply 'call-process cmd
-                           nil (current-buffer) nil
+                           ;; Redirect stderr to the log buffer.
+                           nil (list (current-buffer) melpa-check-log-buffer)
+                           nil
                            args)))
         (if (eq status 0)
             (buffer-substring-no-properties (point-min) (point-max))
@@ -650,6 +653,14 @@ If the system type is unsupported by Nix, it throws an error."
      (executable-find melpa-check-nix-executable))
     (otherwise
      (user-error "This package does not work on your system, since it depends on Nix, which works only on gnu/linux and darwin now.  Your system: %s" system-type))))
+
+(defun melpa-check--nix-build-expr (expr)
+  "Instantiate EXPR and realise its result."
+  (let ((path (melpa-check--nix-eval expr)))
+    (string-trim-right
+     (melpa-check--read-process "nix-store"
+                                "-r"
+                                path))))
 
 (defun melpa-check--nix-eval (expr)
   "Evaluate EXPR using \"nix-instantiate\" command."
