@@ -185,6 +185,7 @@ in  Actions.buildMultiFileCiWorkflows config packages"
 
 ;;;; Initializing a project
 
+;;;###autoload
 (defun melpa-check-init-project ()
   "Initialize configuration files for an Emacs Lisp project."
   (interactive)
@@ -387,6 +388,7 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
                    src)))))))
 
 ;;;; Running tasks
+;;;###autoload
 (defun melpa-check-config (&optional dir)
   "Check the validity of the configuration using \"melpa-check config\".
 
@@ -399,7 +401,12 @@ With a universal prefix, reset the configuration directory to DIR."
     (when dir
       `("-f" ,(f-relative dir (melpa-check--project-root))))))
 
-;; TODO: Implement a command for running all tasks
+;;;###autoload
+(defun melpa-check-run-all ()
+  "Run \"melpa-check all\" command in the project."
+  (interactive)
+  (melpa-check--compile-project "melpa-check"
+    "all"))
 
 (defun melpa-check--compile-project (cmd &rest args)
   "Run CMD with ARGS using `compile' at the project root."
@@ -423,6 +430,7 @@ With a universal prefix, reset the configuration directory to DIR."
   (compile command))
 
 ;;;; Initialize CI configuration
+;;;###autoload
 (defun melpa-check-init-github-actions ()
   "Initialize CI configuration for GitHub Actions."
   (interactive)
@@ -441,6 +449,7 @@ With a universal prefix, reset the configuration directory to DIR."
       (save-buffer)
       (switch-to-buffer (current-buffer)))))
 
+;;;###autoload
 (defun melpa-check-generate-ci-config ()
   "Generate configuration files for CI."
   (interactive)
