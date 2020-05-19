@@ -170,7 +170,7 @@ in  Actions.buildMultiFileCiWorkflows config packages"
 
 (melpa-check--def-logged copy-file
   (cl-function
-   (lambda (file newname)
+   (lambda (file newname &rest _args)
      (format-message "Copy %s to %s"
                      (f-short file)
                      (f-short newname)))))
