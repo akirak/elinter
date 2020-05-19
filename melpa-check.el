@@ -584,8 +584,8 @@ With a universal prefix, reset the configuration directory to DIR."
     (melpa-check--log "Reading output from \"%s\"" command)
     (with-temp-buffer
       (let ((status (apply 'call-process cmd
-                           ;; Redirect stderr to the log buffer.
-                           nil (list (current-buffer) melpa-check-log-buffer)
+                           ;; Discard stderr.
+                           nil (list (current-buffer) nil)
                            nil
                            args)))
         (if (eq status 0)
