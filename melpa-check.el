@@ -203,7 +203,9 @@ in  Actions.buildMultiFileCiWorkflows config packages"
                                             (cons 13 (string-to-list "yn")))
                   (?y t)
                   ((?n 13) nil)))
-         (config-dir (if (yes-or-no-p "Use the default .melpa-check configuration directory? ")
+         (config-dir (if (yes-or-no-p (format-message
+                                       "Use the default .melpa-check configuration directory (in %s)? "
+                                       (f-short root)))
                          ".melpa-check"
                        (read-directory-name "Configuration directory: "
                                             root))))
