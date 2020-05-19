@@ -233,6 +233,7 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
         (default-directory (expand-file-name root)))
     ;; Add melpa-check to Nix sources
     (unless melpa-check-dont-use-niv
+      (message "Initializing nix sources...")
       (unless (f-exists-p (f-join "nix" "sources.nix"))
         (melpa-check--log "nix/sources.nix is not found. Initializing niv...")
         (melpa-check--niv-sync "init"))
