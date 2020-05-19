@@ -237,7 +237,7 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
         (melpa-check--log "nix/sources.nix is not found. Initializing niv...")
         (melpa-check--niv-sync "init"))
       ;; Check if melpa-check is already added before adding it
-      (unless (melpa-check--nix-eval "(import nix/sources.nix) ? melpa-check")
+      (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? melpa-check"))
         (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3")))
     ;; Create the configuration directory
     (cond
