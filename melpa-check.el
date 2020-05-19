@@ -61,6 +61,10 @@
   "Executable file for nix."
   :type 'file)
 
+(defcustom melpa-check-nix-instantiate-executable "nix-instantiate"
+  "Executable file for \"nix-instantiate\"."
+  :type 'file)
+
 (defcustom melpa-check-niv-executable "niv"
   "Executable file for niv."
   :type 'file)
@@ -166,7 +170,7 @@ in  Actions.buildMultiFileCiWorkflows config packages"
 
 (melpa-check--def-logged copy-file
   (cl-function
-   (lambda (file newname)
+   (lambda (file newname &rest _args)
      (format-message "Copy %s to %s"
                      (f-short file)
                      (f-short newname)))))
@@ -199,7 +203,9 @@ in  Actions.buildMultiFileCiWorkflows config packages"
                                             (cons 13 (string-to-list "yn")))
                   (?y t)
                   ((?n 13) nil)))
-         (config-dir (if (yes-or-no-p "Use the default .melpa-check configuration directory? ")
+         (config-dir (if (yes-or-no-p (format-message
+                                       "Use the default .melpa-check configuration directory (in %s)? "
+                                       (f-short root)))
                          ".melpa-check"
                        (read-directory-name "Configuration directory: "
                                             root))))
@@ -227,7 +233,12 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
         (default-directory (expand-file-name root)))
     ;; Add melpa-check to Nix sources
     (unless melpa-check-dont-use-niv
-      (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3"))
+      (unless (f-exists-p (f-join "nix" "sources.nix"))
+        (melpa-check--log "nix/sources.nix is not found. Initializing niv...")
+        (melpa-check--niv-sync "init"))
+      ;; Check if melpa-check is already added before adding it
+      (unless (melpa-check--nix-eval "(import nix/sources.nix) ? melpa-check")
+        (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3")))
     ;; Create the configuration directory
     (cond
      ((not (file-exists-p config-dir))
@@ -247,8 +258,9 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
     (let ((schema-out (f-join relative "schema.dhall")))
       (if melpa-check-dont-use-niv
           (melpa-check--url-copy-file melpa-check-schema-url schema-out t)
-        (let ((src (melpa-check--nix-eval
-                    "\"${(import ./nix/sources.nix).melpa-check}/schema.dhall\"")))
+        (let* ((melpa-check-root (melpa-check--nix-build-expr
+                                  "toString (import ./nix/sources.nix).melpa-check"))
+               (src (f-join melpa-check-root "schema.dhall")))
           (melpa-check--copy-file src schema-out t))))
     ;; Create a package configuration
     (with-temp-buffer
@@ -572,7 +584,9 @@ With a universal prefix, reset the configuration directory to DIR."
     (melpa-check--log "Reading output from \"%s\"" command)
     (with-temp-buffer
       (let ((status (apply 'call-process cmd
-                           nil (current-buffer) nil
+                           ;; Redirect stderr to the log buffer.
+                           nil (list (current-buffer) melpa-check-log-buffer)
+                           nil
                            args)))
         (if (eq status 0)
             (buffer-substring-no-properties (point-min) (point-max))
@@ -640,12 +654,19 @@ If the system type is unsupported by Nix, it throws an error."
     (otherwise
      (user-error "This package does not work on your system, since it depends on Nix, which works only on gnu/linux and darwin now.  Your system: %s" system-type))))
 
+(defun melpa-check--nix-build-expr (expr)
+  "Instantiate EXPR and realise its result."
+  (let ((path (melpa-check--nix-eval expr)))
+    (string-trim-right
+     (melpa-check--read-process "nix-store"
+                                "-r"
+                                path))))
+
 (defun melpa-check--nix-eval (expr)
   "Evaluate EXPR using \"nix-instantiate\" command."
   (melpa-check--log "Evaluating Nix expression %s" expr)
   (melpa-check--json-read-string
-   (melpa-check--read-process melpa-check-nix-executable
-                              "instantiate"
+   (melpa-check--read-process melpa-check-nix-instantiate-executable
                               "--eval"
                               "--json"
                               "--expr" expr)))
