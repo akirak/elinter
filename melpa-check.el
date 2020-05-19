@@ -61,6 +61,10 @@
   "Executable file for nix."
   :type 'file)
 
+(defcustom melpa-check-nix-instantiate-executable "nix-instantiate"
+  "Executable file for \"nix-instantiate\"."
+  :type 'file)
+
 (defcustom melpa-check-niv-executable "niv"
   "Executable file for niv."
   :type 'file)
@@ -644,8 +648,7 @@ If the system type is unsupported by Nix, it throws an error."
   "Evaluate EXPR using \"nix-instantiate\" command."
   (melpa-check--log "Evaluating Nix expression %s" expr)
   (melpa-check--json-read-string
-   (melpa-check--read-process melpa-check-nix-executable
-                              "instantiate"
+   (melpa-check--read-process melpa-check-nix-instantiate-executable
                               "--eval"
                               "--json"
                               "--expr" expr)))
