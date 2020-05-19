@@ -401,7 +401,12 @@ With a universal prefix, reset the configuration directory to DIR."
     (when dir
       `("-f" ,(f-relative dir (melpa-check--project-root))))))
 
-;; TODO: Implement a command for running all tasks
+;;;###autoload
+(defun melpa-check-run-all ()
+  "Run \"melpa-check all\" command in the project."
+  (interactive)
+  (melpa-check--compile-project "melpa-check"
+    "all"))
 
 (defun melpa-check--compile-project (cmd &rest args)
   "Run CMD with ARGS using `compile' at the project root."
