@@ -231,7 +231,12 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
         (default-directory (expand-file-name root)))
     ;; Add melpa-check to Nix sources
     (unless melpa-check-dont-use-niv
-      (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3"))
+      (unless (f-exists-p (f-join "nix" "sources.nix"))
+        (melpa-check--log "nix/sources.nix is not found. Initializing niv...")
+        (melpa-check--niv-sync "init"))
+      ;; Check if melpa-check is already added before adding it
+      (unless (melpa-check--nix-eval "(import nix/sources.nix) ? melpa-check")
+        (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3")))
     ;; Create the configuration directory
     (cond
      ((not (file-exists-p config-dir))
