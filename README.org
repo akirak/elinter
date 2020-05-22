@@ -65,7 +65,7 @@ It provides the following features for convenience:
 
 - Interactive configuration of packages from inside Emacs.
 - Type-safe package and CI configuration in [[https://github.com/dhall-lang/dhall-lang][Dhall]].
-- Command line interface for easily running linting tasks both locally use on CI.
+- Command line interface for easily running linting tasks both locally on CI.
 - [[https://github.com/akirak/emacs-package/][GitHub action]] which provides reproducible installation of the program. =melpa-check= itself is version-locked in each repository and can be easily updated using [[https://github.com/nmattia/niv][niv]].
 ** Prerequisites
 Since this package heavily relies on the [[https://nixos.org/nix/][Nix]] package manager, you will need to install Nix on your machine, and your operating system must be either Linux or macOS. Windows does not support Nix, but you will be able to use it inside Windows Subsystem for Linux (WSL).
@@ -344,7 +344,7 @@ In addition to =snapshot= and all concrete release versions supported by =nix-em
 
 - =minimum= :: Minimum Emacs version supported by the package, as specified in the package configuration.
 - =latest= :: Latest stable release, i.e. a maximum version before =snapshot=.
-- =all= :: All available versions including =minimum= and later.
+- =all= :: All supported versions since =minimum=.
 
 It is recommended that you use either =latest= or =snapshot= for linting, because it includes the latest version of =checkdoc=.
 Emacs versions before =25.1= cause an error in linting in =melpa-check= due to missing dependencies.
