@@ -1,9 +1,371 @@
-* melpa-check (formerly emacs-package-checker)
-This branch is currently a work in progress but is going to be HEAD in the near future.
-
+# -*- mode: org; mode: org-make-toc -*-
+* melpa-check
 #+BEGIN_HTML
 <a href="https://github.com/akirak/melpa-check/actions"><img alt="Build Status" src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fakirak%2Fmelpa-check%2Fbadge%3Fref%3Dv3&style=flat" /></a>
 #+END_HTML
-** Installation
+
+=melpa-check= is a framework for linting and testing Emacs Lisp packages.
+Its main goal is to let package authors easily set up continuous integration (CI) before they send PRs to [[https://melpa.org/#/][MELPA]].
+It can be run either locally or on CI.
+
+It focuses on reproducibility, ease of configuration, and convenience to run tests.
+
+It has a built-in integration with [[https://github.com/purcell/nix-emacs-ci][nix-emacs-ci]] by Steve Purcell, which lets you run package tests on older versions of Emacs, while enabling you to use your preferred version of Emacs for your own tasks.
+
+Even though this program is named after MELPA, it is not written by authors of the service.
+** Table of contents
+:PROPERTIES:
+:TOC:      siblings 
+:END:
+-  [[#features][Features]]
+-  [[#prerequisites][Prerequisites]]
+-  [[#quickstart][Quickstart]]
+  -  [[#installing-the-emacs-lisp-frontend-and-the-cli][Installing the Emacs Lisp frontend and the CLI]]
+  -  [[#configuring-a-project][Configuring a project]]
+  -  [[#running-tests-locally][Running tests locally]]
+  -  [[#configuring-github-action][Configuring GitHub Action]]
+  -  [[#running-ci-on-github-actions][Running CI on GitHub Actions]]
+-  [[#overview][Overview]]
+  -  [[#typical-project-structure][Typical project structure]]
+-  [[#usage][Usage]]
+  -  [[#configuring-packages][Configuring packages]]
+    -  [[#verifying-the-package-configuration][Verifying the package configuration]]
+  -  [[#configuring-ci][Configuring CI]]
+    -  [[#github-actions][GitHub Actions]]
+    -  [[#other-services][Other services]]
+  -  [[#running-linting-and-testing-locally][Running linting and testing locally]]
+    -  [[#cli][CLI]]
+    -  [[#in-emacs][In Emacs]]
+  -  [[#maintenance][Maintenance]]
+    -  [[#updating-melpa-check-in-your-project][Updating melpa-check in your project]]
+    -  [[#garbage-collection-of-the-nix-stores][Garbage collection of the Nix stores]]
+-  [[#supplementary-information][Supplementary information]]
+  -  [[#abstract-emacs-versions-supported-by-the-cli][Abstract Emacs versions supported by the CLI]]
+  -  [[#the-default-emacs-version][The default Emacs version]]
+-  [[#development][Development]]
+-  [[#license][License]]
+
+** Features
+=melpa-check= is capable of the following features that are not known to be supported by other existing alternatives:
+
+- Testing multiple packages in a single project/repository: With local dependencies, it allow you to run =package-lint= and other tasks even if your package depends on another package that is not available on MELPA yet.
+- Integration with =nix-emacs-ci,= which lets you run =byte-compile= and tests with a specific version of Emacs.
+- It even allows you to run tests with all Emacs versions specified by your package without defining a matrix on CI.
+
+The following is a list of currently supported linting/testing backends:
+
+- =checkdoc=
+- [[https://github.com/purcell/package-lint][package-lint]]
+- =byte-compile=
+- [[https://github.com/jorgenschaefer/emacs-buttercup/][buttercup]]
+
+If you need support for other backends, feel free to [[https://github.com/akirak/melpa-check/issues][create an issue]] on GitHub.
+
+It provides the following features for convenience:
+
+- Interactive configuration of packages from inside Emacs.
+- Type-safe package and CI configuration in [[https://github.com/dhall-lang/dhall-lang][Dhall]].
+- Command line interface for easily running linting tasks both locally use on CI.
+- [[https://github.com/akirak/emacs-package/][GitHub action]] which provides reproducible installation of the program. =melpa-check= itself is version-locked in each repository and can be easily updated using [[https://github.com/nmattia/niv][niv]].
+** Prerequisites
+Since this package heavily relies on the [[https://nixos.org/nix/][Nix]] package manager, you will need to install Nix on your machine, and your operating system must be either Linux or macOS. Windows does not support Nix, but you will be able to use it inside Windows Subsystem for Linux (WSL).
+
+The Emacs frontend requires Emacs 26.1 or later.
+For development, you will also require [[https://github.com/nmattia/niv][niv]] for management of Nix dependencies. It is not required on CI.
+** Quickstart
+*** Installing the Emacs Lisp frontend and the CLI
+=melpa-check= provides an Emacs frontend for configuring your projects.
+Like other Emacs packages, clone the repository and load =melpa-check= package:
+
+#+begin_src emacs-lisp
+  (use-package melpa-check)
+#+end_src
+
+It is also recommended that you install [[https://github.com/psibi/dhall-mode][dhall-mode]] for editing configuration files.
+Optionally, you can install and configure [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] to enable type-checking in Dhall.
+
+You also have to install [[https://nixos.org/nix/][Nix]]:
+
+#+begin_src shell
+curl -L https://nixos.org/nix/install | sh
+#+end_src
+
+and [[https://github.com/nmattia/niv#install][niv]]:
+
+#+begin_src shell
+  # Available on master
+  nix-env -i niv
+#+end_src
+
+You have to install the command line interface of =melpa-check=.
+Run the following command:
+
+#+begin_src shell
+  nix-env -iA cli -f https://github.com/akirak/melpa-check/archive/v3.tar.gz
+#+end_src
+
+=melpa-check= depends on [[https://github.com/cachix/cachix][cachix]] and the cache server for [[https://github.com/purcell/nix-emacs-ci][nix-emacs-ci]], but those dependencies can be installed globally using the following command:
+
+#+begin_src shell
+melpa-check deps
+#+end_src
+*** Configuring a project
+Before you get started with =melpa-check= for your Emacs Lisp project, your source files should be already containing library headers such as =Package-Requires= and =Version=. They are used by =melpa-check= to generate an initial package configuration. If any of the required information is missing, the Emacs command may asks you for a value or abort operation.
+
+To interactively generate configuration files for your project, visit a buffer in the project in Emacs and run =melpa-check-init-project=.
+The process will go on as follows:
+
+1. If the file is not inside a Git repository, enter the root directory of your working tree.
+2. Choose if your project consists of multiple packages or a single package. Answer =n= if it consists of a single package.
+3. Enter a directory for the configuration files of =melpa-check=. To select the default value (i.e. =.melpa-check= in the project root), answer =y=.
+4. Select Emacs Lisp sources files of your package. You don't have to include test files.
+5. It enumerates some possible options for your MELPA recipe. Select one or enter it by yourself.
+6. If you have selected a multi-package project in the step 2, you will be again asked for source files of the next package (step 4). Repeat until you enter nil.
+
+Now your project contains =nix= and =.melpa-check= directory.
+The former contains Nix dependencies including the latest version of =melpa-check=, and the latter contains configuration files for =melpa-check=.
+You can configure your packages by editing =.melpa-check/packages.dhall=, whose schema is defined in =schema.dhall= in the same directory.
+*** Running tests locally
+To lint your package locally from inside Emacs, first run =melpa-check-config= to check your package configuration and then run =melpa-check-run-all= command to run all tasks. Both commands uses =compilation-mode= to run =melpa-check= CLI.
+*** Configuring GitHub Action
+To configure a GitHub Action workflow for your project, run =melpa-check-init-github-action= command in Emacs.
+It generates a meta file in =.melpa-check/ci/github.dhall=.
+
+You can add some preferences to =Actions.MultiFileCiConfig::{...}=:
+
+#+begin_src dhall
+  let Actions =
+        https://raw.githubusercontent.com/akirak/melpa-check/v3/dhall/github-actions.dhall
+
+  let packages = ../packages.dhall
+
+  let config = Actions.MultiFileCiConfig::{
+    -- Add your configuration here
+  }
+
+  in  Actions.buildMultiFileCiWorkflows config packages
+#+end_src
+
+or replace the value of =config= with =Actions.MultiFileCiConfig.default= to use the default settings:
+
+#+begin_src dhall
+  let Actions =
+        https://raw.githubusercontent.com/akirak/melpa-check/v3/dhall/github-actions.dhall
+
+  let packages = ../packages.dhall
+
+  let config = Actions.MultiFileCiConfig.default
+
+  in  Actions.buildMultiFileCiWorkflows config packages
+#+end_src
+
+After you finish with your Dhall configuration file, run =melpa-check-generate-ci-config=.
+It reads all dhall files in =.melpa-check/ci= directory and generates configuration files for continuous integration.
+Unless your configuration file contains an error, you will find YAML files in =.github/workflows=, with one file for each package.
+*** Running CI on GitHub Actions
+Commit all files to the Git repository and push the branch to GitHub.
+GitHub Actions run =melpa-check= for each package.
+
+After a while, it finishes tests, which should be all green.
+
+Let's see an example in the repository of [[https://github.com/akirak/org-multi-wiki/actions][org-multi-wiki]], which is a multi-package example by the same author of =melpa-check=. Each package has a separate workflow:
+
+#+BEGIN_HTML
+<img src="https://raw.githubusercontent.com/akirak/melpa-check/screenshots/melpa-check-1.png" alt="GitHub Actions screen 1">
+#+END_HTML
+
+and each workflow has separate steps for linting and testing, with =byte-compile= and tests run on all Emacs versions:
+
+#+BEGIN_HTML
+<img src="https://raw.githubusercontent.com/akirak/melpa-check/screenshots/melpa-check-2.png" alt="GitHub Actions screen 2">
+#+END_HTML
+
+You can also have separate CI status badges for individual packages:
+
+#+BEGIN_HTML
+<img src="https://raw.githubusercontent.com/akirak/melpa-check/screenshots/melpa-check-badge-examples.png" alt="CI status badge examples">
+#+END_HTML
+
+** Overview
+*** Typical project structure
+With =melpa-check= configured, a typical Emacs Lisp project has the following structure:
+
+- =.github/workflows/=: Directory containing workflow definitions consumed by GitHub Actions.
+  - =PACKAGE.yml=: CI configuration for the package, generated by the Emacs frontend. If you have multiple packages in the repository, there will be a workflow for each package.
+- =.melpa-check/=: Directory containing configuration files for =melpa-check=.
+  - =ci/=: Directory containing configuration files for CI. Files are written in Dhall, and converted to specific formats supported by each service using the Emacs frontend.
+    - =github.dhall=: CI configuration file for GitHub Actions.
+  - =packages.dhall=: Package configuration of the project, which is interactively configured at first by the Emacs frontend. Then you can edit it on Emacs.
+  - =schema.dhall=: Dhall schema for the package configuration automatically installed by the Emacs frontend. You usually don't edit this file manually.
+  - =default.nix=: Nix entry point for the project, which is generated by the Emacs frontend. You usually don't edit this file manually.
+- =nix/=: Directory specifying Nix dependencies. Files in this directory are maintained by the =niv= tool, and you usually don't edit them manually.
+  - =sources.json=: JSON file specifying individual Nix dependencies.
+  - =sources.nix=: Nix file for referencing the dependencies in Nix.
+- =PACKAGE.el=: Source file for the package.
+- =PACKAGE-test.el=: Optional test file for the package.
+- =tests/=: Optional directory containing test files for the package.
+- =README=: README for the project. Its format can be Markdown, Org, or whatever you like.
+- =CHANGELOG.md=: Optional change log for the project.
+- =LICENSE=: Document describing a license for the project.
+- =.gitignore=: Configuration file listing files to be ignored by Git.
+
+Of these files and directories, =.github=, =.melpa-check=, and =nix= directories are generated by =melpa-check=. You have to create the other files by yourself.
 ** Usage
-*** Initializing a project                                          :elisp:
+*** Configuring packages
+You can configure your packages by editing =.melpa-check/packages.dhall=.
+The file specifies a list of packages, and the package type is defined in the schema (=schema.dhall=).
+
+With [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] and [[https://github.com/dhall-lang/dhall-haskell/tree/master/dhall-lsp-server][dhall-lsp-server]], the package configuration is checked against the schema.
+Also, =dhall-format= (which is based on [[https://github.com/purcell/reformatter.el][reformatter]]) provided by =dhall-mode= formats dhall buffers if you have installed [[https://github.com/dhall-lang/dhall-haskell][dhall]] command.
+
+The package type has the following fields:
+
+- =pname= :: Name of the package, as registered on MELPA.
+- =version= :: Package version. This should be the same as in =Version= header in the source file.
+- =emacsVersion= :: Minimum version of Emacs required by the package, e.g. =25.1=.
+- =files= :: Source files of the package. This should be a list of relative paths from the project root.
+- =dependencies= :: Emacs Lisp packages required by the package. The packages should be on MELPA or local (i.e. residing in the same project).
+- =localDependencies= :: Dependencies defined within the same project. Default: empty.
+- =mainFile= :: Main file of the package, i.e. =package-lint-main-file= in =package-lint=. Default: none.
+- =buttercupTests= :: Buttercup test files for the package. This is a list of file patterns relative from the project root. It supports =extglob= of =bash=, so =*-test?(s).el= matches both =hello-test.el= and =hello-tests.el=. Default: a sensible default value.
+- =recipe= :: MELPA-style recipe of the package. [[https://github.com/melpa/melpa#recipe-format][Syntax]]
+
+You can omit fields that use the default values.
+
+Some notes on the Dhall syntax:
+
+- An empty list requires a type signature, e.g. =[] : List Text=.
+- An optional type is either =Some VALUE= (e.g. =Some "melpa-check.el"=) or =None TYPE= (e.g. =None Text=).
+**** Verifying the package configuration
+While =Dhall= supports syntax checking of the package configuration on the fly, it is not capable of checking against the semantics.
+
+To aid this issue, =melpa-check= provides verification of the package configuration itself.
+To check the configuration, run =melpa-check-config= in Emacs or =melpa-check config= command in CLI.
+The CLI command must be run at the project root, but the Emacs command can be run at anywhere inside the project.
+By running this command before pushing it to remote, you can prevent a failure from a configuration mistake.
+This feature is not comprehensive for now, but it can check if the package version is consistent with source files.
+*** Configuring CI
+=melpa-check= is capable of generating configuration files for CI from Dhall.
+This is an extra feature intended for saving your time.
+You can still manually configure CI if you don't like the output produced by it or tweak the generated files to your liking.
+
+The basic step is as follows:
+
+1. Generate a Dhall configuration file using an Emacs command for a specific service.
+2. Edit the configuration file.
+3. Generate actual configuration files for the service using =melpa-check-generate-ci-config= and review the output.
+
+This feature supports only GitHub Actions at present.
+For other services such as CircleCI and TravisCI, you have to manually configure workflows.
+**** GitHub Actions
+=melpa-check-init-github-actions= generates a configuration file for GitHub Actions.
+The file name is =.melpa-check/ci/github.dhall=.
+It depends on emacs-lisp action created by the same author.
+
+All of the fields have defaults, so you don't need any configuration.
+To omit all fields, use =MultiFileCiConfig.default= as the entire value.
+
+It consists of =lint= and =test= steps. The former runs =checkdoc= and =package-lint=, and the latter =byte-compile= and buttercup tests.
+
+=MultiFileCiConfig=, which generates one workflow for each package, has the following fields:
+
+- =triggers= :: Events that triger the workflow. Actually it is a function that takes a package as an argument. Default: on =push= event, ignoring changes in Markdown and Org files.
+- =lintOn= :: Operating systems where lint is run. Default: =ubuntu-latest=.
+- =lintEmacsVersion= :: Emacs version with which lint is run. Default: latest release.
+- =testOn= :: Operating systems where tests are run. Default: =ubuntu-latest=.
+- =testEmacsVersion= :: Emacs version with which tests are run. Default: all versions since the minimum version of the package.
+- =fileNameFn= :: Function that determines the workflow file name. Default: the package name.
+- =actionnameFn= :: Function that determines the file name. Default: the package name + " CI".
+- =skipTests= :: If =True=, don't include tests in the test step. Only =byte-compile= is run. Default: =False=.
+**** Other services
+You can check your packages on any CI service using the =melpa-check= CLI.
+Your workflow should include the following steps:
+
+1. Install Nix.
+2. Install the CLI of =melpa-check=.
+3. Run =melpa-check deps= to install cachix and enable it.
+4. In the project, run =melpa-check config= to verify your package configuration.
+5. Run =melpa-check lint [-e latest] [PACKAGE]=.
+6. Run =melpa-check byte-compile [-e all] [PACKAGE]=.
+7. Run =melpa-check buttercup [-e all] [PACKAGE]= (optional).
+
+For details on the commands, refer to the following subsection.
+*** Running linting and testing locally
+You can run tests by either running a CLI command at the project root or running an Emacs command at any directory inside the project.
+**** CLI
+The =melpa-check= CLI is basically a convenient wrapper around Nix to run linting, byte-compile, and tests without hussle.
+It runs tasks on a package on a specific version of Emacs.
+
+It provides the following subcommands for linting and testing:
+
+- =melpa-check lint [PACKAGE]= :: Runs =checkdoc= and =package-lint= on files in the package.
+- =melpa-check byte-compile [PACKAGE]= :: Runs byte-compile on files in the package.
+- =melpa-check buttercup [PACKAGE]= :: Runs buttercup tests in the package.
+- =melpa-check all= :: Runs all tasks on all packages in the project. This is convenient for checking the entire project locally.
+
+If the program encounters an error, it returns a non-zero exit code.
+
+If you have multiple packages in the project, these commands but =all= require a package name as the argument.
+If you have only one package in the project, you can omit the package name.
+
+You can pass =-e VERSION= option to specify an Emacs version.
+=VERSION= can be either concrete (i.e. a specific release like =26.1=) or abstract (e.g. the latest release).
+**** In Emacs
+=melpa-check-run-all= command wraps =melpa-check all= CLI command, which runs all tasks on all packages in the project.
+It can be run from any directory inside a project.
+*** Maintenance
+**** Updating melpa-check in your project
+=melpa-check= is version-locked in each project.
+Unless there is an API/schema change, you can update it to the latest version by running =niv= in the project:
+
+#+begin_src shell
+  niv update melpa-check
+#+end_src
+**** Garbage collection of the Nix stores
+=melpa-check= creates a bunch of immutable directories called Nix stores, which are placed in =/nix/store=.
+It consumes plenty of storage space and eventually causes running out of the storage in local use.
+
+To free up unreachable stores in Nix, run the following command:
+
+#+begin_src shell
+  nix-collect-garbage
+#+end_src
+
+or even:
+
+#+begin_src shell
+nix-collect-garbage -d
+#+end_src
+
+For details, read the manual on [[https://nixos.org/nix/manual/#name-5][nix-collect-garbage]] for usage or [[https://nixos.org/nixos/nix-pills/garbage-collector.html][Nix Pills]] for deeper understanding.
+** Supplementary information
+*** Abstract Emacs versions supported by the CLI
+In addition to =snapshot= and all concrete release versions supported by =nix-emacs-ci=, =melpa-check= CLI commands support the following abstract versions for running Emacs:
+
+- =minimum= :: Minimum Emacs version supported by the package, as specified in the package configuration.
+- =latest= :: Latest stable release, i.e. a maximum version before =snapshot=.
+- =all= :: All available versions including =minimum= and later.
+
+It is recommended that you use either =latest= or =snapshot= for linting, because it includes the latest version of =checkdoc=.
+Emacs versions before =25.1= cause an error in linting in =melpa-check= due to missing dependencies.
+
+=all= is recommended for =byte-compile= and buttercup tests in CI, but in local tests, you might prefer =minimum= because it finishes faster.
+*** The default Emacs version
+Unless you specify an Emacs version, all linting and testing tasks are run on a specific version of Emacs.
+By default, it is the snapshot version of Emacs, which is occasionally updated in the repository of =nix-emacs-ci=.
+You can change it to another version by editing =.melpa-check/default.nix=.
+** Development
+Any feedback and PR are welcome.
+
+=melpa-check= is a polyglot project written in several languages:
+
+- Its core is written in Nix, a lazily-evaluted, purely functional language for writing build systems.
+- The CLI is written in [[https://www.purescript.org/][PureScript]], which is a strongly-typed functional programming language that compiles to JavaScript.
+- The Emacs frontend is written in Emacs Lisp.
+- Package configuration and CI configuration are written in Dhall, which is a statically typed configuration language without turing completeness.
+- Bash is used for shell scripting in the Nix and PureScript parts.
+- [[https://github.com/akirak/emacs-package][The GitHub action]] in a separate repository is written in TypeScript and wraps =nix= and =melpa-check= commands.
+
+TODO: Add instructions for compiling and testing the programs
+** License
+GPL v3
