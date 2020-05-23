@@ -310,6 +310,9 @@ If you have only one package in the project, you can omit the package name.
 
 You can pass =-e VERSION= option to specify an Emacs version.
 =VERSION= can be either concrete (i.e. a specific release like =26.1=) or abstract (e.g. the latest release).
+
+For more commands and options, run =melpa-check --help= to display the help.
+It provides a comprehensive information on the command line interface.
 **** In Emacs
 =melpa-check-run-all= command wraps =melpa-check all= CLI command, which runs all tasks on all packages in the project.
 It can be run from any directory inside a project.
