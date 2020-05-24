@@ -262,7 +262,17 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
         (let* ((melpa-check-root (melpa-check--nix-build-expr
                                   "toString (import ./nix/sources.nix).melpa-check"))
                (src (f-join melpa-check-root "schema.dhall")))
-          (melpa-check--copy-file src schema-out t))))
+          ;; Copy schema.dhall, unless
+          ;; (1) there is no existing file in the output
+          ;; (2) or the content is different and the user permits
+          (when (or (not (f-exists-p schema-out))
+                    (and (not (equal (melpa-check--file-sha1 src)
+                                     (melpa-check--file-sha1 schema-out)))
+                         (yes-or-no-p "Overwrite the existing schema.dhall?")
+                         (progn
+                           (melpa-check--delete-file schema-out)
+                           t)))
+            (melpa-check--copy-file src schema-out t)))))
     ;; Create a package configuration
     (with-temp-buffer
       (setq buffer-file-name (f-join config-dir "default.nix"))
@@ -536,6 +546,12 @@ With a universal prefix, reset the configuration directory to DIR."
                      (f-short skipped))))))))
 
 ;;;; Utility functions
+
+(defun melpa-check--file-sha1 (file)
+  "Retrieve sha1sum of FILE."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (sha1 (current-buffer))))
 
 ;;;;; Project files
 
