@@ -176,3 +176,15 @@ buttercupCommand mVer mPackage =
   generateInternalBlock innerBuilder "prepareButtercup" (Just "--no-build-output") mVer mPackage
     <> " >/dev/null && "
     <> generateInternalBlock innerShell "buttercup" Nothing mVer mPackage
+
+ertCommand :: Maybe EmacsVersion -> Maybe String -> String
+ertCommand mVer mPackage =
+  generateInternalBlock innerBuilder "prepareErt" (Just "--no-build-output") mVer mPackage
+    <> " >/dev/null && "
+    <> generateInternalBlock innerShell "ert" Nothing mVer mPackage
+
+testCommand :: Maybe EmacsVersion -> Maybe String -> String
+testCommand mVer mPackage =
+  generateInternalBlock innerBuilder "prepareAllTests" (Just "--no-build-output") mVer mPackage
+    <> " >/dev/null && "
+    <> generateInternalBlock innerShell "allTests" Nothing mVer mPackage
