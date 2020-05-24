@@ -179,6 +179,13 @@ in {
   buttercup = mapPackage checkers.buttercup
     // checkers.buttercup (onlyPackage "buttercup");
 
+  # A task to silent build output in buttercup.
+  # To be run by nix-build with --no-build-output as a preparation step.
+  prepareErt = mapPackage checkers.prepareErt
+    // checkers.prepareErt (onlyPackage "prepareErt");
+
+  ert = mapPackage checkers.ert // checkers.ert (onlyPackage "ert");
+
   prepareShell = allOrOne emacsWithLocalPackages;
 
   shell = let

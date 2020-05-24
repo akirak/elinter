@@ -18,6 +18,10 @@ let Pattern
     : Type
     = Text
 
+let TestDriver
+    : Type
+    = < ert | buttercup >
+
 let defaultTests
     : List Pattern
     = [ "test?(s).el", "test-*.el", "*-test?(s).el", "test?(s)/*.el" ]
@@ -30,6 +34,8 @@ in  { Package =
           , emacsVersion : Version
           , localDependencies : List PackageName
           , dependencies : List PackageName
+          , testDrivers : List TestDriver
+          , ertTests : List Pattern
           , buttercupTests : List Pattern
           , mainFile : Optional File
           , recipe : Recipe
@@ -37,9 +43,12 @@ in  { Package =
       , default =
         { localDependencies = [] : List File
         , mainFile = None File
+        , testDrivers = [ TestDriver.ert ]
+        , ertTests = defaultTests
         , buttercupTests = defaultTests
         }
       }
     , noTests = [] : List Pattern
     , defaultTests = defaultTests : List Pattern
+    , TestDriver
     }
