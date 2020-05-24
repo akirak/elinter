@@ -363,7 +363,8 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
                   (cl-loop for (key . value) in (melpa-check-package--to-alist package)
                            when (or value
                                     ;; Allow empty value
-                                    (eq key 'dependencies))
+                                    (memq key '(dependencies
+                                                testDrivers)))
                            concat (format "  , %s = %s\n"
                                           key (format-value key value)))
                   "}\n"))
@@ -372,6 +373,10 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
           (cl-case key
             (recipe (concat "''\n" value "\n''"))
             (mainFile (concat "Some " (serialize-obj value)))
+            (testDrivers (if value
+                             (format "[ %s ]"
+                                     (--map (s-prepend "TestDriver." it) value))
+                           "[] : List TestDriver"))
             ((dependencies buttercupTests) (if value
                                                (serialize-obj value)
                                              "[] : List Text"))
@@ -383,7 +388,9 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
             (list (format "[ %s ]" (mapconcat #'serialize-obj
                                               obj ", ")))
             (otherwise (prin1-to-string obj)))))
-      (insert "let Package = (./schema.dhall).Package\n"
+      (insert "let Schema = ./schema.dhall\n\n"
+              "let Package = Schema.Package\n\n"
+              "let TestDriver = Schema.TestDriver\n\n"
               "in ["
               (mapconcat #'format-package packages ", ")
               "]")

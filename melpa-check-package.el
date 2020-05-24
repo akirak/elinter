@@ -50,7 +50,7 @@ See `package-build-default-files-spec' for an authentic value."
 
 (cl-defstruct melpa-check-package
   pname version emacsVersion files dependencies localDependencies
-  buttercupTests mainFile recipe)
+  testDrivers ertTests buttercupTests mainFile recipe)
 
 (defun melpa-check-package--to-alist (package)
   "Build an alist containing data for PACKAGE.
@@ -62,6 +62,8 @@ The result may contain nil values."
     (files . ,(melpa-check-package-files package))
     (dependencies . ,(melpa-check-package-dependencies package))
     (localDependencies . ,(melpa-check-package-localDependencies package))
+    (testDrivers . ,(melpa-check-package-testDrivers package))
+    (ertTests . ,(melpa-check-package-ertTests package))
     (buttercupTests . ,(melpa-check-package-buttercupTests package))
     (mainFile . ,(melpa-check-package-mainFile package))
     (recipe . ,(melpa-check-package-recipe package))))
@@ -135,6 +137,12 @@ to the root of the project (usually a Git repository)."
                                            (-map #'car (read (car deps-raw)))))))))))
     (setf (melpa-check-package-dependencies package)
           (-map #'symbol-name (-uniq (delq 'emacs dependencies))))
+    (setf (melpa-check-package-testDrivers package)
+          (cl-case (read-char-choice "Test driver [e: ert, b: buttercup, n: none]: "
+                                     (string-to-list "ebn"))
+            (?e (list "ert"))
+            (?b (list "buttercup"))
+            (?n nil)))
     ;; Set recipe
     (let ((fetcher-spec (melpa-check-git--fetcher-spec))
           (files-spec (melpa-check-package--files-spec files
