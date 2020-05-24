@@ -157,16 +157,12 @@ let toMultiFileCiWorkflow =
               ]
 
         let testsWanted =
-              not (config.skipTests || null Text package.buttercupTests)
+              not config.skipTests || null schema.TestDriver package.testDrivers
 
         let testSteps =
                     if testsWanted
 
-              then  [ withEmacsVersion
-                        config.testEmacsVersion
-                        "Test using buttercup"
-                        "buttercup"
-                    ]
+              then  [ withEmacsVersion config.testEmacsVersion "Tests" "test" ]
 
               else  [] : List Step
 
