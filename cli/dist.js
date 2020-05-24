@@ -7601,7 +7601,7 @@ var PS = {};
       var withAllPackages = function (cmd) {
           return "for p in ${packages[*]}; do\x0a" + (cmd(opts.emacsVersion)(new Data_Maybe.Just("$p")) + "\x0adone");
       };
-      return Lib.runInNixShell(Data_Functor.map(Data_Functor.functorArray)(withAllPackages)([ Lib.checkdocCommand, Lib.packageLintCommand, Lib.byteCompileCommand, Lib.buttercupCommand ]));
+      return Lib.runInNixShell(Data_Functor.map(Data_Functor.functorArray)(withAllPackages)([ Lib.checkdocCommand, Lib.packageLintCommand, Lib.byteCompileCommand, Lib.testCommand ]));
   };
   var listPackages = function __do() {
       var configPath = Lib.getConfigPath();
