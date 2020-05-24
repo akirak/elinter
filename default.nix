@@ -115,6 +115,10 @@ let
   # Generate an attr set from packages with a function applied on each value
   mapPackage = f: with pkgs.lib; mapAttrs (name: package: f package) packages;
 
+  mapPackage1 = f: task: (mapPackage f // { default = f (onlyPackage task); });
+
+  mapPackageWithDefault = f: default: mapPackage f // { default = f default; };
+
   # Generate an attr set for both individual packages and all packages.
   #
   # Each package name points to a derivation on a package, and "all"
@@ -150,48 +154,37 @@ in {
     packageValues = attrValues packages;
     default = if length packageValues == 1 then
       checkers.byte-compile (head packageValues)
-    else {
-      all = checkers.byte-compile;
-    };
-  in mapPackage checkers.byte-compile // default;
+    else
+      forEachPackage checkers.byte-compile;
+  in mapPackage checkers.byte-compile // { inherit default; };
 
-  checkdoc = mapPackage checkers.checkdoc // checkers.checkdoc (firstPackage
-    // {
-      pname = firstPackage.pname + "-all";
-      files = concatLists (forEachPackage (p: p.files));
-    });
+  checkdoc = mapPackageWithDefault checkers.checkdoc (firstPackage // {
+    pname = firstPackage.pname + "-all";
+    files = concatLists (forEachPackage (p: p.files));
+  });
 
-  package-lint = mapPackage checkers.package-lint
-    // checkers.package-lint (onlyPackage "package-lint");
+  package-lint = mapPackage1 checkers.package-lint "package-lint";
 
-  preparePackageLint = mapPackage checkers.preparePackageLint
-    # Since this command is likely to be called just before 'package-lint',
-    # it can be compatible with it.
-    // checkers.preparePackageLint (onlyPackage "preparePackageLint");
+  preparePackageLint =
+    mapPackage1 checkers.preparePackageLint "preparePackageLint";
 
   # A task to silent build output in buttercup.
   # To be run by nix-build with --no-build-output as a preparation step.
-  prepareButtercup = mapPackage checkers.prepareButtercup
-    # Since this command is likely to be called just before 'buttercup',
-    # it can be compatible with it.
-    // checkers.prepareButtercup (onlyPackage "prepareButtercup");
+  prepareButtercup = mapPackage1 checkers.prepareButtercup "prepareButtercup";
 
-  buttercup = mapPackage checkers.buttercup
-    // checkers.buttercup (onlyPackage "buttercup");
+  buttercup = mapPackage1 checkers.buttercup "buttercup";
 
   # A task to silent build output in buttercup.
   # To be run by nix-build with --no-build-output as a preparation step.
-  prepareErt = mapPackage checkers.prepareErt
-    // checkers.prepareErt (onlyPackage "prepareErt");
+  prepareErt = mapPackage1 checkers.prepareErt "prepareErt";
 
-  ert = mapPackage checkers.ert // checkers.ert (onlyPackage "ert");
+  ert = mapPackage1 checkers.ert "ert";
 
   # A task to silent build output in all tests.
   # To be run by nix-build with --no-build-output as a preparation step.
-  prepareAllTests = mapPackage checkers.prepareAllTests;
+  prepareAllTests = mapPackage1 checkers.prepareAllTests "prepareAllTests";
 
-  allTests = mapPackage checkers.allTests
-    // checkers.allTests (onlyPackage "allTests");
+  allTests = mapPackage1 checkers.allTests "allTests";
 
   prepareShell = allOrOne emacsWithLocalPackages;
 
