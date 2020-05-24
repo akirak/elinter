@@ -1,6 +1,8 @@
-let S = ../schema.dhall
+let Schema = ../schema.dhall
 
-let Package = S.Package
+let Package = Schema.Package
+
+let TestDriver = Schema.TestDriver
 
 in  [ Package::{
       , pname = "bad-hello"
@@ -8,7 +10,8 @@ in  [ Package::{
       , emacsVersion = "25.1"
       , files = [ "tests/bad-hello.el" ]
       , dependencies = [] : List Text
-      , buttercupTests = S.noTests
+      , testDrivers = [ TestDriver.buttercup ]
+      , buttercupTests = Schema.noTests
       , recipe =
           ''
           (bad-hello :fetcher github :repo "akirak/emacs-package-checker"

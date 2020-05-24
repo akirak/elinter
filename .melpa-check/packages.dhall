@@ -1,4 +1,8 @@
-let Package = (../schema.dhall).Package
+let Schema = ../schema.dhall
+
+let Package = Schema.Package
+
+let TestDriver = Schema.TestDriver
 
 in  [ Package::{
       , pname = "melpa-check"
@@ -13,6 +17,7 @@ in  [ Package::{
         ]
       , dependencies = [ "f", "dash", "s", "helm", "dhall-mode" ]
       , buttercupTests = [ "*-test?(s).el" ]
+      , testDrivers = [] : List TestDriver
       , mainFile = Some "melpa-check.el"
       , recipe =
           ''

@@ -8,4 +8,9 @@ config: {
   buttercup = import ./buttercup.nix config;
   prepareButtercup = package:
     (import ./buttercup.nix config package).emacsWithPackagesDrv;
+  ert = import ./ert.nix config;
+  prepareErt = package: (import ./ert.nix config package).emacsWithPackagesDrv;
+  allTests = import ./allTests.nix config;
+  prepareAllTests = package:
+    (import ./allTests.nix config package).emacsWithPackagesDrv;
 }

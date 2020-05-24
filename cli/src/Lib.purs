@@ -1,6 +1,6 @@
 module Lib where
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, runAff_)
 import Effect.Class (liftEffect)
@@ -151,7 +151,8 @@ generateInternalBlock funcName expName mOptions mVer mPackage =
     <> maybe "" (\ver -> " --argstr emacs " <> toVersionArg ver) mVer
     <> " -A "
     <> expName
-    <> maybe "" (\package -> "." <> package) mPackage
+    <> "."
+    <> fromMaybe "default" mPackage
 
 innerBuilder :: String
 innerBuilder = "melpaCheckNixBuild"
@@ -176,3 +177,15 @@ buttercupCommand mVer mPackage =
   generateInternalBlock innerBuilder "prepareButtercup" (Just "--no-build-output") mVer mPackage
     <> " >/dev/null && "
     <> generateInternalBlock innerShell "buttercup" Nothing mVer mPackage
+
+ertCommand :: Maybe EmacsVersion -> Maybe String -> String
+ertCommand mVer mPackage =
+  generateInternalBlock innerBuilder "prepareErt" (Just "--no-build-output") mVer mPackage
+    <> " >/dev/null && "
+    <> generateInternalBlock innerShell "ert" Nothing mVer mPackage
+
+testCommand :: Maybe EmacsVersion -> Maybe String -> String
+testCommand mVer mPackage =
+  generateInternalBlock innerBuilder "prepareAllTests" (Just "--no-build-output") mVer mPackage
+    <> " >/dev/null && "
+    <> generateInternalBlock innerShell "allTests" Nothing mVer mPackage

@@ -32,6 +32,8 @@ opts =
         <> command "lint" (info_ (runLint <$> lintOpts <*> packageArg) (progDesc "Run lint (i.e. checkdoc, package-lint, etc.) on a package"))
         <> command "byte-compile" (info_ (byteCompile <$> byteCompileOpts <*> packageArg) (progDesc "Byte-Compile packages"))
         <> command "buttercup" (info_ (runButtercup <$> buttercupOpts <*> packageArg) (progDesc "Run buttercup tests"))
+        <> command "ert" (info_ (runErt <$> ertOpts <*> packageArg) (progDesc "Run ERT tests"))
+        <> command "test" (info_ (runTest <$> testOpts <*> packageArg) (progDesc "Run tests"))
         <> command "list" (info_ listCommands (progDesc "Display a list of certain things in the project"))
         <> command "all" (info_ (runAll <$> allOpts) (progDesc "Run all tasks on all packages"))
     )
@@ -70,6 +72,16 @@ opts =
       }
 
   buttercupOpts =
+    sequenceRecord
+      { emacsVersion: emacsArg
+      }
+
+  ertOpts =
+    sequenceRecord
+      { emacsVersion: emacsArg
+      }
+
+  testOpts =
     sequenceRecord
       { emacsVersion: emacsArg
       }

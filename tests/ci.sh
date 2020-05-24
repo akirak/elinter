@@ -13,20 +13,24 @@ nix-shell() {
 }
 
 nix-shell -A meta
-nix-shell -A checkdoc
-nix-build -A byte-compile
+nix-shell -A checkdoc.default
+nix-build -A byte-compile.default
 nix-shell -A package-lint.hello
 nix-shell -A package-lint.hello2
 nix-build -A prepareButtercup.hello --no-build-output
-nix-build -A prepareButtercup.hello2 --no-build-output
 nix-shell -A buttercup.hello
-nix-shell -A buttercup.hello2
+nix-build -A prepareAllTests.hello2 --no-build-output
+nix-shell -A allTests.hello2
+nix-build ert -A prepareErt.hello3
+nix-shell ert -A ert.hello3
 
 # The following commands are expected to fail.
 ! nix-shell bad.nix -A meta
-! nix-shell bad.nix -A checkdoc
-! nix-build bad.nix -A byte-compile
+! nix-shell bad.nix -A checkdoc.default
+! nix-build bad.nix -A byte-compile.default
 ! nix-shell bad.nix -A package-lint.bad-hello
+nix-build ert -A prepareErt.hello4
+! nix-shell ert -A ert.hello4
 
 echo
 echo "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
