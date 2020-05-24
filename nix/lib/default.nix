@@ -24,3 +24,4 @@ let
 in {
   inherit concatShArgs discoverFiles;
 } // (import ./package.nix) // (import ./dhall.nix) // (import ./emacs.nix)
+// (import ./tests.nix)
