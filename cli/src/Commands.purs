@@ -168,5 +168,5 @@ runAll opts = do
         [ checkdocCommand
         , packageLintCommand
         , byteCompileCommand
-        , buttercupCommand
+        , testCommand
         ]
