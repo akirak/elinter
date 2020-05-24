@@ -53,5 +53,5 @@ in {
           ${footer}
         '';
       };
-    in drv // { inherit emacsWithPackagesDrv testCommands; };
+    in drv // { inherit emacsWithPackagesDrv testCommands patterns testFiles; };
 }

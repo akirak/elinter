@@ -186,6 +186,13 @@ in {
 
   ert = mapPackage checkers.ert // checkers.ert (onlyPackage "ert");
 
+  # A task to silent build output in all tests.
+  # To be run by nix-build with --no-build-output as a preparation step.
+  prepareAllTests = mapPackage checkers.prepareAllTests;
+
+  allTests = mapPackage checkers.allTests
+    // checkers.allTests (onlyPackage "allTests");
+
   prepareShell = allOrOne emacsWithLocalPackages;
 
   shell = let

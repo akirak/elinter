@@ -26,8 +26,9 @@ in  [ Package::{
       , files = [ "tests/hello2.el" ]
       , dependencies = [ "hello" ]
       , localDependencies = [ "hello" ]
-      , testDrivers = [ TestDriver.buttercup ]
-      , buttercupTests = [ "tests/hello2-test?(s).el" ]
+      , testDrivers = [ TestDriver.buttercup, TestDriver.ert ]
+      , ertTests = [ "tests/hello2-ert-tests.el" ]
+      , buttercupTests = [ "tests/hello2-tests.el" ]
       , recipe =
           ''
           (hello2 :fetcher github :repo "akirak/emacs-package-checker"
