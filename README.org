@@ -46,7 +46,7 @@ Even though this program is named after MELPA, it is not written by the authors 
 -  [[#license][License]]
 
 ** Features
-=melpa-check= is capable of the following features that are not known to be supported by other existing alternatives:
+=melpa-check= is capable of the following features that are not supported by most other existing alternatives:
 
 - Testing a project/repository that accommodates multiple packages: With local dependencies, it allows you to run =package-lint= and other tasks even if your package depends on another package that is not available on MELPA yet.
 - Integration with =nix-emacs-ci=, which lets you run =byte-compile= and tests with a specific version of Emacs.
