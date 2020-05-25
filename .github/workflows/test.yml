@@ -6,6 +6,7 @@ on:
     - '**/*.nix'
     - 'tests/*.*'
     - 'nix/checkers/*.el'
+    - '**/*.dhall'
 
 jobs:
   build:
