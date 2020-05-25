@@ -1,3 +1,5 @@
+let SchemaVersion = "1.0"
+
 let PackageName
     : Type
     = Text
@@ -26,7 +28,8 @@ let defaultTests
     : List Pattern
     = [ "test?(s).el", "test-*.el", "*-test?(s).el", "test?(s)/*.el" ]
 
-in  { Package =
+in  { SchemaVersion
+    , Package =
       { Type =
           { pname : PackageName
           , version : Version

@@ -1,3 +1,5 @@
+let SchemaVersion = "1.0"
+
 let schema = ../schema.dhall
 
 let Package = schema.Package.Type
@@ -186,7 +188,8 @@ let buildMultiFileCiWorkflows =
               packages
         }
 
-in  { Package
+in  { SchemaVersion
+    , Package
     , EventType
     , GitEvent
     , On
