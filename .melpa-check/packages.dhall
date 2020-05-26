@@ -15,7 +15,7 @@ in  [ Package::{
         , "melpa-check-package.el"
         , "melpa-check-verify.el"
         ]
-      , dependencies = [ "f", "dash", "s", "helm", "dhall-mode" ]
+      , dependencies = [ "f", "dash", "s" ]
       , buttercupTests = [ "*-test?(s).el" ]
       , testDrivers = [] : List TestDriver
       , mainFile = Some "melpa-check.el"
