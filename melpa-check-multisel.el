@@ -30,10 +30,10 @@
 
 ;;; Code:
 
-(declare-function #'helm "ext:helm")
-(declare-function #'helm-marked-candidates "ext:helm")
-(declare-function #'helm-build-sync-source "ext:helm")
-(declare-function #'helm-marked-candidates "ext:helm")
+(declare-function helm "ext:helm")
+(declare-function helm-marked-candidates "ext:helm")
+(declare-function helm-build-sync-source "ext:helm")
+(declare-function helm-marked-candidates "ext:helm")
 
 (defgroup melpa-check-multisel nil
   "Muliple selection for melpa-check"
