@@ -2,11 +2,8 @@ name: "Tests"
 
 on:
   push:
-    paths:
-    - '**/*.nix'
-    - 'tests/*.*'
-    - 'nix/checkers/*.el'
-    - '**/*.dhall'
+    paths-ignore:
+    - '**/*.org'
 
 jobs:
   build:
