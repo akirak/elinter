@@ -610,7 +610,7 @@ With a universal prefix, reset the configuration directory to DIR."
   (let ((command (concat cmd " " (mapconcat #'shell-quote-argument args " "))))
     (melpa-check--log "Reading output from \"%s\"" command)
     (with-temp-buffer
-      (let ((status (apply 'call-process cmd
+      (let ((status (apply #'call-process cmd
                            ;; Discard stderr.
                            nil (list (current-buffer) nil)
                            nil
