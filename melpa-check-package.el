@@ -32,6 +32,7 @@
 
 (require 'dash)
 (require 'cl-lib)
+(require 'subr-x)
 (require 'lisp-mnt)
 
 (require 'melpa-check-git)

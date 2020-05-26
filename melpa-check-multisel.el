@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (declare-function helm "ext:helm")
 (declare-function helm-marked-candidates "ext:helm")
 (declare-function helm-build-sync-source "ext:helm")
