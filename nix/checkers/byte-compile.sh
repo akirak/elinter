@@ -43,6 +43,6 @@ if [[ $result -eq 0 ]]; then
     mkdir -p $out
     echo "***** Information from nix-build"
 else
-    echo "Byte-compilation failed in one of $files"
+    echo "Byte-compilation failed in at least one of $files"
 fi
 exit $result
