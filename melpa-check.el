@@ -578,6 +578,7 @@ With a universal prefix, reset the configuration directory to DIR."
          (files (->> (directory-files-recursively root
                                                   (rx bol (not (any ".")) (+ anything)
                                                       ".el" eol))
+                     (--filter (not (string-match-p (rx "/" ".") it)))
                      (--map (string-remove-prefix root it))
                      (-sort (lambda (a b)
                               (string< (file-name-sans-extension a)
