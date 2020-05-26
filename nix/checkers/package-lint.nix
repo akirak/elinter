@@ -17,11 +17,11 @@ let
         (package.localDependencies or [ ]);
       mainFile =
         # package.mainFile can be null if the package is converted
-        # from Dhall, so the null check is necessary.
-        if package ? mainFile && !(isNull package.mainFile) then
-          package.mainFile
+        # from Dhall, so the type check is necessary.
+        if package ? mainFile && builtins.isString (package.mainFile) then
+          ''\"${package.mainFile}\"''
         else
-          "";
+          "nil";
     in ''
       echo
       echo ==========================================================
@@ -30,7 +30,7 @@ let
       cd ${package.src}
       emacs --no-site-file --batch \
          --eval "(setq explicitly-installed-packages '(${localDeps}))" \
-         --eval "(setq package-lint-main-file \"${mainFile}\")" \
+         --eval "(setq package-lint-main-file ${mainFile})" \
          -l ${./package-lint-runner.el} ${concatShArgs package.files}
       result=$?
       echo ----------------------------------------------------------
