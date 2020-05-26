@@ -1,14 +1,14 @@
 # Since package-lint requires the internet connection to test
 # if dependencies are installable, you can only run this command
 # in nix-shell, and not in nix-build.
-{ pkgs, emacsDerivation }:
+{ pkgs, emacsDerivation, sources, ... }:
 package:
 with (import ../lib);
 let
   emacsWithPackagesDrv = (emacsWithPackages emacsDerivation (epkgs:
     (package.dependencies epkgs) ++ [
       (epkgs.melpaPackages.package-lint.overrideAttrs
-        (oldAttrs: { src = (import ../sources.nix).package-lint; }))
+        (oldAttrs: { src = sources.package-lint; }))
     ]));
 
   drv = pkgs.stdenv.mkDerivation {

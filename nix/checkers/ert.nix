@@ -1,4 +1,4 @@
-config@{ pkgs, emacsDerivation }:
+config@{ pkgs, emacsDerivation, ... }:
 package:
 with (import ../lib);
 
