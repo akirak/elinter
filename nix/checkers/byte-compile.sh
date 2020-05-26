@@ -32,9 +32,6 @@ chmod u+w -R .
 echo "Running byte-compile on $files..."
 
 emacs --batch --no-site-file \
-    --eval "(require 'package)" \
-    --eval "(setq package-archives nil)" \
-    --eval "(package-initialize)" \
     --eval "(setq byte-compile-error-on-warn t)" \
     --eval "(dolist (dir $loadPaths) (add-to-list 'load-path (expand-file-name dir)))" \
     --funcall batch-byte-compile $files

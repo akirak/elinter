@@ -21,7 +21,8 @@ derivation {
   dependencyNames = concatShArgs (package.dependencyNames or [ "unknown" ]);
   # localDependencyNames = concatShArgs package.localDependencyNames;
   loadPaths = let
-    dirs = pkgs.lib.unique (map builtins.dirOf package.files);
+    dependencies = package.dependencies pkgs.emacsPackages;
+    dirs = (pkgs.lib.unique (map builtins.dirOf package.files));
     dquote = file: ''"'' + file + ''"'';
   in "'(${concatShArgs (map dquote dirs)})";
 }
