@@ -283,7 +283,10 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
       (insert (if multi
                   (melpa-check--build-multi-package-config)
                 (melpa-check--build-single-package-config)))
-      (melpa-check--save-buffer))))
+      (melpa-check--save-buffer))
+    (message (propertize "Project configured!"
+                         'font
+                         '((:foreground "green2"))))))
 
 (cl-defun melpa-check--build-default-nix (relative-config-dir)
   "Generate a content for default.nix in RELATIVE-CONFIG-DIR."
