@@ -6,9 +6,6 @@
 # The logic is based on an implementation in makel:
 # <https://gitlab.petton.fr/DamienCassou/makel/blob/master/makel.mk>
 
-# Fail if any error occurs inside this script
-set -e
-
 # Set PATH from buildInputs
 unset PATH
 for p in $buildInputs; do
@@ -31,12 +28,15 @@ chmod u+w -R .
 
 echo "Running byte-compile on $files..."
 
-emacs --batch --no-site-file \
-    --eval "(setq byte-compile-error-on-warn t)" \
-    --eval "(dolist (dir $loadPaths) (add-to-list 'load-path (expand-file-name dir)))" \
-    --funcall batch-byte-compile $files
+result=0
+for f in $files; do
+    emacs --batch --no-site-file \
+        --eval "(setq byte-compile-error-on-warn t)" \
+        --eval "(dolist (dir $loadPaths) (add-to-list 'load-path (expand-file-name dir)))" \
+        --funcall batch-byte-compile $f
+    result=$((result + $?))
+done
 
-result=$?
 if [[ $result -eq 0 ]]; then
     echo "Byte-compilation was successful."
     # nix-build fails if you don't make the output directory
