@@ -44,10 +44,11 @@
 (require 'f)
 (require 'project)
 (require 'json)
-(require 'dhall-mode nil t)
 
 (require 'melpa-check-multisel)
 (require 'melpa-check-package)
+
+(declare-function dhall-format-buffer "ext:dhall-mode")
 
 (defgroup melpa-check nil
   "Configure and run melpa-check, a CI framework for Emacs Lisp."
@@ -409,6 +410,7 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
         ;; Format the buffer if dhall is available
         (condition-case-unless-debug err
             (progn
+              (require 'dhall-mode)
               (dhall-format-buffer)
               (melpa-check--log "Successfully formatted using dhall-format")
               (buffer-string))
