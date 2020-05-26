@@ -1,12 +1,15 @@
 # Since package-lint requires the internet connection to test
 # if dependencies are installable, you can only run this command
 # in nix-shell, and not in nix-build.
-{ pkgs, emacsDerivation }:
+{ pkgs, emacsDerivation, sources, ... }:
 package:
 with (import ../lib);
 let
   emacsWithPackagesDrv = (emacsWithPackages emacsDerivation (epkgs:
-    (package.dependencies epkgs) ++ [ epkgs.melpaPackages.package-lint ]));
+    (package.dependencies epkgs) ++ [
+      (epkgs.melpaPackages.package-lint.overrideAttrs
+        (oldAttrs: { src = sources.package-lint; }))
+    ]));
 
   drv = pkgs.stdenv.mkDerivation {
     name = package.pname + "-package-lint";
@@ -17,11 +20,11 @@ let
         (package.localDependencies or [ ]);
       mainFile =
         # package.mainFile can be null if the package is converted
-        # from Dhall, so the null check is necessary.
-        if package ? mainFile && !(isNull package.mainFile) then
-          package.mainFile
+        # from Dhall, so the type check is necessary.
+        if package ? mainFile && builtins.isString (package.mainFile) then
+          ''\"${package.mainFile}\"''
         else
-          "";
+          "nil";
     in ''
       echo
       echo ==========================================================
@@ -30,7 +33,7 @@ let
       cd ${package.src}
       emacs --no-site-file --batch \
          --eval "(setq explicitly-installed-packages '(${localDeps}))" \
-         --eval "(setq package-lint-main-file \"${mainFile}\")" \
+         --eval "(setq package-lint-main-file ${mainFile})" \
          -l ${./package-lint-runner.el} ${concatShArgs package.files}
       result=$?
       echo ----------------------------------------------------------

@@ -4,7 +4,6 @@
 
 ;; Author: Akira Komamura <akira.komamura@gmail.com>
 ;; Version: 0.1
-;; Package-Requires: ((emacs "25.1"))
 ;; URL: https://github.com/akirak/emacs-package-checker
 
 ;; This file is not part of GNU Emacs.

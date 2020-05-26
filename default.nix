@@ -1,5 +1,5 @@
 { emacs ? "snapshot", srcDir ? null, packageFile ? ".melpa-check/packages.dhall"
-, emacs-ci ? (import ./nix/pkgs.nix).emacs-ci }:
+, emacs-ci ? (import ./nix/pkgs.nix).emacs-ci, overrideSources ? { } }:
 with (import ./nix/lib);
 with builtins;
 let
@@ -25,8 +25,14 @@ let
   # Emacs taking a list of packages as an argument
   emacsWithPackages_ = emacsWithPackages emacsDerivation;
 
+  defaultSources = import ./nix/sources.nix;
+
+  sources = {
+    package-lint = overrideSources.package-lint or defaultSources.package-lint;
+  };
+
   # Built-in checkers and test drivers
-  checkers = import ./nix/checkers { inherit pkgs emacsDerivation; };
+  checkers = import ./nix/checkers { inherit pkgs emacsDerivation sources; };
 
   emacsWithLocalPackages = packages_:
     emacsWithPackages_

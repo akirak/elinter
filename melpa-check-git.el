@@ -4,7 +4,6 @@
 
 ;; Version: 0.1
 ;; Author: Akira Komamura <akira.komamura@gmail.com>
-;; Package-Requires: ((emacs "26.1") (s "1.12") (dash "2.17"))
 ;; Keywords: maint vc
 ;; URL: https://github.com/akirak/melpa-check
 

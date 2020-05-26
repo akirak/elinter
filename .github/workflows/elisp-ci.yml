@@ -2,12 +2,8 @@ name: "elisp-ci"
 
 on:
   push:
-    # branches:
-    # - v3
-    paths:
-    - 'nix/checkers/*.el'
-    - '**/*.js'
-    - '**/*.nix'
+    paths-ignore:
+    - '**/*.org'
 
 jobs:
   ci:

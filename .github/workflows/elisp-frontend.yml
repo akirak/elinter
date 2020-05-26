@@ -4,10 +4,8 @@ on:
   push:
     # branches:
     # - v3
-    paths:
-    - '*.el'
-    - '**/*.js'
-    - '**/*.yml'
+    paths-ignore:
+    - '**/*.org'
 
 jobs:
   frontend:
