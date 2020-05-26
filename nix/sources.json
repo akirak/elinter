@@ -58,5 +58,17 @@
         "type": "tarball",
         "url": "https://github.com/NixOS/nixpkgs-channels/archive/ab3adfe1c769c22b6629e59ea0ef88ec8ee4563f.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "package-lint": {
+        "branch": "master",
+        "description": "A linting library for elisp package metadata",
+        "homepage": "",
+        "owner": "purcell",
+        "repo": "package-lint",
+        "rev": "495da67557d35acb146ec1f38f7576126aec6bfc",
+        "sha256": "0nb83rs2hb097pvv63pkvdlyqx136mrcbzdjkyskwg3rd3rwvimq",
+        "type": "tarball",
+        "url": "https://github.com/purcell/package-lint/archive/495da67557d35acb146ec1f38f7576126aec6bfc.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }

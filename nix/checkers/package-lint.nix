@@ -6,7 +6,10 @@ package:
 with (import ../lib);
 let
   emacsWithPackagesDrv = (emacsWithPackages emacsDerivation (epkgs:
-    (package.dependencies epkgs) ++ [ epkgs.melpaPackages.package-lint ]));
+    (package.dependencies epkgs) ++ [
+      (epkgs.melpaPackages.package-lint.overrideAttrs
+        (oldAttrs: { src = (import ../sources.nix).package-lint; }))
+    ]));
 
   drv = pkgs.stdenv.mkDerivation {
     name = package.pname + "-package-lint";
