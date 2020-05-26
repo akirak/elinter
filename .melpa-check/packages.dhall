@@ -21,8 +21,7 @@ in  [ Package::{
       , mainFile = Some "melpa-check.el"
       , recipe =
           ''
-          (melpa-check :fetcher github :repo "akirak/melpa-check"
-                       :branch "v3")
+          (melpa-check :fetcher github :repo "akirak/melpa-check")
           ''
       }
     ]
