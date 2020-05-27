@@ -15,8 +15,8 @@ import Lib (EmacsVersion, PackageName, buttercupCommand, byteCompileCommand, che
 import Node.ChildProcess (defaultSpawnOptions)
 import Node.Path as Path
 import Node.Process (getEnv)
-import Prelude (Unit, bind, discard, ifM, map, pure, unit, unlessM, ($), (<>))
-import Utils (callProcess, callProcessAsync_, exitOnError, getHomeDirectory, getProcessOutputAsJson, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
+import Prelude (Unit, bind, discard, ifM, map, pure, unit, unlessM, whenM, ($), (<>))
+import Utils (callProcess, callProcessAsync_, doesFileExist, exitOnError, getHomeDirectory, getProcessOutputAsJson, getSubstituters, hasExecutable, logTextFileContent, readNixConf)
 
 installDeps :: Effect Unit
 installDeps = do
@@ -43,7 +43,10 @@ installDeps = do
   callProcess "nix-env" [ "--version" ]
   callProcess "cachix" [ "--version" ]
   home <- getHomeDirectory
-  logTextFileContent $ Path.concat [ home, ".config", "nix", "nix.conf" ]
+  let
+    nixConfFile = Path.concat [ home, ".config", "nix", "nix.conf" ]
+  whenM (doesFileExist nixConfFile)
+    $ logTextFileContent nixConfFile
   where
   enabledEmacsCiCache = do
     conf <- readNixConf
