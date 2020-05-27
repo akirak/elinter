@@ -100,6 +100,11 @@ in  Actions.buildMultiFileCiWorkflows config packages"
   "Default content of Dhall CI configuration for GitHub Actions."
   :type 'string)
 
+(defface melpa-check-success-face
+  '((t :foreground "green2"))
+  "The face used for success messages."
+  :group 'melpa-check)
+
 ;;;; Variables
 
 (defconst melpa-check-log-buffer "*melpa-check log*")
@@ -285,8 +290,8 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
                 (melpa-check--build-single-package-config)))
       (melpa-check--save-buffer))
     (message (propertize "Project configured!"
-                         'font
-                         '((:foreground "green2"))))))
+                         'font-lock-face
+                         'melpa-check-success-face))))
 
 (cl-defun melpa-check--build-default-nix (relative-config-dir)
   "Generate a content for default.nix in RELATIVE-CONFIG-DIR."
