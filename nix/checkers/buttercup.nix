@@ -1,4 +1,4 @@
-config@{ pkgs, emacsDerivation, ... }:
+config@{ pkgs, customEmacsPackages, ... }:
 package:
 with (import ../lib);
 
@@ -22,6 +22,6 @@ in makeTestDerivation {
   drvNameSuffix = "-buttercup";
   title = "Buttercup Tests";
   typeDesc = "buttercup tests";
-  emacsWithPackagesDrv = (emacsWithPackages emacsDerivation
+  emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages
     (epkgs: [ epkgs.melpaPackages.buttercup (melpaBuild package) ]));
 }

@@ -1,4 +1,4 @@
-{ pkgs, emacsDerivation, ... }:
+{ pkgs, customEmacsPackages, ... }:
 package:
 with (import ../lib);
 assert (builtins.isPath package.src);
@@ -8,7 +8,7 @@ assert (builtins.all
   package.files);
 pkgs.stdenv.mkDerivation {
   name = package.pname + "-checkdoc";
-  buildInputs = [ emacsDerivation pkgs.coreutils ];
+  buildInputs = [ customEmacsPackages.emacs pkgs.coreutils ];
   shellHook = ''
     echo
     echo ==========================================================

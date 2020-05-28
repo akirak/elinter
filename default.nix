@@ -1,5 +1,6 @@
 { emacs ? "snapshot", srcDir ? null, packageFile ? ".melpa-check/packages.dhall"
-, emacs-ci ? (import ./nix/pkgs.nix).emacs-ci, overrideSources ? { } }:
+, emacs-ci ? (import ./nix/pkgs.nix).emacs-ci, overrideSources ? { }
+, emacsPackages ? (import <nixpkgs> { }).emacsPackages }:
 with (import ./nix/lib);
 with builtins;
 let
@@ -23,7 +24,11 @@ let
       emacs;
 
   # Emacs taking a list of packages as an argument
-  emacsWithPackages_ = emacsWithPackages emacsDerivation;
+  # https://github.com/NixOS/nixpkgs/blob/master/pkgs/build-support/emacs/wrapper.nix
+  customEmacsPackages =
+    emacsPackages.overrideScope' (self: super: {
+      emacs = emacsDerivation;
+    });
 
   defaultSources = import ./nix/sources.nix;
 
@@ -32,10 +37,10 @@ let
   };
 
   # Built-in checkers and test drivers
-  checkers = import ./nix/checkers { inherit pkgs emacsDerivation sources; };
+  checkers = import ./nix/checkers { inherit pkgs customEmacsPackages sources; };
 
   emacsWithLocalPackages = packages_:
-    emacsWithPackages_
+    customEmacsPackages
     (epkgs: (pkgs.lib.forEach packages_ checkers.melpaBuild));
 
   shellHookWithPackageInfo = packages_:

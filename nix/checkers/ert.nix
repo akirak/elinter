@@ -1,4 +1,4 @@
-config@{ pkgs, emacsDerivation, ... }:
+config@{ pkgs, customEmacsPackages, ... }:
 package:
 with (import ../lib);
 
@@ -23,5 +23,5 @@ in makeTestDerivation {
   title = "ERT Tests";
   typeDesc = "ERT tests";
   emacsWithPackagesDrv =
-    (emacsWithPackages emacsDerivation (epkgs: [ (melpaBuild package) ]));
+    (customEmacsPackages.emacsWithPackages (epkgs: [ (melpaBuild package) ]));
 }
