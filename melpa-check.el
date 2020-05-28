@@ -678,7 +678,7 @@ In any case, ARGS will be passed to the program."
                                args)))
     (apply #'call-process-region (point-min) (point-max)
            cmd
-           'delete t nil
+           'delete (list (current-buffer) nil) nil
            args2)))
 
 (defun melpa-check--dhall-to-json (file)
