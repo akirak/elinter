@@ -284,12 +284,14 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
       (setq buffer-file-name (f-join config-dir "default.nix"))
       (insert (melpa-check--build-default-nix relative))
       (melpa-check--save-buffer))
+    ;; If the user aborts operation, the temporary buffer is killed.
     (with-temp-buffer
       (setq buffer-file-name (f-join config-dir "packages.dhall"))
       (insert (if multi
                   (melpa-check--build-multi-package-config)
                 (melpa-check--build-single-package-config)))
       (melpa-check--save-buffer))
+    (find-file (f-join config-dir "packages.dhall"))
     (message (propertize "Project configured!"
                          'font-lock-face
                          'melpa-check-success-face))))
