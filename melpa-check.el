@@ -245,7 +245,11 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
         (melpa-check--niv-sync "init"))
       ;; Check if melpa-check is already added before adding it
       (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? melpa-check"))
-        (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3")))
+        (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3"))
+      ;; Add the latest unstable version of nixpkgs
+      (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? nixpkgs-unstable"))
+        (melpa-check--niv-sync "add" "NixOS/nixpkgs-channels" "-n" "nixpkgs-unstable"
+                               "--branch" "nixpkgs-unstable")))
     ;; Create the configuration directory
     (cond
      ((not (file-exists-p config-dir))
@@ -305,11 +309,14 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
   (let* ((relative-config-dir (f-slash relative-config-dir))
          (packageFile (f-join relative-config-dir "packages.dhall"))
          (srcDir (concat (f-slash (f-relative "" relative-config-dir)) "."))
+         (local-source (concat "import (import "
+                               (f-relative "nix/sources.nix" relative-config-dir)
+                               ").%s"))
          (melpa-check (if melpa-check-dont-use-niv
                           (upcase "fixme")
-                        (concat "import (import "
-                                (f-relative "nix/sources.nix" relative-config-dir)
-                                ").melpa-check"))))
+                        (format local-source "melpa-check")))
+         (nixpkgs-unstable (concat (format local-source "nixpkgs-unstable")
+                                   " { }")))
     ;; Generate a string for a function that takes optional arguments
     ;; and call melpa-check.
     (concat "{\n"
@@ -324,11 +331,15 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
                          ;; TODO: Add support for custom emacs-ci
                          ("The directory containing source files"
                           "srcDir" ,srcDir)
+                         ("Custom nixpkgs for Emacs packages"
+                          "pkgs" ,nixpkgs-unstable)
                          ("A configuration file which defines packages under test"
                           "packageFile" ,(concat "\"" packageFile "\"")))
                        ",\n")
             "\n}:\n"
-            "melpa-check {\n  inherit emacs packageFile srcDir;\n}")))
+            "melpa-check {\n  inherit emacs packageFile srcDir;\n"
+            "  emacsPackages = pkgs.emacsPackages;\n"
+            "}")))
 
 (defun melpa-check--build-multi-package-config ()
   "Build a content of packages.dhall for multiple packages."
@@ -588,8 +599,8 @@ With a universal prefix, reset the configuration directory to DIR."
          (files (->> (directory-files-recursively root
                                                   (rx bol (not (any ".")) (+ anything)
                                                       ".el" eol))
-                     (--filter (not (string-match-p (rx "/" ".") it)))
                      (--map (string-remove-prefix root it))
+                     (--filter (not (string-match-p (rx (or "/." (and bol "."))) it)))
                      (-sort (lambda (a b)
                               (string< (file-name-sans-extension a)
                                        (file-name-sans-extension b)))))))

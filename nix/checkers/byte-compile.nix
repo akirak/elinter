@@ -1,4 +1,4 @@
-{ pkgs, emacsDerivation, ... }:
+{ pkgs, customEmacsPackages, ... }:
 package:
 with (import ../lib);
 assert (builtins.isString package.pname);
@@ -13,7 +13,7 @@ derivation {
   name = package.pname + "-byte-compile";
   builder = "${pkgs.bash}/bin/bash";
   buildInputs =
-    [ pkgs.coreutils (emacsWithPackages emacsDerivation package.dependencies) ];
+    [ pkgs.coreutils (customEmacsPackages.emacsWithPackages package.dependencies) ];
   args = [ ./byte-compile.sh ];
   # Only used in the shell script
   files = concatShArgs package.files;

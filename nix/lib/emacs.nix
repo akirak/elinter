@@ -21,9 +21,6 @@ in with pkgs.lib; rec {
         replaceStrings [ "-" ] [ "." ] (removePrefix "emacs-" name);
     in map nameToVersion names;
 
-  emacsWithPackages = emacsDerivation:
-    (pkgs.emacsPackagesNgGen emacsDerivation).emacsWithPackages;
-
   inherit compareEmacsVersions;
 
   sortEmacsVersions = sort compareEmacsVersions;

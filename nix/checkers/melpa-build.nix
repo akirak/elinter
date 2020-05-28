@@ -1,4 +1,4 @@
-{ pkgs, emacsDerivation, ... }:
+{ pkgs, customEmacsPackages, ... }:
 package:
 with (import ../lib);
 pkgs.emacsPackages.melpaBuild {
