@@ -1,6 +1,5 @@
+{ pkgs }:
 let
-  pkgs = import ../pkgs.nix;
-
   compareEmacsVersions = v1: v2:
     if v1 == "snapshot" then
       false

@@ -1,5 +1,5 @@
-let pkgs = import ../pkgs.nix;
-in {
+{ pkgs }:
+{
   dhallToNix = srcDir: file:
     let
       drv = pkgs.stdenv.mkDerivation {

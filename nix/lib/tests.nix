@@ -1,5 +1,5 @@
-let pkgs = import ../pkgs.nix;
-in with pkgs.lib;
+{ pkgs }:
+with pkgs.lib;
 with builtins;
 let
   shTrueIf = test:
