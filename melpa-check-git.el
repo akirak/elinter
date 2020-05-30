@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2020 Akira Komamura
 
-;; Version: 0.1
+;; Version: 0.2
 ;; Author: Akira Komamura <akira.komamura@gmail.com>
 ;; Keywords: maint vc
 ;; URL: https://github.com/akirak/melpa-check

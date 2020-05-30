@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Akira Komamura
 
 ;; Author: Akira Komamura <akira.komamura@gmail.com>
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ((emacs "26.1") (f "0.20") (dash "2.17") (s "1.12"))
 ;; Keywords: maint files
 
