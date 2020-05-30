@@ -52,6 +52,7 @@ Caution: This project is still at an alpha stage, so its API is subject to chang
   -  [[#dhall-for-ci][Dhall for CI]]
   -  [[#emacs-lisp][Emacs Lisp]]
 -  [[#credits][Credits]]
+-  [[#alternatives][Alternatives]]
 -  [[#license][License]]
 
 ** Features
@@ -428,5 +429,14 @@ The Emacs frontend for generating configuration files and running the =melpa-che
 - The idea of using =niv= for dependency management is an inspiration from [[https://github.com/purcell/setup-emacs/][setup-emacs]] by Steve Purcell ([[https://github.com/purcell/][@purcell]]). The GitHub action in the external repository is also roughly based on his work.
 
 And thank you for contributors of this project, including Eric Dallo ([[https://github.com/ericdallo][@ericdallo]]) and Terje Larsen ([[https://github.com/terlar][@terlar]])!
+** Alternatives
+There are many alternatives for linting Emacs Lisp packages, and you might want to consider one of them instead:
+
+- [[https://github.com/alphapapa/makem.sh][makem.sh]]
+- [[https://github.com/doublep/eldev][eldev]]
+- [[https://gitea.petton.fr/DamienCassou/makel][makel]]
+- [[https://github.com/vermiculus/emake.el][emake.el]]
+
+Alphapapa provides [[https://github.com/alphapapa/makem.sh#comparisons][a detailed comparison]] of these tools in the documentation of =makem.sh=,
 ** License
 GPL v3
