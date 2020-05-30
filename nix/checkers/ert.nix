@@ -27,6 +27,6 @@ in makeTestDerivation {
   drvNameSuffix = "-ert";
   title = "ERT Tests";
   typeDesc = "ERT tests";
-  emacsWithPackagesDrv =
-    (customEmacsPackages.emacsWithPackages (epkgs: [ (melpaBuild package) ]));
+  emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages
+    (epkgs: [ (melpaBuild package) ] ++ package.testDependencies epkgs));
 }
