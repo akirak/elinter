@@ -40,6 +40,7 @@ in  { SchemaVersion
           , testDrivers : List TestDriver
           , ertTests : List Pattern
           , buttercupTests : List Pattern
+          , testExcludes : List Pattern
           , mainFile : Optional File
           , recipe : Recipe
           }
@@ -49,6 +50,7 @@ in  { SchemaVersion
         , testDrivers = [ TestDriver.ert ]
         , ertTests = defaultTests
         , buttercupTests = defaultTests
+        , testExcludes = [] : List Pattern
         }
       }
     , noTests = [] : List Pattern

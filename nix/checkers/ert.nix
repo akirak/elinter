@@ -5,7 +5,8 @@ with (import ../lib { inherit pkgs; });
 let
   melpaBuild = import ./melpa-build.nix config;
   patterns = package.ertTests;
-  testFiles = discoverFiles package.src patterns;
+  testFiles =
+    discoverFilesWithExcludes package.src patterns package.testExcludes;
   makeTestCommand = file: ''
     echo "Running tests in ${file}..."
     cd $root/${builtins.dirOf file}
