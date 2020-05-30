@@ -12,17 +12,20 @@ with builtins; {
           packageRequires = pkg.dependencies epkgs;
         };
       f = self:
-        listToAttrs (forEach plainPackageList (x: {
+        let
+          packageListFromNames = names: epkgs:
+            forEach names (depName:
+              if elem depName localPackages then
+                localMelpaBuild epkgs self."${depName}"
+              else
+                epkgs."${depName}");
+        in listToAttrs (forEach plainPackageList (x: {
           name = x.pname;
           value = x // {
             src = srcDir;
             recipe = pkgs.writeText "recipe" x.recipe;
-            dependencies = epkgs:
-              forEach x.dependencies (depName:
-                if elem depName localPackages then
-                  localMelpaBuild epkgs self."${depName}"
-                else
-                  epkgs."${depName}");
+            dependencies = packageListFromNames x.dependencies;
+            testDependencies = packageListFromNames x.testDependencies;
             localDependencies =
               forEach x.localDependencies (depName: self."${depName}");
             # Only used for information to the user

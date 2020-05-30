@@ -21,10 +21,16 @@ let
     else
       filter (str: pathExists (rootDir + "/${str}")) (splitString " " raw);
 
+  discoverFilesWithExcludes = rootDir: patterns: excludePatterns:
+    let
+      matches = discoverFiles rootDir patterns;
+      excludes = discoverFiles rootDir excludePatterns;
+    in pkgs.lib.subtractLists excludes matches;
+
   libs = foldl' (a: b: a // b) { } (map (file: import file config) [
     ./package.nix
     ./dhall.nix
     ./emacs.nix
     ./tests.nix
   ]);
-in { inherit concatShArgs discoverFiles; } // libs
+in { inherit concatShArgs discoverFiles discoverFilesWithExcludes; } // libs

@@ -36,6 +36,7 @@
 (require 'lisp-mnt)
 
 (require 'melpa-check-git)
+(require 'melpa-check-multisel)
 
 (defgroup melpa-check-package nil
   "Build package configuration."
@@ -48,9 +49,20 @@
 See `package-build-default-files-spec' for an authentic value."
   :type '(repeat string))
 
+(defcustom melpa-check-package-test-dependencies
+  '("el-mock")
+  "Initial value of testDependencies field in each package."
+  :type '(repeat string))
+
+(defcustom melpa-check-package-default-test-excludes
+  '("**/test-helper?(s).el")
+  "Default list of patterns excluded from running tests."
+  :type '(repeat string))
+
 (cl-defstruct melpa-check-package
   pname version emacsVersion files dependencies localDependencies
-  testDrivers ertTests buttercupTests mainFile recipe)
+  testDrivers ertTests buttercupTests testDependencies testExcludes
+  mainFile recipe)
 
 (defun melpa-check-package--to-alist (package)
   "Build an alist containing data for PACKAGE.
@@ -65,6 +77,8 @@ The result may contain nil values."
     (testDrivers . ,(melpa-check-package-testDrivers package))
     (ertTests . ,(melpa-check-package-ertTests package))
     (buttercupTests . ,(melpa-check-package-buttercupTests package))
+    (testDependencies . ,(melpa-check-package-testDependencies package))
+    (testExcludes . ,(melpa-check-package-testExcludes package))
     (mainFile . ,(melpa-check-package-mainFile package))
     (recipe . ,(melpa-check-package-recipe package))))
 
@@ -137,12 +151,19 @@ to the root of the project (usually a Git repository)."
                                            (-map #'car (read (car deps-raw)))))))))))
     (setf (melpa-check-package-dependencies package)
           (-map #'symbol-name (-uniq (delq 'emacs dependencies))))
-    (setf (melpa-check-package-testDrivers package)
-          (cl-case (read-char-choice "Test driver [e: ert, b: buttercup, n: none]: "
-                                     (string-to-list "ebn"))
-            (?e (list "ert"))
-            (?b (list "buttercup"))
-            (?n nil)))
+    (let* ((test-driver (cl-case (read-char-choice "Test driver [e: ert, b: buttercup, n: none]: "
+                                                   (string-to-list "ebn"))
+                          (?e (list "ert"))
+                          (?b (list "buttercup"))
+                          (?n nil)))
+           (test-dependencies (when test-driver
+                                (melpa-check-multisel "Extra dependencies for testing: "
+                                                      melpa-check-package-test-dependencies)))
+           (test-excluded-files (when test-driver
+                                  melpa-check-package-default-test-excludes)))
+      (setf (melpa-check-package-testDrivers package) test-driver)
+      (setf (melpa-check-package-testDependencies package) test-dependencies)
+      (setf (melpa-check-package-testExcludes package) test-excluded-files))
     ;; Set recipe
     (let ((fetcher-spec (melpa-check-git--fetcher-spec))
           (files-spec (melpa-check-package--files-spec files

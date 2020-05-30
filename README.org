@@ -129,7 +129,7 @@ The process will go on as follows:
 2. Choose if your project consists of multiple packages or a single package. Answer =n= if it consists of a single package.
 3. Enter a directory for the configuration files of =melpa-check=. To select the default value (i.e. =.melpa-check= in the project root), answer =y=.
 4. Select Emacs Lisp sources files of your package. You don't have to include test files.
-5. Select the type of tests you plan on adding.
+5. Select the type of tests you plan on adding. If you choose to add some tests, you are also asked to select testing dependencies.
 6. It enumerates some possible options for your MELPA recipe. Select one or enter it by yourself.
 7. If you have selected a multi-package project in the step 2, you will be again asked for source files of the next package (step 4). Repeat until you enter nil.
 
@@ -239,8 +239,10 @@ The package type has the following fields:
 - =localDependencies= :: Dependencies defined within the same project. Default: empty.
 - =mainFile= :: Main file of the package, i.e. =package-lint-main-file= in =package-lint=. Default: none.
 - =testDrivers= :: Types of tests you want to run using =melpa-check test= command. This is a list of =TestDriver= type, and =buttercup= and =ert= are currently allowed. If an empty list (i.e. =[] :: List TestDriver=) is specified, no test is run. You can also specify multiple values to run multiple types of tests.
+- =testDependencies= :: Emacs Lisp packages required only for testing. They are installed in test sessions including buttercup and ERT. If you use a mocking library for testing, it should be included in this field. Default: empty.
 - =buttercupTests= :: Buttercup test files for the package. This is a list of file patterns relative from the project root. It supports =extglob= of =bash=, so =*-test?(s).el= matches both =hello-test.el= and =hello-tests.el=. Default: a sensible default value.
 - =ertTests= :: ERT test files for the package. Like =buttercupTests=, this is a list of file patterns. Default: the same default value as =buttercupTests=.
+- =excludeTests= :: Files to exclude from the test patterns above. Files specified in this field are excluded from tests even if they match =buttercupTests= or =ertTests=. The same file patterns as =buttercupTests= and =ertTests=. For example, =**/test-helper?(s).el= would be a sensible value. Default: empty.
 - =recipe= :: MELPA-style recipe of the package. [[https://github.com/melpa/melpa#recipe-format][Syntax]]
 
 You can omit fields that use the default values.

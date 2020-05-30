@@ -1,4 +1,4 @@
-let SchemaVersion = "1.0"
+let SchemaVersion = "1.1"
 
 let PackageName
     : Type
@@ -40,6 +40,8 @@ in  { SchemaVersion
           , testDrivers : List TestDriver
           , ertTests : List Pattern
           , buttercupTests : List Pattern
+          , testDependencies : List PackageName
+          , testExcludes : List Pattern
           , mainFile : Optional File
           , recipe : Recipe
           }
@@ -49,6 +51,8 @@ in  { SchemaVersion
         , testDrivers = [ TestDriver.ert ]
         , ertTests = defaultTests
         , buttercupTests = defaultTests
+        , testDependencies = [] : List PackageName
+        , testExcludes = [] : List Pattern
         }
       }
     , noTests = [] : List Pattern
