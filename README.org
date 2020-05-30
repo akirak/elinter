@@ -40,6 +40,7 @@ Caution: This project is still at an alpha stage, so its API is subject to chang
     -  [[#in-emacs][In Emacs]]
   -  [[#maintenance][Maintenance]]
     -  [[#updating-melpa-check-in-your-project][Updating melpa-check in your project]]
+    -  [[#updating-emacs-overlay-in-your-project][Updating emacs-overlay in your project]]
     -  [[#garbage-collection-of-the-nix-stores][Garbage collection of the Nix stores]]
 -  [[#supplementary-information][Supplementary information]]
   -  [[#abstract-emacs-versions-supported-by-the-cli][Abstract Emacs versions supported by the CLI]]
@@ -335,6 +336,15 @@ Unless there is an API/schema change, you can update it to the latest version by
 
 #+begin_src shell
   niv update melpa-check
+#+end_src
+**** Updating emacs-overlay in your project
+This program also uses [[https://github.com/nix-community/emacs-overlay][emacs-overlay]] for a fresh set of Emacs packages.
+However, it is version-locked in each project at project initialization for reproducibility.
+It is likely that the packages used in your project become outdated during development.
+To update the overlay to the latest snapshot, use =niv=:
+
+#+begin_src shell
+  niv update emacs-overlay
 #+end_src
 **** Garbage collection of the Nix stores
 =melpa-check= creates a bunch of immutable directories called Nix stores, which are placed in =/nix/store=.
