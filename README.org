@@ -43,6 +43,11 @@ Even though this program is named after MELPA, it is not written by the authors 
   -  [[#abstract-emacs-versions-supported-by-the-cli][Abstract Emacs versions supported by the CLI]]
   -  [[#the-default-emacs-version][The default Emacs version]]
 -  [[#development][Development]]
+  -  [[#nix][Nix]]
+  -  [[#purescript][PureScript]]
+  -  [[#dhall-for-package-configuration][Dhall for package configuration]]
+  -  [[#dhall-for-ci][Dhall for CI]]
+  -  [[#emacs-lisp][Emacs Lisp]]
 -  [[#credits][Credits]]
 -  [[#license][License]]
 
@@ -370,11 +375,38 @@ Any feedback and PR are welcome.
 - Its core is written in Nix, a lazily-evaluted, purely functional language for writing build systems.
 - The CLI is written in [[https://www.purescript.org/][PureScript]], which is a strongly-typed functional programming language that compiles to JavaScript.
 - The Emacs frontend is written in Emacs Lisp.
-- Package configuration and CI configuration are written in Dhall, which is a statically typed configuration language without turing completeness.
-- Bash is used for shell scripting in the Nix and PureScript parts.
+- Configuration files are mostly written in Dhall, which is a programmable configuration language that intentionally drops turing completeness for safety.
+- Bash is used for shell scripting inside Nix and PureScript.
 - [[https://github.com/akirak/emacs-package][The GitHub action]] in a separate repository is written in TypeScript and wraps =nix= and =melpa-check= commands.
 
-TODO: Add instructions for compiling and testing the programs
+*** Nix
+The main entry point of =melpa-check= is =default.nix= in the project root. It should be linked from =.melpa-check/default.nix= in each project.
+
+The other Nix source files are contained in =nix= directory. It uses =niv= for dependency management but also keeps libraries and checkers in =lib= and =checkers= directory, respectively.
+
+Example projects and smoke tests are contained in =tests= directory in the repository. Enter the directory and run
+
+#+begin_src shell
+  ./ci.sh
+#+end_src
+
+to check if the Nix part is functional. The script contains both success and failure cases, but the entire script should exit successfully.
+*** PureScript
+The command line interface is written in PureScript, and its source code in in =cli= directory of this repository.
+
+The directory contains =shell.nix= as well as =.direnv=. You can use [[https://github.com/target/lorri][lorri]] and [[https://github.com/wbolster/emacs-direnv][direnv]] for development.
+
+To build the package, run the following command in the directory:
+
+#+begin_src shell
+  make -f build.mk
+#+end_src
+*** Dhall for package configuration
+=schema.dhall= defines the type of package configuration. It is copied to each project, because Nix doesn't allow internet connection during its build processes. It has a version tag exposed.
+*** Dhall for CI
+Functions for generating Ci configuration files are contained in =dhall= directory.
+*** Emacs Lisp
+The Emacs frontend for generating configuration files and running the =melpa-check= CLI inside Emacs are in the project root.
 ** Credits
 - The linting logics are partly based on [[https://github.com/alphapapa/makem.sh][makem.sh]] by alphapapa (Adam Porter) and [[https://gitea.petton.fr/DamienCassou/makel][makel]] by Damien Cassou.
 - The idea of generating GitHub actions from Dhall is based on [[https://github.com/vmchale/github-actions-dhall][vmchale/github-actions-dhall]].
