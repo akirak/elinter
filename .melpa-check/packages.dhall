@@ -6,7 +6,7 @@ let TestDriver = Schema.TestDriver
 
 in  [ Package::{
       , pname = "melpa-check"
-      , version = "0.1"
+      , version = "0.2"
       , emacsVersion = "26.1"
       , files =
         [ "melpa-check.el"

@@ -1,6 +1,6 @@
 # Run all tests configured in the package
-config: package:
-with (import ../lib);
+config@{ pkgs, ... }: package:
+with (import ../lib { inherit pkgs; });
 with builtins;
 let
   testDrivers = package.testDrivers;

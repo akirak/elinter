@@ -1,6 +1,6 @@
 config@{ pkgs, customEmacsPackages, ... }:
 package:
-with (import ../lib);
+with (import ../lib { inherit pkgs; });
 
 let
   melpaBuild = import ./melpa-build.nix config;

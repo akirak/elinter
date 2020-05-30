@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Akira Komamura
 
 ;; Author: Akira Komamura <akira.komamura@gmail.com>
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ((emacs "26.1") (f "0.20") (dash "2.17") (s "1.12"))
 ;; Keywords: maint files
 
@@ -247,9 +247,8 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
       (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? melpa-check"))
         (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3"))
       ;; Add the latest unstable version of nixpkgs
-      (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? nixpkgs-unstable"))
-        (melpa-check--niv-sync "add" "NixOS/nixpkgs-channels" "-n" "nixpkgs-unstable"
-                               "--branch" "nixpkgs-unstable")))
+      (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? emacs-overlay"))
+        (melpa-check--niv-sync "add" "nix-community/emacs-overlay")))
     ;; Create the configuration directory
     (cond
      ((not (file-exists-p config-dir))
@@ -315,8 +314,7 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
          (melpa-check (if melpa-check-dont-use-niv
                           (upcase "fixme")
                         (format local-source "melpa-check")))
-         (nixpkgs-unstable (concat (format local-source "nixpkgs-unstable")
-                                   " { }")))
+         (emacs-overlay (format local-source "emacs-overlay")))
     ;; Generate a string for a function that takes optional arguments
     ;; and call melpa-check.
     (concat "{\n"
@@ -331,14 +329,13 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
                          ;; TODO: Add support for custom emacs-ci
                          ("The directory containing source files"
                           "srcDir" ,srcDir)
-                         ("Custom nixpkgs for Emacs packages"
-                          "pkgs" ,nixpkgs-unstable)
+                         ("Snapshot of emacs-overlay to use for builds"
+                          "emacs-overlay" ,emacs-overlay)
                          ("A configuration file which defines packages under test"
                           "packageFile" ,(concat "\"" packageFile "\"")))
                        ",\n")
             "\n}:\n"
-            "melpa-check {\n  inherit emacs packageFile srcDir;\n"
-            "  emacsPackages = pkgs.emacsPackages;\n"
+            "melpa-check {\n  inherit emacs packageFile srcDir emacs-overlay;\n"
             "}")))
 
 (defun melpa-check--build-multi-package-config ()

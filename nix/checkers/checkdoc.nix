@@ -1,6 +1,6 @@
 { pkgs, customEmacsPackages, ... }:
 package:
-with (import ../lib);
+with (import ../lib { inherit pkgs; });
 assert (builtins.isPath package.src);
 assert (builtins.pathExists package.src);
 assert (builtins.all

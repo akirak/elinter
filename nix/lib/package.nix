@@ -1,5 +1,5 @@
-let pkgs = import ../pkgs.nix;
-in with pkgs.lib;
+{ pkgs }:
+with pkgs.lib;
 with builtins; {
   # Build an internal representation for package list from
   # parsed dhall package data
@@ -22,7 +22,7 @@ with builtins; {
                 if elem depName localPackages then
                   localMelpaBuild epkgs self."${depName}"
                 else
-                  epkgs.melpaPackages."${depName}");
+                  epkgs."${depName}");
             localDependencies =
               forEach x.localDependencies (depName: self."${depName}");
             # Only used for information to the user
