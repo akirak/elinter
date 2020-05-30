@@ -8,15 +8,19 @@ let
   testFiles = discoverFiles package.src patterns;
   makeTestCommand = file: ''
     echo "Running tests in ${file}..."
+    cd $root/${builtins.dirOf file}
     emacs --batch --no-site-file \
         --load package --eval '(setq package-archives nil)' \
         -f package-initialize \
-        --load ert -l ${file} -f ert-run-tests-batch-and-exit
+        --load ert -l ${baseNameOf file} -f ert-run-tests-batch-and-exit
     r=$?
     e=$((e + r))
     echo ----------------------------------------------------------
   '';
-  testCommands = pkgs.lib.concatMapStringsSep "\n" makeTestCommand testFiles;
+  testCommands = ''
+    root='''$PWD
+  '' + (pkgs.lib.concatMapStringsSep "\n" makeTestCommand testFiles)
+    + "cd $root";
 in makeTestDerivation {
   inherit package testCommands patterns testFiles;
   drvNameSuffix = "-ert";
