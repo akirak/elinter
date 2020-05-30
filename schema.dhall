@@ -1,4 +1,4 @@
-let SchemaVersion = "1.0"
+let SchemaVersion = "1.1"
 
 let PackageName
     : Type
