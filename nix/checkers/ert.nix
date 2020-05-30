@@ -7,23 +7,10 @@ let
   patterns = package.ertTests;
   testFiles =
     discoverFilesWithExcludes package.src patterns package.testExcludes;
-  makeTestCommand = file: ''
-    echo "Running tests in ${file}..."
-    cd $root/${builtins.dirOf file}
-    emacs --batch --no-site-file \
-        --load package --eval '(setq package-archives nil)' \
-        -f package-initialize \
-        --load ert -l ${baseNameOf file} -f ert-run-tests-batch-and-exit
-    r=$?
-    e=$((e + r))
-    echo ----------------------------------------------------------
-  '';
-  testCommands = ''
-    root='''$PWD
-  '' + (pkgs.lib.concatMapStringsSep "\n" makeTestCommand testFiles)
-    + "cd $root";
-in makeTestDerivation {
-  inherit package testCommands patterns testFiles;
+in makeTestDerivation2 {
+  inherit package patterns testFiles;
+  testLibrary = "ert";
+  batchTestFunction = "ert-run-tests-batch-and-exit";
   drvNameSuffix = "-ert";
   title = "ERT Tests";
   typeDesc = "ERT tests";

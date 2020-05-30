@@ -7,7 +7,7 @@ let
       "${pkgs.coreutils}/bin/true"
     else
       "${pkgs.coreutils}/bin/false";
-in {
+
   makeTestDerivation = { package, title, typeDesc, patterns, testFiles
     , testCommands, emacsWithPackagesDrv, drvNameSuffix }:
     let
@@ -54,4 +54,29 @@ in {
         '';
       };
     in drv // { inherit emacsWithPackagesDrv testCommands patterns testFiles; };
-}
+
+  makeTestDerivation2 = { package, title, typeDesc, patterns, testFiles
+    , testLibrary, batchTestFunction, emacsWithPackagesDrv, drvNameSuffix }:
+    let
+      makeTestCommand = file: ''
+        echo "Running tests in ${file}..."
+        cd $root/${builtins.dirOf file}
+        emacs --batch --no-site-file \
+            --load package --eval '(setq package-archives nil)' \
+            -f package-initialize \
+            --load ${testLibrary} -l ${baseNameOf file} -f ${batchTestFunction}
+        r=$?
+        e=$((e + r))
+        echo ----------------------------------------------------------
+      '';
+      testCommands = ''
+        root=$PWD
+        ${pkgs.lib.concatMapStringsSep "\n" makeTestCommand testFiles}
+        cd $root
+      '';
+    in makeTestDerivation {
+      inherit testCommands package title typeDesc patterns testFiles
+        emacsWithPackagesDrv drvNameSuffix;
+    };
+
+in { inherit makeTestDerivation makeTestDerivation2; }
