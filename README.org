@@ -43,6 +43,7 @@ Even though this program is named after MELPA, it is not written by the authors 
   -  [[#abstract-emacs-versions-supported-by-the-cli][Abstract Emacs versions supported by the CLI]]
   -  [[#the-default-emacs-version][The default Emacs version]]
 -  [[#development][Development]]
+-  [[#credits][Credits]]
 -  [[#license][License]]
 
 ** Features
@@ -374,5 +375,12 @@ Any feedback and PR are welcome.
 - [[https://github.com/akirak/emacs-package][The GitHub action]] in a separate repository is written in TypeScript and wraps =nix= and =melpa-check= commands.
 
 TODO: Add instructions for compiling and testing the programs
+** Credits
+- The linting logics are partly based on [[https://github.com/alphapapa/makem.sh][makem.sh]] by alphapapa (Adam Porter) and [[https://gitea.petton.fr/DamienCassou/makel][makel]] by Damien Cassou.
+- The idea of generating GitHub actions from Dhall is based on [[https://github.com/vmchale/github-actions-dhall][vmchale/github-actions-dhall]].
+- The PureScript source code follows some articles and examples written by [[https://github.com/justinwoo/][Justin Woo]].
+- The idea of using =niv= for dependency management is an inspiration from [[https://github.com/purcell/setup-emacs/][setup-emacs]] by Steve Purcell. The GitHub action in the external repository is also roughly based on his work.
+
+And thank you for other contributors, including Eric Dallo ([[https://github.com/ericdallo][@ericdallo]]) and Terje Larsen ([[https://github.com/terlar][@terlar]])!
 ** License
 GPL v3
