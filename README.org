@@ -413,6 +413,6 @@ The Emacs frontend for generating configuration files and running the =melpa-che
 - The PureScript source code follows some articles and examples written by [[https://github.com/justinwoo/][Justin Woo]].
 - The idea of using =niv= for dependency management is an inspiration from [[https://github.com/purcell/setup-emacs/][setup-emacs]] by Steve Purcell. The GitHub action in the external repository is also roughly based on his work.
 
-And thank you for other contributors, including Eric Dallo ([[https://github.com/ericdallo][@ericdallo]]) and Terje Larsen ([[https://github.com/terlar][@terlar]])!
+And thank you for contributors of this project, including Eric Dallo ([[https://github.com/ericdallo][@ericdallo]]) and Terje Larsen ([[https://github.com/terlar][@terlar]])!
 ** License
 GPL v3
