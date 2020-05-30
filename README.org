@@ -10,9 +10,9 @@ It can be run either locally or on CI.
 
 It focuses on reproducibility, ease of configuration, and convenience to run tests.
 
-It has a built-in integration with [[https://github.com/purcell/nix-emacs-ci][nix-emacs-ci]] by Steve Purcell, which lets you run package tests on older versions of Emacs, while enabling you to use your preferred version of Emacs for your own tasks.
+It has a built-in integration with [[https://github.com/purcell/nix-emacs-ci][nix-emacs-ci]] by Steve Purcell, which enables you to run package tests on older versions of Emacs, while letting you stick to your preferred version of Emacs for your own tasks.
 
-Even though this program is named after MELPA, it is not written by the authors of the service.
+Disclaimer: Even though this program is named after MELPA, it is not written by authors of the service.
 ** Table of contents
 :PROPERTIES:
 :TOC:      siblings 
