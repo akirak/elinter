@@ -408,10 +408,10 @@ Functions for generating Ci configuration files are contained in =dhall= directo
 *** Emacs Lisp
 The Emacs frontend for generating configuration files and running the =melpa-check= CLI inside Emacs are in the project root.
 ** Credits
-- The linting logics are partly based on [[https://github.com/alphapapa/makem.sh][makem.sh]] by alphapapa (Adam Porter) and [[https://gitea.petton.fr/DamienCassou/makel][makel]] by Damien Cassou.
+- The linting logics are partly based on [[https://github.com/alphapapa/makem.sh][makem.sh]] by Adam Porter ([[https://github.com/alphapapa/][@alphapapa]]) and [[https://gitea.petton.fr/DamienCassou/makel][makel]] by Damien Cassou ([[https://github.com/damiencassou][@DamienCassou]]).
 - The idea of generating GitHub actions from Dhall is based on [[https://github.com/vmchale/github-actions-dhall][vmchale/github-actions-dhall]].
-- The PureScript source code follows some articles and examples written by [[https://github.com/justinwoo/][Justin Woo]].
-- The idea of using =niv= for dependency management is an inspiration from [[https://github.com/purcell/setup-emacs/][setup-emacs]] by Steve Purcell. The GitHub action in the external repository is also roughly based on his work.
+- The PureScript source code follows some articles and examples written by Justin Woo ([[https://github.com/justinwoo/][@justinwoo]]).
+- The idea of using =niv= for dependency management is an inspiration from [[https://github.com/purcell/setup-emacs/][setup-emacs]] by Steve Purcell ([[https://github.com/purcell/][@purcell]]). The GitHub action in the external repository is also roughly based on his work.
 
 And thank you for contributors of this project, including Eric Dallo ([[https://github.com/ericdallo][@ericdallo]]) and Terje Larsen ([[https://github.com/terlar][@terlar]])!
 ** License
