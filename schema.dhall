@@ -22,7 +22,7 @@ let Pattern
 
 let TestDriver
     : Type
-    = < ert | buttercup >
+    = < ert | ert-runner | buttercup >
 
 let defaultTests
     : List Pattern
@@ -39,7 +39,6 @@ in  { SchemaVersion
           , dependencies : List PackageName
           , testDrivers : List TestDriver
           , ertTests : List Pattern
-          , ertRunnerCompatible : Bool
           , buttercupTests : List Pattern
           , testDependencies : List PackageName
           , testExcludes : List Pattern
@@ -49,9 +48,8 @@ in  { SchemaVersion
       , default =
         { localDependencies = [] : List File
         , mainFile = None File
-        , testDrivers = [ TestDriver.ert ]
+        , testDrivers = [] : List TestDriver
         , ertTests = defaultTests
-        , ertRunnerCompatible = True
         , buttercupTests = defaultTests
         , testDependencies = [] : List PackageName
         , testExcludes = [] : List Pattern
