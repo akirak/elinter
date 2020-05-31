@@ -1,4 +1,5 @@
-{ pkgs }:
+# Libraries dedicated to testing
+{ pkgs, customEmacsPackages, ... }:
 with pkgs.lib;
 with builtins;
 let
@@ -33,9 +34,17 @@ let
     echo ----------------------------------------------------------
   '';
 
+  melpaBuild = import ./melpa-build.nix { inherit pkgs customEmacsPackages; };
+
+  emacsDerivationForTesting = package: testLibraries:
+    customEmacsPackages.emacsWithPackages (epkgs:
+      [ (melpaBuild package) ] ++ package.testDependencies epkgs
+      ++ testLibraries epkgs);
+
   makeTestDerivation = { package, title, typeDesc, patterns, testFiles
-    , testCommands, emacsWithPackagesDrv, drvNameSuffix }:
+    , testCommands, testLibraries, drvNameSuffix }:
     let
+      emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
       # Change the directory for testing
       testCommands_ = withMutableSourceDirectory package testCommands;
       drv = pkgs.stdenv.mkDerivation {
@@ -76,13 +85,13 @@ let
         '';
       };
     in drv // {
-      inherit emacsWithPackagesDrv patterns testFiles;
+      inherit emacsWithPackagesDrv patterns testFiles testLibraries;
       # Pass the possibly sandboxed test environment
       testCommands = testCommands_;
     };
 
   makeTestDerivation2 = { package, title, typeDesc, patterns, testFiles
-    , testLibrary, batchTestFunction, emacsWithPackagesDrv, drvNameSuffix }:
+    , testLibrary, batchTestFunction, drvNameSuffix, testLibraries }:
     let
       makeTestCommand = file: ''
         echo "Running tests in ${file}..."
@@ -102,10 +111,10 @@ let
       '';
     in makeTestDerivation {
       inherit testCommands package title typeDesc patterns testFiles
-        emacsWithPackagesDrv drvNameSuffix;
+        testLibraries drvNameSuffix;
     };
 
 in {
   inherit makeTestDerivation makeTestDerivation2 makeTestHeader
-    withMutableSourceDirectory;
+    withMutableSourceDirectory emacsDerivationForTesting;
 }

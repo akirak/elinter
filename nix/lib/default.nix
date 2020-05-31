@@ -31,6 +31,5 @@ let
     ./package.nix
     ./dhall.nix
     ./emacs.nix
-    ./tests.nix
   ]);
 in { inherit concatShArgs discoverFiles discoverFilesWithExcludes; } // libs

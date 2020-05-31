@@ -1,13 +1,11 @@
-config@{ pkgs, customEmacsPackages, ... }:
+config@{ pkgs, ... }:
 package:
 with (import ../lib { inherit pkgs; });
-
+with (import ./test-base.nix config);
 let
-  melpaBuild = import ./melpa-build.nix config;
+  testLibraries = epkgs: [ epkgs.melpaPackages.ert-runner ];
 
-  emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages (epkgs:
-    [ (melpaBuild package) epkgs.melpaPackages.ert-runner ]
-    ++ package.testDependencies epkgs));
+  emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
 
   testCommands = withMutableSourceDirectory package ''
     echo "Running ert-runner..."
@@ -34,7 +32,8 @@ let
     '';
   };
 in drv // {
-  inherit emacsWithPackagesDrv testCommands;
-  # Unlike other test drivers, you don't have to expose testFiles and
-  # patterns, because they are only used in allTests.nix
+  inherit emacsWithPackagesDrv testCommands testLibraries;
+  patterns = [ "test/*.el" ];
+  testFiles =
+    if builtins.pathExists "${package.src}/test" then [ "test" ] else [ ];
 }
