@@ -184,6 +184,12 @@ ertCommand mVer mPackage =
     <> " >/dev/null && "
     <> generateInternalBlock innerShell "ert" Nothing mVer mPackage
 
+ertRunnerCommand :: Maybe EmacsVersion -> Maybe String -> String
+ertRunnerCommand mVer mPackage =
+  generateInternalBlock innerBuilder "prepareErtRunner" (Just "--no-build-output") mVer mPackage
+    <> " >/dev/null && "
+    <> generateInternalBlock innerShell "ert-runner" Nothing mVer mPackage
+
 testCommand :: Maybe EmacsVersion -> Maybe String -> String
 testCommand mVer mPackage =
   generateInternalBlock innerBuilder "prepareAllTests" (Just "--no-build-output") mVer mPackage

@@ -1,6 +1,5 @@
 module Main where
 
-import Version (versionString)
 import Commands
 import Control.Applicative ((<$>), (<*>))
 import Data.Maybe (Maybe, optional)
@@ -10,6 +9,7 @@ import Options.Applicative (Parser, ReadM, command, execParser, flag, help, help
 import Options.Applicative.Types (readerAsk)
 import Prelude (Unit, join, pure, ($), (<>), bind)
 import Record.Extra (sequenceRecord)
+import Version (versionString)
 
 main :: Effect Unit
 main = join $ execParser (info (opts <**> helper <**> showVersion) progInfo)
@@ -33,6 +33,7 @@ opts =
         <> command "byte-compile" (info_ (byteCompile <$> byteCompileOpts <*> packageArg) (progDesc "Byte-Compile packages"))
         <> command "buttercup" (info_ (runButtercup <$> buttercupOpts <*> packageArg) (progDesc "Run buttercup tests"))
         <> command "ert" (info_ (runErt <$> ertOpts <*> packageArg) (progDesc "Run ERT tests"))
+        <> command "ert-runner" (info_ (runErtRunner <$> ertRunnerOpts <*> packageArg) (progDesc "Run ert-runner tests"))
         <> command "test" (info_ (runTest <$> testOpts <*> packageArg) (progDesc "Run tests"))
         <> command "list" (info_ listCommands (progDesc "Display a list of certain things in the project"))
         <> command "all" (info_ (runAll <$> allOpts) (progDesc "Run all tasks on all packages"))
@@ -77,6 +78,11 @@ opts =
       }
 
   ertOpts =
+    sequenceRecord
+      { emacsVersion: emacsArg
+      }
+
+  ertRunnerOpts =
     sequenceRecord
       { emacsVersion: emacsArg
       }

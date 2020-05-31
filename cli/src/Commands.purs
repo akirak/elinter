@@ -11,7 +11,7 @@ import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Exception (error, throwException)
 import Foreign.Object (insert)
-import Lib (EmacsVersion, PackageName, buttercupCommand, byteCompileCommand, checkdocCommand, doesConfigExist, ertCommand, getConfigPath, packageLintCommand, runInNixShell, setConfigPath, testCommand)
+import Lib (EmacsVersion, PackageName, buttercupCommand, byteCompileCommand, checkdocCommand, doesConfigExist, ertCommand, ertRunnerCommand, getConfigPath, packageLintCommand, runInNixShell, setConfigPath, testCommand)
 import Node.ChildProcess (defaultSpawnOptions)
 import Node.Path as Path
 import Node.Process (getEnv)
@@ -122,6 +122,14 @@ type ErtOpts
 runErt :: ErtOpts -> Maybe PackageName -> Effect Unit
 runErt opts mPackage = do
   runInNixShell [ ertCommand opts.emacsVersion mPackage ]
+
+type ErtRunnerOpts
+  = { emacsVersion :: Maybe EmacsVersion
+    }
+
+runErtRunner :: ErtRunnerOpts -> Maybe PackageName -> Effect Unit
+runErtRunner opts mPackage = do
+  runInNixShell [ ertRunnerCommand opts.emacsVersion mPackage ]
 
 type TestOpts
   = { emacsVersion :: Maybe EmacsVersion
