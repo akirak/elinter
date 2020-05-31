@@ -1,4 +1,4 @@
-let SchemaVersion = "1.1"
+let SchemaVersion = "1.2"
 
 let PackageName
     : Type
@@ -22,7 +22,7 @@ let Pattern
 
 let TestDriver
     : Type
-    = < ert | buttercup >
+    = < ert | ert-runner | buttercup >
 
 let defaultTests
     : List Pattern
@@ -48,7 +48,7 @@ in  { SchemaVersion
       , default =
         { localDependencies = [] : List File
         , mainFile = None File
-        , testDrivers = [ TestDriver.ert ]
+        , testDrivers = [] : List TestDriver
         , ertTests = defaultTests
         , buttercupTests = defaultTests
         , testDependencies = [] : List PackageName

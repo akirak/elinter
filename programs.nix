@@ -174,6 +174,10 @@ in {
 
   ert = mapPackage1 checkers.ert "ert";
 
+  prepareErtRunner = mapPackage1 checkers.prepareErtRunner "prepareErtRunner";
+
+  ert-runner = mapPackage1 checkers.ert-runner "ert-runner";
+
   # A task to silent build output in all tests.
   # To be run by nix-build with --no-build-output as a preparation step.
   prepareAllTests = mapPackage1 checkers.prepareAllTests "prepareAllTests";

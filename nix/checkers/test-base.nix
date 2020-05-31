@@ -1,4 +1,5 @@
-{ pkgs }:
+# Libraries dedicated to testing
+{ pkgs, customEmacsPackages, ... }:
 with pkgs.lib;
 with builtins;
 let
@@ -8,9 +9,44 @@ let
     else
       "${pkgs.coreutils}/bin/false";
 
+  # Create a temporary copy of the source directory for testing
+  # and run commands in the directory
+  withMutableSourceDirectory = package: commands: ''
+    set -e
+    cd ${package.src}
+    tmpdir=$(mktemp -d -u -t ${package.pname}-ertXXX)
+    cleanup_tmpdir() { cd ${package.src}; rm -rf $tmpdir; }
+    trap cleanup_tmpdir EXIT INT KILL
+    cp -r ${package.src} $tmpdir
+    chmod u+w -R $tmpdir
+    cd $tmpdir
+    set +e
+    ${commands}
+  '';
+
+  makeTestHeader = { title, package, fileInfo }: ''
+    e=0
+    echo ==========================================================
+    echo ${title} on ${package.pname}
+    echo ==========================================================
+    ${fileInfo}
+    emacs --version
+    echo ----------------------------------------------------------
+  '';
+
+  melpaBuild = import ./melpa-build.nix { inherit pkgs customEmacsPackages; };
+
+  emacsDerivationForTesting = package: testLibraries:
+    customEmacsPackages.emacsWithPackages (epkgs:
+      [ (melpaBuild package) ] ++ package.testDependencies epkgs
+      ++ testLibraries epkgs);
+
   makeTestDerivation = { package, title, typeDesc, patterns, testFiles
-    , testCommands, emacsWithPackagesDrv, drvNameSuffix }:
+    , testCommands, testLibraries, drvNameSuffix }:
     let
+      emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
+      # Change the directory for testing
+      testCommands_ = withMutableSourceDirectory package testCommands;
       drv = pkgs.stdenv.mkDerivation {
         name = package.pname + drvNameSuffix;
         buildInputs = [ emacsWithPackagesDrv ];
@@ -28,16 +64,11 @@ let
               exit 0
             fi
           '';
-          header = ''
-            e=0
-            cd ${package.src}
-            echo ==========================================================
-            echo ${title} on ${package.pname}
-            echo ==========================================================
-            ${fileInfo}
-            emacs --version
-            echo ----------------------------------------------------------
-          '';
+          header = makeTestHeader { inherit title package fileInfo; };
+          #  ''
+          #   cd ${package.src}
+          #   ${testCommands}
+          # '';
           footer = ''
             if [[ $e -gt 0 ]]; then
               echo "Some ${title} for ${package.pname} have failed."
@@ -49,14 +80,18 @@ let
           '';
         in ''
           ${header}
-          ${testCommands}
+          ${testCommands_}
           ${footer}
         '';
       };
-    in drv // { inherit emacsWithPackagesDrv testCommands patterns testFiles; };
+    in drv // {
+      inherit emacsWithPackagesDrv patterns testFiles testLibraries;
+      # Pass the possibly sandboxed test environment
+      testCommands = testCommands_;
+    };
 
   makeTestDerivation2 = { package, title, typeDesc, patterns, testFiles
-    , testLibrary, batchTestFunction, emacsWithPackagesDrv, drvNameSuffix }:
+    , testLibrary, batchTestFunction, drvNameSuffix, testLibraries }:
     let
       makeTestCommand = file: ''
         echo "Running tests in ${file}..."
@@ -76,7 +111,10 @@ let
       '';
     in makeTestDerivation {
       inherit testCommands package title typeDesc patterns testFiles
-        emacsWithPackagesDrv drvNameSuffix;
+        testLibraries drvNameSuffix;
     };
 
-in { inherit makeTestDerivation makeTestDerivation2; }
+in {
+  inherit makeTestDerivation makeTestDerivation2 makeTestHeader
+    withMutableSourceDirectory emacsDerivationForTesting;
+}

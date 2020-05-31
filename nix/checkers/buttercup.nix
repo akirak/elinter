@@ -1,9 +1,8 @@
-config@{ pkgs, customEmacsPackages, ... }:
+config@{ pkgs, ... }:
 package:
 with (import ../lib { inherit pkgs; });
-
+with (import ./test-base.nix config);
 let
-  melpaBuild = import ./melpa-build.nix config;
   patterns = package.buttercupTests;
   testFiles = discoverFiles package.src patterns;
 in makeTestDerivation2 {
@@ -13,7 +12,5 @@ in makeTestDerivation2 {
   drvNameSuffix = "-buttercup";
   title = "Buttercup Tests";
   typeDesc = "buttercup tests";
-  emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages (epkgs:
-    [ epkgs.melpaPackages.buttercup (melpaBuild package) ]
-    ++ package.testDependencies epkgs));
+  testLibraries = epkgs: [ epkgs.melpaPackages.buttercup ];
 }

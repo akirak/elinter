@@ -1,9 +1,8 @@
-config@{ pkgs, customEmacsPackages, ... }:
+config@{ pkgs, ... }:
 package:
 with (import ../lib { inherit pkgs; });
-
+with (import ./test-base.nix config);
 let
-  melpaBuild = import ./melpa-build.nix config;
   patterns = package.ertTests;
   testFiles =
     discoverFilesWithExcludes package.src patterns package.testExcludes;
@@ -14,6 +13,5 @@ in makeTestDerivation2 {
   drvNameSuffix = "-ert";
   title = "ERT Tests";
   typeDesc = "ERT tests";
-  emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages
-    (epkgs: [ (melpaBuild package) ] ++ package.testDependencies epkgs));
+  testLibraries = _: [];
 }

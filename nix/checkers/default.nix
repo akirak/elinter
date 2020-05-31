@@ -10,6 +10,8 @@ config: {
     (import ./buttercup.nix config package).emacsWithPackagesDrv;
   ert = import ./ert.nix config;
   prepareErt = package: (import ./ert.nix config package).emacsWithPackagesDrv;
+  ert-runner = import ./ert-runner.nix config;
+  prepareErtRunner = package: (import ./ert-runner.nix config package).emacsWithPackagesDrv;
   allTests = import ./allTests.nix config;
   prepareAllTests = package:
     (import ./allTests.nix config package).emacsWithPackagesDrv;
