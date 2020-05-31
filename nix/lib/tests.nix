@@ -30,7 +30,6 @@ let
           '';
           header = ''
             e=0
-            cd ${package.src}
             echo ==========================================================
             echo ${title} on ${package.pname}
             echo ==========================================================
@@ -38,6 +37,24 @@ let
             emacs --version
             echo ----------------------------------------------------------
           '';
+          # Enter the immutable directory containing the source files.
+          enterImmutableDirectory = ''
+            cd ${package.src}
+          '';
+          # Create a temporary copy of the source directory for testing
+          enterMutableDirectory = ''
+            set -e
+            cd ${package.src}
+            tmpdir=$(mktemp -d -u -t ${package.pname}-ertXXX)
+            cleanup_tmpdir() { cd ${package.src}; rm -rf $tmpdir; }
+            trap cleanup_tmpdir EXIT INT KILL
+            cp -r ${package.src} $tmpdir
+            chmod u+w -R $tmpdir
+            cd $tmpdir
+            set +e
+          '';
+          # TODO: Add an option to switch between mutable and immutable test directory
+          enterDirectory = enterMutableDirectory;
           footer = ''
             if [[ $e -gt 0 ]]; then
               echo "Some ${title} for ${package.pname} have failed."
@@ -49,6 +66,7 @@ let
           '';
         in ''
           ${header}
+          ${enterDirectory}
           ${testCommands}
           ${footer}
         '';
