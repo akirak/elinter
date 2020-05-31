@@ -151,15 +151,18 @@ to the root of the project (usually a Git repository)."
                                            (-map #'car (read (car deps-raw)))))))))))
     (setf (melpa-check-package-dependencies package)
           (-map #'symbol-name (-uniq (delq 'emacs dependencies))))
-    (let* ((test-driver (cl-case (read-char-choice "Test driver [e: ert, b: buttercup, n: none]: "
-                                                   (string-to-list "ebn"))
+    (let* ((test-driver (cl-case (read-char-choice
+                                  "Test driver [e: ert, r: ert-runner, b: buttercup, n: none]: "
+                                  (string-to-list "erbn"))
                           (?e (list "ert"))
+                          (?r (list "ert-runner"))
                           (?b (list "buttercup"))
                           (?n nil)))
            (test-dependencies (when test-driver
                                 (melpa-check-multisel "Extra dependencies for testing: "
                                                       melpa-check-package-test-dependencies)))
-           (test-excluded-files (when test-driver
+           (test-excluded-files (when (and test-driver
+                                           (not (equal test-driver '("ert-runner"))))
                                   melpa-check-package-default-test-excludes)))
       (setf (melpa-check-package-testDrivers package) test-driver)
       (setf (melpa-check-package-testDependencies package) test-dependencies)
