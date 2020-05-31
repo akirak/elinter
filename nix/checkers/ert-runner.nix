@@ -12,6 +12,8 @@ let
     emacs --batch --no-site-file \
         --load package --eval '(setq package-archives nil)' \
         -f package-initialize -l ert-runner
+    r=$?
+    e=$((e + r))
   '';
 
   drv = pkgs.stdenv.mkDerivation {
@@ -27,8 +29,7 @@ let
       ${header}
       e=0
       ${testCommands}
-      r=$?
-      e=$((e + r))
+      exit $e
     '';
   };
 in drv // {
