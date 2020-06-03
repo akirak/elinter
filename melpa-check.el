@@ -101,6 +101,8 @@ in  Actions.buildMultiFileCiWorkflows config packages"
   "Default content of Dhall CI configuration for GitHub Actions."
   :type 'string)
 
+;;;; Faces
+
 (defface melpa-check-success-face
   '((t :foreground "green2"))
   "The face used for success messages."
