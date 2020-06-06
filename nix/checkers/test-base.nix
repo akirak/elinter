@@ -42,11 +42,18 @@ let
       packages = package.dependencyNames ++ package.testDependencyNames
         ++ testLibraries;
     in ''
+      install_log=$(mktemp -t package-installXXX.log)
+      cleanup_install_log() { rm ''${install_log}; }
+      trap cleanup_install_log EXIT INT KILL TERM
+      echo "Installing packages..."
       emacs --batch --no-site-file \
           -l ${./setup-package.el} \
           --eval "(setup-package-many '(${
             builtins.concatStringsSep " " packages
-          }))"
+          }))" 2>''${install_log} || {
+        cat ''${install_log}
+        exit 1
+      }
     '';
 
   # emacsDerivationForTesting = package: testLibraries:
@@ -139,5 +146,6 @@ let
 
 in {
   inherit makeTestDerivation makeTestDerivation2 makeTestHeader
+    packageInstallCommandForTesting
     withMutableSourceDirectory emacsDerivationForTesting;
 }

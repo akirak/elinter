@@ -16,7 +16,6 @@ let
     echo "Running ert-runner..."
     emacs --batch --no-site-file \
         -l ${./setup-package.el} \
-        --eval "(setup-package-many '(${packageNames}))" \
         -l ert-runner
     r=$?
     e=$((e + r))
@@ -33,6 +32,7 @@ let
       };
     in ''
       ${header}
+      ${packageInstallCommandForTesting package testLibraries}
       e=0
       ${testCommands}
       exit $e
