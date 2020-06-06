@@ -56,7 +56,8 @@
             (let ((xdg-cache (or (getenv "XDG_CACHE_HOME")
                                  (expand-file-name "~/.cache"))))
               (expand-file-name (concat "melpa-check/elpa/"
-                                        (format-time-string "%F"))
+                                        (format-time-string "%F")
+                                        "/" emacs-version)
                                 xdg-cache)))))
  (t
   (when (getenv "ELPA_USER_DIR")
