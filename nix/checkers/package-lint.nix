@@ -10,7 +10,8 @@ let
     (epkgs: (package.dependencies epkgs)));
 
   installPackages = package:
-    packageInstallCommand (package.dependencyNames ++ [ "package-lint" ]);
+    packageInstallCommand ((pkgs.lib.subtractLists package.localDependencyNames
+      package.dependencyNames) ++ [ "package-lint" ]);
 
   drv = pkgs.stdenv.mkDerivation {
     name = package.pname + "-package-lint";

@@ -53,8 +53,8 @@ let
   '';
 
   packageInstallCommandForTesting = package: testLibraries:
-    packageInstallCommand
-    (package.dependencyNames ++ package.testDependencyNames ++ testLibraries);
+    packageInstallCommand ((pkgs.lib.subtractLists package.localDependencyNames
+      package.dependencyNames) ++ package.testDependencyNames ++ testLibraries);
 
   # emacsDerivationForTesting = package: testLibraries:
   #   customEmacsPackages.emacsWithPackages (epkgs:
