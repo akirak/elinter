@@ -16,7 +16,7 @@ let
     echo "Running ert-runner..."
     emacs --batch --no-site-file \
         -l ${./setup-package.el} \
-        --eval "(mapc #'package-install '(${packageNames}))" \
+        --eval "(setup-package-many '(${packageNames}))" \
         -l ert-runner
     r=$?
     e=$((e + r))

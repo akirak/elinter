@@ -71,5 +71,12 @@
 ;; Disable the local variables for packages
 (setq enable-dir-local-variables nil)
 
+(defun setup-package-many (packages)
+  "Install PACKAGES that are missing in the current environment."
+  (mapc (lambda (sym)
+          (unless (package-installed-p sym)
+            (package-install sym)))
+        packages))
+
 (provide 'setup-package)
 ;;; setup-package.el ends here
