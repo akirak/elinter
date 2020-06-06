@@ -30,6 +30,7 @@ with builtins; {
               forEach x.localDependencies (depName: self."${depName}");
             # Only used for information to the user
             dependencyNames = x.dependencies;
+            testDependencyNames = x.testDependencies;
           };
         }));
     in fix f;
