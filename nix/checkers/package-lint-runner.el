@@ -30,6 +30,8 @@
 
 ;;; Code:
 
+(require 'subr-x)
+
 ;;;; Run package-lint
 ;; You need to use an Emacs package with the linter.
 ;; This is provided by nix.
