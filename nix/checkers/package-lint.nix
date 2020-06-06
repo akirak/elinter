@@ -6,7 +6,7 @@ package:
 with (import ../lib { inherit pkgs; });
 let
   emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages (epkgs:
-    (package.dependencies epkgs) ++ [ epkgs.melpaPackages.package-lint ]));
+    (package.dependencies epkgs)));
 
   drv = pkgs.stdenv.mkDerivation {
     name = package.pname + "-package-lint";
@@ -31,6 +31,8 @@ let
       emacs --no-site-file --batch \
          --eval "(setq explicitly-installed-packages '(${localDeps}))" \
          --eval "(setq package-lint-main-file ${mainFile})" \
+         -l ${./setup-package.el} \
+         --eval "(setup-package-many '(package-lint))" \
          -l ${./package-lint-runner.el} ${concatShArgs package.files}
       result=$?
       echo ----------------------------------------------------------

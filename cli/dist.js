@@ -7474,22 +7474,22 @@ var PS = {};
   };
   var packageLintCommand = function (mVer) {
       return function (mPackage) {
-          return generateInternalBlock(innerBuilder)("preparePackageLint")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" >/dev/null && " + generateInternalBlock(innerShell)("package-lint")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+          return generateInternalBlock(innerShell)("package-lint")(Data_Maybe.Nothing.value)(mVer)(mPackage);
       };
   };
   var testCommand = function (mVer) {
       return function (mPackage) {
-          return generateInternalBlock(innerBuilder)("prepareAllTests")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" >/dev/null && " + generateInternalBlock(innerShell)("allTests")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+          return generateInternalBlock(innerShell)("allTests")(Data_Maybe.Nothing.value)(mVer)(mPackage);
       };
   };
   var ertRunnerCommand = function (mVer) {
       return function (mPackage) {
-          return generateInternalBlock(innerBuilder)("prepareErtRunner")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" >/dev/null && " + generateInternalBlock(innerShell)("ert-runner")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+          return generateInternalBlock(innerShell)("ert-runner")(Data_Maybe.Nothing.value)(mVer)(mPackage);
       };
   };
   var ertCommand = function (mVer) {
       return function (mPackage) {
-          return generateInternalBlock(innerBuilder)("prepareErt")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" >/dev/null && " + generateInternalBlock(innerShell)("ert")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+          return generateInternalBlock(innerShell)("ert")(Data_Maybe.Nothing.value)(mVer)(mPackage);
       };
   };
   var doesConfigExist = function (path) {
@@ -7531,7 +7531,7 @@ var PS = {};
   var byteCompileCommand = generateInternalBlock(innerBuilder)("byte-compile")(Data_Maybe.Nothing.value);
   var buttercupCommand = function (mVer) {
       return function (mPackage) {
-          return generateInternalBlock(innerBuilder)("prepareButtercup")(new Data_Maybe.Just("--no-build-output"))(mVer)(mPackage) + (" >/dev/null && " + generateInternalBlock(innerShell)("buttercup")(Data_Maybe.Nothing.value)(mVer)(mPackage));
+          return generateInternalBlock(innerShell)("buttercup")(Data_Maybe.Nothing.value)(mVer)(mPackage);
       };
   };
   exports["Release"] = Release;

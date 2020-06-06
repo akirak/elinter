@@ -245,12 +245,17 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
       (unless (f-exists-p (f-join "nix" "sources.nix"))
         (melpa-check--log "nix/sources.nix is not found. Initializing niv...")
         (melpa-check--niv-sync "init"))
+      ;; Integration with emacs-overlay is not supported right now.
+      ;; See https://github.com/akirak/melpa-check/issues/16
+      ;;
+      ;; Add the latest unstable version of nixpkgs
+      ;;
+      ;; (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? emacs-overlay"))
+      ;;   (melpa-check--niv-sync "add" "nix-community/emacs-overlay"))
+      ;;
       ;; Check if melpa-check is already added before adding it
       (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? melpa-check"))
-        (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3"))
-      ;; Add the latest unstable version of nixpkgs
-      (unless (eq t (melpa-check--nix-eval "(import nix/sources.nix) ? emacs-overlay"))
-        (melpa-check--niv-sync "add" "nix-community/emacs-overlay")))
+        (melpa-check--niv-sync "add" "akirak/melpa-check" "--branch" "v3")))
     ;; Create the configuration directory
     (cond
      ((not (file-exists-p config-dir))
@@ -332,10 +337,14 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
          (local-source (concat "import (import "
                                (f-relative "nix/sources.nix" relative-config-dir)
                                ").%s"))
+         ;; emacs-overlay is not supported right now.
+         ;;
+         ;; See https://github.com/akirak/melpa-check/issues/16
+         ;;
+         ;; (emacs-overlay (format local-source "emacs-overlay"))
          (melpa-check (if melpa-check-dont-use-niv
                           (upcase "fixme")
-                        (format local-source "melpa-check")))
-         (emacs-overlay (format local-source "emacs-overlay")))
+                        (format local-source "melpa-check"))))
     ;; Generate a string for a function that takes optional arguments
     ;; and call melpa-check.
     (concat "{\n"
@@ -350,13 +359,15 @@ ROOT, MULTI, and CONFIG-DIR should be passed from
                          ;; TODO: Add support for custom emacs-ci
                          ("The directory containing source files"
                           "srcDir" ,srcDir)
-                         ("Snapshot of emacs-overlay to use for builds"
-                          "emacs-overlay" ,emacs-overlay)
+                         ;; Don't support emacs-overlay for now
+                         ;;
+                         ;; ("Snapshot of emacs-overlay to use for builds"
+                         ;;  "emacs-overlay" ,emacs-overlay)
                          ("A configuration file which defines packages under test"
                           "packageFile" ,(concat "\"" packageFile "\"")))
                        ",\n")
             "\n}:\n"
-            "melpa-check {\n  inherit emacs packageFile srcDir emacs-overlay;\n"
+            "melpa-check {\n  inherit emacs packageFile srcDir;\n"
             "}")))
 
 (defun melpa-check--build-multi-package-config ()

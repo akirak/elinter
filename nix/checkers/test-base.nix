@@ -1,7 +1,8 @@
 # Libraries dedicated to testing
-{ pkgs, customEmacsPackages, ... }:
+config@{ pkgs, customEmacsPackages, ... }:
 with pkgs.lib;
 with builtins;
+with (import ../lib { inherit pkgs; });
 let
   shTrueIf = test:
     if test then
@@ -36,20 +37,32 @@ let
 
   melpaBuild = import ./melpa-build.nix { inherit pkgs customEmacsPackages; };
 
-  emacsDerivationForTesting = package: testLibraries:
-    customEmacsPackages.emacsWithPackages (epkgs:
-      [ (melpaBuild package) ] ++ package.testDependencies epkgs
-      ++ testLibraries epkgs);
+  packageInstallCommandForTesting = package: testLibraries:
+    let
+      packages = package.dependencyNames ++ package.testDependencyNames
+        ++ testLibraries;
+    in ''
+      emacs --batch --no-site-file \
+          -l ${./setup-package.el} \
+          --eval "(setup-package-many '(${
+            builtins.concatStringsSep " " packages
+          }))"
+    '';
+
+  # emacsDerivationForTesting = package: testLibraries:
+  #   customEmacsPackages.emacsWithPackages (epkgs:
+  #     [ (melpaBuild package) ] ++ package.testDependencies epkgs
+  #     ++ testLibraries epkgs);
 
   makeTestDerivation = { package, title, typeDesc, patterns, testFiles
     , testCommands, testLibraries, drvNameSuffix }:
     let
-      emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
+      # emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
       # Change the directory for testing
       testCommands_ = withMutableSourceDirectory package testCommands;
       drv = pkgs.stdenv.mkDerivation {
         name = package.pname + drvNameSuffix;
-        buildInputs = [ emacsWithPackagesDrv ];
+        buildInputs = [ customEmacsPackages.emacs ];
         shellHook = let
           fileInfo = ''
             if ${shTrueIf (builtins.length patterns == 0)}; then
@@ -80,12 +93,14 @@ let
           '';
         in ''
           ${header}
+          ${packageInstallCommandForTesting package testLibraries}
           ${testCommands_}
           ${footer}
         '';
       };
     in drv // {
-      inherit emacsWithPackagesDrv patterns testFiles testLibraries;
+      inherit patterns testFiles testLibraries;
+      # inherit emacsWithPackagesDrv;
       # Pass the possibly sandboxed test environment
       testCommands = testCommands_;
     };
@@ -93,13 +108,21 @@ let
   makeTestDerivation2 = { package, title, typeDesc, patterns, testFiles
     , testLibrary, batchTestFunction, drvNameSuffix, testLibraries }:
     let
+      addLoadPaths =
+        let dirs = (pkgs.lib.unique (map builtins.dirOf package.files));
+        in concatMapStringsSep " " (dir:
+          ''
+            --eval "(add-to-list 'load-path (expand-file-name \"$root/${dir}\"))"'')
+        dirs;
+
       makeTestCommand = file: ''
         echo "Running tests in ${file}..."
         cd $root/${builtins.dirOf file}
         emacs --batch --no-site-file \
-            --load package --eval '(setq package-archives nil)' \
-            -f package-initialize \
-            --load ${testLibrary} -l ${baseNameOf file} -f ${batchTestFunction}
+            -l ${./setup-package.el} \
+            ${addLoadPaths} \
+            --load ${testLibrary} -l ${baseNameOf file} \
+            -f ${batchTestFunction}
         r=$?
         e=$((e + r))
         echo ----------------------------------------------------------

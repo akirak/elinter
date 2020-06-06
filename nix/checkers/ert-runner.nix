@@ -1,24 +1,30 @@
-config@{ pkgs, ... }:
+config@{ pkgs, customEmacsPackages, ... }:
 package:
 with (import ../lib { inherit pkgs; });
 with (import ./test-base.nix config);
 let
-  testLibraries = epkgs: [ epkgs.melpaPackages.ert-runner ];
+  # testLibraries = epkgs: [ epkgs.melpaPackages.ert-runner ];
 
-  emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
+  testLibraries = [ "ert-runner" ];
+
+  # emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
+
+  packageNames = builtins.concatStringsSep " " (package.dependencyNames
+    ++ package.testDependencyNames ++ [ "ert-runner" ]);
 
   testCommands = withMutableSourceDirectory package ''
     echo "Running ert-runner..."
     emacs --batch --no-site-file \
-        --load package --eval '(setq package-archives nil)' \
-        -f package-initialize -l ert-runner
+        -l ${./setup-package.el} \
+        --eval "(setup-package-many '(${packageNames}))" \
+        -l ert-runner
     r=$?
     e=$((e + r))
   '';
 
   drv = pkgs.stdenv.mkDerivation {
     name = package.pname + "-ert-runner";
-    buildInputs = [ emacsWithPackagesDrv ];
+    buildInputs = [ customEmacsPackages.emacs ];
     shellHook = let
       header = makeTestHeader {
         inherit package;

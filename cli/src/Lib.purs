@@ -164,34 +164,19 @@ checkdocCommand :: Maybe EmacsVersion -> Maybe String -> String
 checkdocCommand = generateInternalBlock innerShell "checkdoc" Nothing
 
 packageLintCommand :: Maybe EmacsVersion -> Maybe String -> String
-packageLintCommand mVer mPackage =
-  generateInternalBlock innerBuilder "preparePackageLint" (Just "--no-build-output") mVer mPackage
-    <> " >/dev/null && "
-    <> generateInternalBlock innerShell "package-lint" Nothing mVer mPackage
+packageLintCommand mVer mPackage = generateInternalBlock innerShell "package-lint" Nothing mVer mPackage
 
 byteCompileCommand :: Maybe EmacsVersion -> Maybe String -> String
 byteCompileCommand = generateInternalBlock innerBuilder "byte-compile" Nothing
 
 buttercupCommand :: Maybe EmacsVersion -> Maybe String -> String
-buttercupCommand mVer mPackage =
-  generateInternalBlock innerBuilder "prepareButtercup" (Just "--no-build-output") mVer mPackage
-    <> " >/dev/null && "
-    <> generateInternalBlock innerShell "buttercup" Nothing mVer mPackage
+buttercupCommand mVer mPackage = generateInternalBlock innerShell "buttercup" Nothing mVer mPackage
 
 ertCommand :: Maybe EmacsVersion -> Maybe String -> String
-ertCommand mVer mPackage =
-  generateInternalBlock innerBuilder "prepareErt" (Just "--no-build-output") mVer mPackage
-    <> " >/dev/null && "
-    <> generateInternalBlock innerShell "ert" Nothing mVer mPackage
+ertCommand mVer mPackage = generateInternalBlock innerShell "ert" Nothing mVer mPackage
 
 ertRunnerCommand :: Maybe EmacsVersion -> Maybe String -> String
-ertRunnerCommand mVer mPackage =
-  generateInternalBlock innerBuilder "prepareErtRunner" (Just "--no-build-output") mVer mPackage
-    <> " >/dev/null && "
-    <> generateInternalBlock innerShell "ert-runner" Nothing mVer mPackage
+ertRunnerCommand mVer mPackage = generateInternalBlock innerShell "ert-runner" Nothing mVer mPackage
 
 testCommand :: Maybe EmacsVersion -> Maybe String -> String
-testCommand mVer mPackage =
-  generateInternalBlock innerBuilder "prepareAllTests" (Just "--no-build-output") mVer mPackage
-    <> " >/dev/null && "
-    <> generateInternalBlock innerShell "allTests" Nothing mVer mPackage
+testCommand mVer mPackage = generateInternalBlock innerShell "allTests" Nothing mVer mPackage
