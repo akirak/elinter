@@ -5,7 +5,7 @@ with (import ./test-base.nix config);
 let
   # testLibraries = epkgs: [ epkgs.melpaPackages.ert-runner ];
 
-  testLibraries = _: [];
+  testLibraries = [ "ert-runner" ];
 
   # emacsWithPackagesDrv = emacsDerivationForTesting package testLibraries;
 

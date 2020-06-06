@@ -14,11 +14,11 @@ in makeTestDerivation {
   drvNameSuffix = "-test";
   title = "Tests";
   typeDesc = "tests";
-  testLibraries = epkgs: concatLists (map (f:
+  testLibraries = concatLists (map (f:
     f {
-      ert = ert.testLibraries epkgs;
-      ert-runner = ert-runner.testLibraries epkgs;
-      buttercup = buttercup.testLibraries epkgs;
+      ert = ert.testLibraries;
+      ert-runner = ert-runner.testLibraries;
+      buttercup = buttercup.testLibraries;
     }) testDrivers);
   patterns = concatLists (map (f:
     f {

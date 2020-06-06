@@ -12,5 +12,5 @@ in makeTestDerivation2 {
   drvNameSuffix = "-buttercup";
   title = "Buttercup Tests";
   typeDesc = "buttercup tests";
-  testLibraries = epkgs: [ epkgs.melpaPackages.buttercup ];
+  testLibraries = [ "buttercup" ];
 }

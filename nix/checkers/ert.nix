@@ -13,5 +13,5 @@ in makeTestDerivation2 {
   drvNameSuffix = "-ert";
   title = "ERT Tests";
   typeDesc = "ERT tests";
-  testLibraries = _: [];
+  testLibraries = [ ];
 }
