@@ -31,6 +31,7 @@ let
       emacs --no-site-file --batch \
          --eval "(setq explicitly-installed-packages '(${localDeps}))" \
          --eval "(setq package-lint-main-file ${mainFile})" \
+         -l ${./setup-package.el} \
          -l ${./package-lint-runner.el} ${concatShArgs package.files}
       result=$?
       echo ----------------------------------------------------------
