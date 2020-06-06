@@ -1,12 +1,17 @@
 # Since package-lint requires the internet connection to test
 # if dependencies are installable, you can only run this command
 # in nix-shell, and not in nix-build.
-{ pkgs, customEmacsPackages, ... }:
+config@{ pkgs, customEmacsPackages, ... }:
 package:
 with (import ../lib { inherit pkgs; });
+with (import ./test-base.nix config);
 let
-  emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages (epkgs:
-    (package.dependencies epkgs)));
+  emacsWithPackagesDrv = (customEmacsPackages.emacsWithPackages
+    (epkgs: (package.dependencies epkgs)));
+
+  installPackages = package:
+    packageInstallCommand ((pkgs.lib.subtractLists package.localDependencyNames
+      package.dependencyNames) ++ [ "package-lint" ]);
 
   drv = pkgs.stdenv.mkDerivation {
     name = package.pname + "-package-lint";
@@ -27,12 +32,12 @@ let
       echo ==========================================================
       echo package-lint on ${package.pname} package
       echo ==========================================================
+      ${installPackages package}
       cd ${package.src}
       emacs --no-site-file --batch \
          --eval "(setq explicitly-installed-packages '(${localDeps}))" \
          --eval "(setq package-lint-main-file ${mainFile})" \
          -l ${./setup-package.el} \
-         --eval "(setup-package-many '(package-lint))" \
          -l ${./package-lint-runner.el} ${concatShArgs package.files}
       result=$?
       echo ----------------------------------------------------------

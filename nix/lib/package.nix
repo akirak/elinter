@@ -31,6 +31,7 @@ with builtins; {
             # Only used for information to the user
             dependencyNames = x.dependencies;
             testDependencyNames = x.testDependencies;
+            localDependencyNames = x.localDependencies;
           };
         }));
     in fix f;
