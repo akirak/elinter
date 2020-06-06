@@ -36,12 +36,12 @@
 ;; You need to use an Emacs package with the linter.
 ;; This is provided by nix.
 (require 'package-lint)
-(message "package-user-dir: %s" (abbreviate-file-name package-user-dir))
-(message "package-archives:\n%s"
-         (mapconcat (lambda (cell)
-                      (format "  %s: %s" (car cell) (cdr cell)))
-                    package-archives "\n"))
-(message "----------------------------------------------------------")
+;; (message "package-user-dir: %s" (abbreviate-file-name package-user-dir))
+;; (message "package-archives:\n%s"
+;;          (mapconcat (lambda (cell)
+;;                       (format "  %s: %s" (car cell) (cdr cell)))
+;;                     package-archives "\n"))
+;; (message "----------------------------------------------------------")
 (message "Running package-lint on %s..." (string-join command-line-args-left " "))
 (when (> (length command-line-args-left) 1)
   ;; Use `bound-and-true-p' to avoid an unbound variable error
