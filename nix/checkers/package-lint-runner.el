@@ -31,7 +31,6 @@
 ;;; Code:
 
 ;;;; Run package-lint
-;; package-lint is not installed by package.el.
 ;; You need to use an Emacs package with the linter.
 ;; This is provided by nix.
 (require 'package-lint)
