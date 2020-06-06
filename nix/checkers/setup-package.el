@@ -22,7 +22,9 @@
         (or (getenv "ELPA_USER_DIR")
             (let ((xdg-cache (or (getenv "XDG_CACHE_HOME")
                                  (expand-file-name "~/.cache"))))
-              (expand-file-name "melpa-check/elpa" xdg-cache)))))
+              (expand-file-name (concat "melpa-check/elpa/"
+                                        (format-time-string "%F"))
+                                xdg-cache)))))
  (t
   (when (getenv "ELPA_USER_DIR")
     (setq package-user-dir (getenv "ELPA_USER_DIR")))))
