@@ -1,7 +1,8 @@
 # Libraries dedicated to testing
-{ pkgs, customEmacsPackages, ... }:
+config@{ pkgs, customEmacsPackages, ... }:
 with pkgs.lib;
 with builtins;
+with (import ../lib { inherit pkgs; });
 let
   shTrueIf = test:
     if test then
@@ -107,12 +108,21 @@ let
   makeTestDerivation2 = { package, title, typeDesc, patterns, testFiles
     , testLibrary, batchTestFunction, drvNameSuffix, testLibraries }:
     let
+      addLoadPaths =
+        let dirs = (pkgs.lib.unique (map builtins.dirOf package.files));
+        in concatMapStringsSep " " (dir:
+          ''
+            --eval "(add-to-list 'load-path (expand-file-name \"$root/${dir}\"))"'')
+        dirs;
+
       makeTestCommand = file: ''
         echo "Running tests in ${file}..."
         cd $root/${builtins.dirOf file}
         emacs --batch --no-site-file \
             -l ${./setup-package.el} \
-            --load ${testLibrary} -l ${baseNameOf file} -f ${batchTestFunction}
+            ${addLoadPaths} \
+            --load ${testLibrary} -l ${baseNameOf file} \
+            -f ${batchTestFunction}
         r=$?
         e=$((e + r))
         echo ----------------------------------------------------------
