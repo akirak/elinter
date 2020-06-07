@@ -59,6 +59,15 @@
                                         (format-time-string "%F")
                                         "/" emacs-version)
                                 xdg-cache)))))
+ ((eq system-type 'darwin)
+  (setq package-user-dir
+        ;; If you want to store packages in a specific directory,
+        ;; e.g. for caching on CI, you can give it as an environment
+        ;; variable.
+        (or (getenv "ELPA_USER_DIR")
+            (expand-file-name (concat "~/Library/Caches/melpa-check/elpa/"
+                                      (format-time-string "%F")
+                                      "/" emacs-version)))))
  (t
   (when (getenv "ELPA_USER_DIR")
     (setq package-user-dir (getenv "ELPA_USER_DIR")))))
