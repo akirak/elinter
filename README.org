@@ -4,6 +4,8 @@
 <a href="https://github.com/akirak/melpa-check/actions"><img alt="Build Status" src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fakirak%2Fmelpa-check%2Fbadge%3Fref%3Dv3&style=flat" /></a>
 #+END_HTML
 
+*The current version has entered maintenance mode, and it is no longer meant for general adoption.* I'm planning on a name change in the next iteration, so the name =melpa-check= is not going to be used in the next version. See [[https://github.com/akirak/melpa-check/issues/18][#18]] for details.
+
 =melpa-check= is a framework for linting and testing Emacs Lisp packages.
 Its main goal is to let package authors easily set up continuous integration (CI) before they send PRs to [[https://melpa.org/#/][MELPA]].
 It can be run either locally or on CI.
