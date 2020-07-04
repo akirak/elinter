@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: install nix
-      uses: cachix/install-nix-action@v7
+      uses: cachix/install-nix-action@v10
     - name: install cachix
       run: nix-env -iA cachix -f https://cachix.org/api/v1/install
     - name: enable cachix for emacs-ci
