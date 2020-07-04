@@ -18,7 +18,7 @@ jobs:
           - snapshot
     steps:
     - name: Install nix
-      uses: cachix/install-nix-action@v8
+      uses: cachix/install-nix-action@v10
     - uses: actions/checkout@v2
     - name: Install
       run: nix-env -iA cli.gh-action -f .
