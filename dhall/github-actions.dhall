@@ -1,4 +1,4 @@
-let SchemaVersion = "1.0"
+let SchemaVersion = "1.0.1"
 
 let schema = ../schema.dhall
 
@@ -101,9 +101,9 @@ let WorkflowFile = { fileName : Text, content : Workflow }
 
 let uses = λ(repo : Text) → Step.Uses { uses = repo }
 
-let installNix = uses "cachix/install-nix-action@v8"
+let installNix = uses "cachix/install-nix-action@v10"
 
-let checkout = uses "actions/checkout@v1"
+let checkout = uses "actions/checkout@v2"
 
 let configPackage = uses "akirak/emacs-package@v1"
 
