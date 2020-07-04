@@ -563,7 +563,7 @@ With a universal prefix, reset the configuration directory to DIR."
                         (buf (find-buffer-visiting outfile)))
                    ;; If there is an open buffer and it's modified,
                    ;; ask if the user wants to discard the changes
-                   (when (buffer-modified-p buf)
+                   (when (and buf (buffer-modified-p buf))
                      (if (yes-or-no-p (format-message
                                        "Already visiting %s and it's modified. Discard the changes?"
                                        (f-short outfile)))
