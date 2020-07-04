@@ -24,14 +24,14 @@ with builtins; {
           value = x // {
             src = srcDir;
             recipe = pkgs.writeText "recipe" x.recipe;
-            dependencies = packageListFromNames x.dependencies;
-            testDependencies = packageListFromNames x.testDependencies;
+            dependencies = packageListFromNames (x.dependencies or [ ]);
+            testDependencies = packageListFromNames (x.testDependencies or [ ]);
             localDependencies =
               forEach x.localDependencies (depName: self."${depName}");
             # Only used for information to the user
-            dependencyNames = x.dependencies;
-            testDependencyNames = x.testDependencies;
-            localDependencyNames = x.localDependencies;
+            dependencyNames = x.dependencies or [ ];
+            testDependencyNames = x.testDependencies or [ ];
+            localDependencyNames = x.localDependencies or [ ];
           };
         }));
     in fix f;
