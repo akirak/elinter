@@ -29,7 +29,11 @@
 ;;;###autoload
 (defun bad-hello-message ()
   (interactive)
+  (when (not t)
+    t)
   (message "Hello"))
+
+(bind-keys ("<f12> <f11> <f10>" . #'emacs-version))
 
 (provide 'bad-hello)
 ;;; bad-hello.el ends here
