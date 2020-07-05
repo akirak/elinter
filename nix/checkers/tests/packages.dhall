@@ -27,7 +27,8 @@ in  [ Package::{
       , version = "0.1"
       , emacsVersion = "25.1"
       , files = [ "nix/checkers/melpazoid-misc-runner.el" ]
-      , dependencies = [] : List Text
+      , dependencies = [ "melpazoid" ]
+      , localDependencies = [ "melpazoid" ]
       , recipe =
           ''
           (melpazoid-misc-runner :fetcher github :repo "akirak/melpa-check" :files ("nix/checkers/melpazoid-misc-runner.el"))
