@@ -42,6 +42,7 @@
 ;; Configure the standard set of package archives
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("org" . "https://orgmode.org/elpa/")
         ("melpa" . "https://melpa.org/packages/")))
 
 ;; Store packages in a separate directory to avoid polution of
