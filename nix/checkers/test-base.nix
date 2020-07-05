@@ -147,5 +147,5 @@ let
 in {
   inherit makeTestDerivation makeTestDerivation2 makeTestHeader
     packageInstallCommand packageInstallCommandForTesting
-    withMutableSourceDirectory emacsDerivationForTesting;
+    withMutableSourceDirectory emacsDerivationForTesting melpaBuild;
 }
