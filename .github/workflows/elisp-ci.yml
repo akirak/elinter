@@ -23,7 +23,7 @@ jobs:
     - name: Install
       run: nix-env -iA cli.gh-action -f .
     - run: melpa-check deps
-    - run: melpa-check config -f nix/checkers/tests
+    - run: melpa-check config -f nix/checkers/tests || echo Ignoring
     # Continue even if there is an error
     - run: melpa-check lint checkdoc-runner || echo Ignoring
     - run: melpa-check byte-compile -e ${{ matrix.emacs }} checkdoc-runner
