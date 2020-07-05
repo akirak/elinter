@@ -22,4 +22,15 @@ in  [ Package::{
           (checkdoc-runner :fetcher github :repo "akirak/melpa-check" :files ("nix/checkers/checkdoc-runner.el"))
           ''
       }
+    , Package::{
+      , pname = "melpazoid-misc-runner"
+      , version = "0.1"
+      , emacsVersion = "25.1"
+      , files = [ "nix/checkers/melpazoid-misc-runner.el" ]
+      , dependencies = [] : List Text
+      , recipe =
+          ''
+          (melpazoid-misc-runner :fetcher github :repo "akirak/melpa-check" :files ("nix/checkers/melpazoid-misc-runner.el"))
+          ''
+      }
     ]

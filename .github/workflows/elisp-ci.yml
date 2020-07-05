@@ -29,3 +29,5 @@ jobs:
     - run: melpa-check byte-compile -e ${{ matrix.emacs }} checkdoc-runner
     - run: melpa-check lint package-lint-runner || echo Ignoring
     - run: melpa-check byte-compile -e ${{ matrix.emacs }} package-lint-runner
+    - run: melpa-check lint melpazoid-misc-runner || echo Ignoring
+    - run: melpa-check byte-compile -e ${{ matrix.emacs }} melpazoid-misc-runner
