@@ -23,6 +23,18 @@
         "url": "https://github.com/justinwoo/easy-purescript-nix/archive/d4879bfd2b595d7fbd37da1a7bea5d0361975eb3.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "melpazoid": {
+        "branch": "master",
+        "description": "A bundle of CI scripts for testing Emacs packages, primarily submissions to MELPA.",
+        "homepage": "",
+        "owner": "riscy",
+        "repo": "melpazoid",
+        "rev": "382db43a29340dcbd8f7414a9ade19944d12e12c",
+        "sha256": "1d48ky67i67chm19s6k35qs0msh1pnldqw46lx7h414rf20bhgb5",
+        "type": "tarball",
+        "url": "https://github.com/riscy/melpazoid/archive/382db43a29340dcbd8f7414a9ade19944d12e12c.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",

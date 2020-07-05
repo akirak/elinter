@@ -3,6 +3,7 @@ config: {
   package-lint = import ./package-lint.nix config;
   preparePackageLint = package:
     (import ./package-lint.nix config package).emacsWithPackagesDrv;
+  melpazoid-misc = import ./melpazoid-misc.nix config;
   byte-compile = import ./byte-compile.nix config;
   melpaBuild = import ./melpa-build.nix config;
   buttercup = import ./buttercup.nix config;

@@ -162,6 +162,8 @@ in {
   preparePackageLint =
     mapPackage1 checkers.preparePackageLint "preparePackageLint";
 
+  melpazoid-misc = mapPackage1 checkers.melpazoid-misc "melpazoid-misc";
+
   # A task to silent build output in buttercup.
   # To be run by nix-build with --no-build-output as a preparation step.
   prepareButtercup = mapPackage1 checkers.prepareButtercup "prepareButtercup";
