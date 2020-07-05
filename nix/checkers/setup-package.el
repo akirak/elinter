@@ -53,25 +53,30 @@
         ;; If you want to store packages in a specific directory,
         ;; e.g. for caching on CI, you can give it as an environment
         ;; variable.
-        (or (getenv "ELPA_USER_DIR")
-            (let ((xdg-cache (or (getenv "XDG_CACHE_HOME")
-                                 (expand-file-name "~/.cache"))))
-              (expand-file-name (concat "melpa-check/elpa/"
-                                        (format-time-string "%F")
-                                        "/" emacs-version)
-                                xdg-cache)))))
+        (if-let (user-dir (getenv "ELPA_USER_DIR"))
+            (expand-file-name (int-to-string emacs-major-version)
+                              user-dir)
+          (let ((xdg-cache (or (getenv "XDG_CACHE_HOME")
+                               (expand-file-name "~/.cache"))))
+            (expand-file-name (concat "melpa-check/elpa/"
+                                      (format-time-string "%F")
+                                      "/" (int-to-string emacs-major-version))
+                              xdg-cache)))))
  ((eq system-type 'darwin)
   (setq package-user-dir
         ;; If you want to store packages in a specific directory,
         ;; e.g. for caching on CI, you can give it as an environment
         ;; variable.
-        (or (getenv "ELPA_USER_DIR")
-            (expand-file-name (concat "~/Library/Caches/melpa-check/elpa/"
-                                      (format-time-string "%F")
-                                      "/" emacs-version)))))
+        (if-let (user-dir (getenv "ELPA_USER_DIR"))
+            (expand-file-name (int-to-string emacs-major-version)
+                              user-dir)
+          (expand-file-name (concat "~/Library/Caches/melpa-check/elpa/"
+                                    (format-time-string "%F")
+                                    "/" (int-to-string emacs-major-version))))))
  (t
-  (when (getenv "ELPA_USER_DIR")
-    (setq package-user-dir (getenv "ELPA_USER_DIR")))))
+  (when-let (user-dir (getenv "ELPA_USER_DIR"))
+    (setq package-user-dir (expand-file-name (int-to-string emacs-major-version)
+                                             user-dir)))))
 
 ;; Download the package database only once
 (if (file-directory-p package-user-dir)
