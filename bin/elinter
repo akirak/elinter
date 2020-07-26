@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+
+set -e
+
+####################
+# Set the defaults #
+####################
+
+os_cache_root() {
+  # read variables from the command line
+  case "$OSTYPE" in
+    linux-gnu*)
+      echo "${XDG_CACHE_HOME:-$HOME/.cache}"
+      ;;
+    darwin*)
+      # TODO: Set the cache directory
+      echo macOS is not supported yet >&2
+      exit 1
+      ;;
+  esac
+}
+
+nixLibDir="${ELINTER_NIX_LIB_DIR:?Cannot be empty}"
+
+# Directory for storing cache files
+cache_dir="${ELINTER_CACHE_ROOT:-$(os_cache_root)/elinter}"
+
+# config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
+
+# Directory containing niv nix directory
+# niv_root="${ELINTER_NIV_ROOT:-${config_dir}}"
+
+package_source_root="${cache_dir}/pkg-src"
+# package_output_root="${cache_dir}/pkg-out"
+
+if nix_shell_bin="$(command -v cached-nix-shell)"; then
+  echo "Using cached-nix-shell"
+  echo
+else
+  nix_shell_bin=nix-shell
+fi
+
+# Directory containing recipes
+recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
+
+# Export emacs_version to make it available in nix-shell
+export EMACS_VERSION
+
+###################################
+# Read the command line arguments #
+###################################
+
+# Initialize variables
+op=lint_and_compile
+recipes=()
+packages=()
+unset cleanup
+
+# TODO: Add help
+help_body=<<HELP
+Usage: elinter [FLAGS] RECIPES.. [-- ARGS]
+
+  -c      Clean up cache before operation
+HELP
+
+# TODO: Use enhanced getopt to parse command line arguments
+# See https://gist.github.com/hoylen/6607180 for example
+
+# Loop arguments until it becomes empty
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -c|--clean)
+      cleanup=1
+      ;;
+    -b|--compile)
+      op=compile
+      ;;
+    -l|--lint)
+      op=lint
+      ;;
+    *)
+      if [[ -f "$1" ]]; then
+        recipes+=("$1")
+      elif [[ -d "${package_source_root}/$1" ]]; then
+        packages+=("$1")
+      else
+        echo "Unsupported arg or missing file: $1" >&2
+        exit 1
+      fi
+      ;;
+  esac
+  shift
+done
+
+#############
+# Functions #
+#############
+
+discover_recipes() {
+  echo "Looking for recipes in ${recipes_dir}..."
+  shopt -s nullglob
+  mapfile -t recipes < <(echo "${recipes_dir}/*")
+
+  if [[ ${#recipes} -eq 0 ]]; then
+    echo "No recipe file was found." >&2
+    echo "You have to specify at least one recipe file or put it in ${recipes_dir}." >&2
+    exit 1
+  else
+    echo "Found ${recipes[*]}"
+  fi
+}
+
+cleanup_cache() {
+  echo "Cleaning up the cache directory..."
+  rm -rf "${package_source_root}"
+}
+
+copy_package_sources() {
+  echo "Linking package source files..."
+  mkdir -p "${package_source_root}"
+  initialdir="$(pwd)"
+  for f in ${recipes[*]}; do
+    package="$(basename \""$f\"")"
+    recipe="$(cat "$initialdir/$f")"
+    packages+=("$package")
+    cd "${package_source_root}"
+    # TODO: Check for updates in the working tree
+    if [[ -d "$package" ]]; then
+      echo
+      echo "Reusing the previous for $package:"
+      ls "$package"
+      continue
+    fi
+    instruction=$(nix-build "$nixLibDir/copySource.nix" \
+            --no-out-link --quiet --no-build-output \
+            --argstr recipe "$recipe" --argstr src "$initialdir")
+    mkdir "$package"
+    cd "${package_source_root}/$package"
+    # shellcheck disable=SC1090
+    . "$instruction"
+    echo
+    echo "Package: $package"
+    # shellcheck disable=SC2001
+    echo "${recipe}" sed 's/^/> /'
+    echo -n "Files: "
+    ls
+  done
+}
+
+for_each_package_sources() {
+  set +e
+  local r=0
+  for package in ${packages[*]}; do
+    # Spawn a subshell to isolate the environment, e.g. variables
+    if ! (
+      cd "${package_source_root}/$package"
+      # shellcheck disable=SC1091
+      source .envrc
+      echo "On package ${PACKAGE_NAME}:"
+      # shellcheck disable=SC2048
+      $*
+    ); then
+      r=1
+    fi
+    echo
+  done
+  if [[ $r -eq 0 ]]; then
+    echo "All checks were successful."
+  else
+    echo "Some checks failed."
+  fi
+  return $r
+}
+
+lint_package() {
+  "${nix_shell_bin}" "$nixLibDir/emacs.nix" -A development \
+          --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
+          --run elinter-run-linters
+}
+
+compile_package() {
+  "${nix_shell_bin}" "$nixLibDir/emacs.nix" -A development \
+          --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
+          --run elinter-byte-compile
+}
+
+lint_and_compile_package() {
+  local r=0
+  lint_package || r=1
+  echo
+  compile_package || r=1
+  return $r
+}
+
+####################
+# Main entry point #
+####################
+
+if [[ -v cleanup && $cleanup = 1 ]]; then
+  cleanup_cache
+  echo
+fi
+
+# For most operations, at least one recipe is mandatory
+if [[ ${#recipes} -eq 0 && ${#packages} -eq 0 ]]; then
+  discover_recipes
+  echo
+fi
+
+if [[ ${#recipes} -gt 0 ]]; then
+  copy_package_sources
+  echo
+fi
+
+case "$op" in
+  lint_and_compile)
+    for_each_package_sources lint_and_compile_package
+    exit $?
+    ;;
+  lint)
+    for_each_package_sources lint_package
+    exit $?
+    ;;
+  compile)
+    for_each_package_sources compile_package
+    exit $?
+    ;;
+  test)
+    # TODO:
+    ;;
+  *)
+    echo "Unsupported operation: $op" >&2
+    exit 2
+    ;;
+esac

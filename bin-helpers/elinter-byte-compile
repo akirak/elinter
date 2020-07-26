@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+# This logic is based on makel:
+# <https://gitlab.petton.fr/DamienCassou/makel/blob/master/makel.mk>
+
+unset outdir
+outdir="${ELINTER_COMPILE_OUTDIR}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o)
+      if [[ $# -gt 1 ]]; then
+        outdir="$2"
+        shift
+      fi
+      ;;
+  esac
+  shift
+done
+
+result=0
+
+rm -f ./*.elc
+
+for f in ${PACKAGE_ELISP_FILES[*]}; do
+  echo "Compiling $f..."
+  if ! emacs --batch --no-site-file \
+      --eval "(setq byte-compile-error-on-warn t)" \
+      --eval "(add-to-list 'load-path \"$(pwd)\")" \
+      --funcall batch-byte-compile "$f"
+  then
+    result=1
+    # Add a blank line after the error message
+    echo
+  fi
+done
+
+if [[ $result -eq 0 ]]; then
+  echo SUCCESS
+else
+  echo FAIL
+fi
+
+set -e
+
+if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
+  emacs --batch -Q --eval \
+     "(with-temp-buffer
+         (insert (number-to-string emacs-major-version))
+         (write-region (point-min) (point-max) \".elinter-emacs-version\"))"
+  major_version="$(cat .elinter-emacs-version)"
+  rm .elinter-emacs-version
+  dest="$outdir/${major_version}/${PACKAGE_NAME}"
+  if command -v rsync >/dev/null; then
+    echo "Using rsync to copy the artifacts"
+    mkdir -p "$dest"
+    rsync -rL . "$dest"
+  else
+    rm -rf "$dest"
+    mkdir -p "$dest"
+    cp -ar -t "$dest" ./* ./*.*
+  fi
+  rm "$dest/.envrc"
+  echo "Installed to $outdir/${major_version}"
+fi
+
+rm -f ./*.elc
+
+exit $result
