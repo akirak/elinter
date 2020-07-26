@@ -23,18 +23,6 @@
         "url": "https://github.com/hercules-ci/gitignore/archive/c4662e662462e7bf3c2a968483478a665d00e717.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
-    "makem.sh": {
-        "branch": "master",
-        "description": "Makefile-like script for building and testing Emacs Lisp packages",
-        "homepage": "",
-        "owner": "alphapapa",
-        "repo": "makem.sh",
-        "rev": "fde1cd5f3535f1fd14ee6ec841a7cf677987e476",
-        "sha256": "02y04bks0l83fdkzrivs95kzcn5mczk271scmxbpn9npiwx0j119",
-        "type": "tarball",
-        "url": "https://github.com/alphapapa/makem.sh/archive/fde1cd5f3535f1fd14ee6ec841a7cf677987e476.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
     "melpazoid": {
         "branch": "master",
         "description": "A bundle of CI scripts for testing Emacs packages, primarily submissions to MELPA.",
@@ -69,18 +57,6 @@
         "sha256": "0w2z0vbm23mmdphy0yid53wpjl2lfk39f1mq4v3549aia2ajk6wc",
         "type": "tarball",
         "url": "https://github.com/akirak/nix-elisp-helpers/archive/fd0c37ae455daacafdeea5649ca8e1adebc796c3.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "nixpkgs": {
-        "branch": "nixos-20.03",
-        "description": "A read-only mirror of NixOS/nixpkgs tracking the released channels. Send issues and PRs to",
-        "homepage": "https://github.com/NixOS/nixpkgs",
-        "owner": "NixOS",
-        "repo": "nixpkgs-channels",
-        "rev": "0a40a3999eb4d577418515da842a2622a64880c5",
-        "sha256": "1j8gy2d61lmrp5gzi1a2jmb2v2pbk4b9666y8pf1pjg3jiqkzf7m",
-        "type": "tarball",
-        "url": "https://github.com/NixOS/nixpkgs-channels/archive/0a40a3999eb4d577418515da842a2622a64880c5.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "pre-commit-hooks.nix": {
