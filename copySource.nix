@@ -32,13 +32,13 @@ in
   in
     writeText "emacs-${package.pname}-link-source"
       ''
-            cat> .envrc <<HERE
+        cat > .envrc <<HERE
         export PACKAGE_NAME=${pname}
         export PACKAGE_FILES="${baseNames packageFiles}"
         export PACKAGE_ELISP_FILES="${baseNames sourceFiles}"
         export PACKAGE_MAIN_FILE=${baseNameOf mainFile}
         HERE
-            for f in ${lib.escapeShellArgs packageFilePaths}; do
-              ln -s $f
-            done
+        for f in ${lib.escapeShellArgs packageFilePaths}; do
+          ln -s $f
+        done
       ''
