@@ -1,8 +1,4 @@
-{ pkgs ? import <nixpkgs> {
-    overlays = [
-      (import (import ./nix/sources.nix).emacs-overlay)
-    ];
-  }
+{ pkgs ? import <nixpkgs> {}
 , src
 , recipe
 }:
