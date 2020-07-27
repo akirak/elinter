@@ -2,9 +2,6 @@
 }:
 with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
-let
-  pre-commit-hooks = import (import ./nix/sources.nix)."pre-commit-hooks.nix";
-in
 rec {
   main = stdenv.mkDerivation {
     name = "elinter";
@@ -60,15 +57,5 @@ rec {
   # makem = writeScriptBin "makem.sh"
   #   (readFile ((fetchTarball
   #     (import ./nix/sources.nix."makem.sh".url) + "/makem.sh")))
-
-  pre-commit-check = pre-commit-hooks.run {
-    src = ./.;
-    excludes = [ "^nix/sources\.nix$" ];
-    hooks = {
-      shellcheck.enable = true;
-      nix-linter.enable = true;
-      nixpkgs-fmt.enable = true;
-    };
-  };
 
 }
