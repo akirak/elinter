@@ -24,9 +24,8 @@ rm -f ./*.elc
 
 for f in ${PACKAGE_ELISP_FILES[*]}; do
   echo "Compiling $f..."
-  if ! emacs --batch --no-site-file \
+  if ! emacs --batch --no-site-file -L . \
       --eval "(setq byte-compile-error-on-warn t)" \
-      --eval "(add-to-list 'load-path \"$(pwd)\")" \
       --funcall batch-byte-compile "$f"
   then
     result=1
