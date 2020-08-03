@@ -57,6 +57,8 @@ packages=()
 unset cleanup
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
+  # shellcheck disable=SC2206
+  linters=(${linters[*]})
 else
   linters=(package-lint checkdoc check-declare)
 fi

@@ -14,10 +14,7 @@
 (defcustom elinter-enabled-linters
   (cl-labels
       ((env-as-list (name) (let ((val (getenv name)))
-                             (and val
-                                  ;; The string can contain a trailing newline, so trim it
-                                  (mapcar #'string-trim
-                                          (split-string val " "))))))
+                             (and val (split-string val " ")))))
     (or (env-as-list "ELINTER_LINTERS")
         '("package-lint"
           "checkdoc"

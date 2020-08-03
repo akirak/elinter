@@ -19,8 +19,7 @@ let
     then defaultLinters
     else if isList enabledLinters
     then enabledLinters
-      # Trim newlines
-    else filter (s: isString s && s != "") (split "[ \n]" enabledLinters);
+    else filter isString (split " " enabledLinters);
 
   melpazoidSource = (import ./nix/sources.nix).melpazoid;
 
