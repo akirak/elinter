@@ -3,12 +3,18 @@
 (require 'cl-lib)
 (require 'subr-x)
 
+(defgroup elinter nil
+  "Lint runner for Emacs Lisp projects.")
+
 (defvar elinter-package-elisp-files
   (split-string (getenv "PACKAGE_ELISP_FILES") " "))
 
 (defvar elinter-package-main-file (getenv "PACKAGE_MAIN_FILE"))
 
-(defvar elinter-enabled-linters '("package-lint" "checkdoc" "check-declare"))
+(defcustom elinter-enabled-linters
+  '("package-lint" "checkdoc" "check-declare")
+  "List of linters to run."
+  :type '(repeat string))
 
 (defvar elinter-lint-failures nil)
 
