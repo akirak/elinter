@@ -55,6 +55,11 @@ op=lint_and_compile
 recipes=()
 packages=()
 unset cleanup
+if [[ -v ELINTER_LINTERS ]]; then
+  mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
+else
+  linters=(package-lint checkdoc check-declare)
+fi
 
 # TODO: Add help
 help_body=<<HELP
@@ -77,6 +82,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     -l|--lint)
       op=lint
+      ;;
+    --melpazoid)
+      linters+=(melpazoid)
       ;;
     *)
       if [[ -f "$1" ]]; then
@@ -141,7 +149,7 @@ copy_package_sources() {
     echo
     echo "Package: $package"
     # shellcheck disable=SC2001
-    echo "${recipe}" sed 's/^/> /'
+    echo "${recipe}" | sed 's/^/> /'
     echo -n "Files: "
     ls
   done
@@ -172,16 +180,20 @@ for_each_package_sources() {
   return $r
 }
 
-lint_package() {
+emacs_dev_shell() {
   "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A development \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
-          --run elinter-run-linters
+          --argstr enabledLinters "${linters[*]}" \
+          "$@"
+}
+
+lint_package() {
+  export ELINTER_LINTERS="${linters[*]}"
+  emacs_dev_shell --run elinter-run-linters
 }
 
 compile_package() {
-  "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A development \
-          --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
-          --run elinter-byte-compile
+  emacs_dev_shell --run elinter-byte-compile
 }
 
 lint_and_compile_package() {
