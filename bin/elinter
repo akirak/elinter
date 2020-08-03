@@ -20,7 +20,7 @@ os_cache_root() {
   esac
 }
 
-nixLibDir="${ELINTER_NIX_LIB_DIR:?Cannot be empty}"
+nix_lib_dir="${ELINTER_NIX_LIB_DIR:?Cannot be empty}"
 
 # Directory for storing cache files
 cache_dir="${ELINTER_CACHE_ROOT:-$(os_cache_root)/elinter}"
@@ -131,7 +131,7 @@ copy_package_sources() {
       ls "$package"
       continue
     fi
-    instruction=$(nix-build "$nixLibDir/copySource.nix" \
+    instruction=$(nix-build "${nix_lib_dir}/copySource.nix" \
             --no-out-link --quiet --no-build-output \
             --argstr recipe "$recipe" --argstr src "$initialdir")
     mkdir "$package"
@@ -173,13 +173,13 @@ for_each_package_sources() {
 }
 
 lint_package() {
-  "${nix_shell_bin}" "$nixLibDir/emacs.nix" -A development \
+  "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A development \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --run elinter-run-linters
 }
 
 compile_package() {
-  "${nix_shell_bin}" "$nixLibDir/emacs.nix" -A development \
+  "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A development \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --run elinter-byte-compile
 }
