@@ -113,23 +113,9 @@
             (when (and err-buf
                        (buffer-live-p err-buf)
                        (> (buffer-size err-buf) 0))
+              (setq has-errors t)
               (with-current-buffer err-buf
-                (goto-char (point-min))
-                (while (and (< (point) (point-max))
-                            (looking-at (rx (+ anything))))
-                  (let* ((err (substring (thing-at-point 'line t) 2))
-                         (loc (and (string-match (rx "#L" (group (+ digit))
-                                                     ": ")
-                                                 err)
-                                   (read (match-string 1 err))))
-                         (source (with-current-buffer file-buf
-                                   (forward-line (- loc
-                                                    (line-number-at-pos)))
-                                   (string-trim-right
-                                    (thing-at-point 'line t)))))
-                    (message "\n%s> %s" err source)
-                    (setq has-errors t))
-                  (forward-line)))))))
+                (message (string-trim (buffer-string))))))))
       (when has-errors
         (throw 'failure t)))))
 
