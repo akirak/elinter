@@ -107,9 +107,13 @@ done
 discover_recipes() {
   echo "Looking for recipes in ${recipes_dir}..."
   shopt -s nullglob
-  mapfile -t recipes < <(echo "${recipes_dir}/*")
+  mapfile -t recipes <<<"${recipes_dir}/*"
+  # Fill the gap
+  # If the file name contain spaces, it may fail
+  # shellcheck disable=SC2206
+  recipes=(${recipes[*]})
 
-  if [[ ${#recipes} -eq 0 ]]; then
+  if [[ ${#recipes[*]} -eq 0 ]]; then
     echo "No recipe file was found." >&2
     echo "You have to specify at least one recipe file or put it in ${recipes_dir}." >&2
     exit 1
