@@ -8,7 +8,7 @@
 
 (defvar elinter-package-main-file (getenv "PACKAGE_MAIN_FILE"))
 
-(defvar elinter-enabled-linters '("package-lint" "checkdoc"))
+(defvar elinter-enabled-linters '("package-lint" "checkdoc" "check-declare"))
 
 (defvar elinter-lint-failures nil)
 
@@ -70,6 +70,18 @@
   (mapc #'elinter-checkdoc-on-file elinter-package-elisp-files)
   (when elinter-checkdoc-found-errors
     (throw 'failure t)))
+
+(defun elinter-check-declare ()
+  ;; Based on an equivalent function from makem.sh by alphapapa.
+  ;; <https://github.com/alphapapa/makem.sh/blob/master/makem.sh>
+  (require 'check-declare)
+  ;; `check-declare-files' returns a list of errors. It would be
+  ;; possible to retrieve information on the errors from the variable
+  ;; rather than opening the file.
+  (when (apply #'check-declare-files elinter-package-elisp-files)
+    (with-current-buffer check-declare-warning-buffer
+      (message (buffer-string))
+      (throw 'failure t))))
 
 (defun elinter-run-linter (linter)
   (let ((func (intern (concat "elinter-" linter))))
