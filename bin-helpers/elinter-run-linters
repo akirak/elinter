@@ -97,41 +97,41 @@
 
 (defun elinter-melpazoid ()
   (let ((noninteractive nil))
-    (require 'melpazoid))
-  (setq melpazoid--misc-header-printed-p t)
-  (let (file has-errors)
-    (dolist (file elinter-package-elisp-files)
-      (ignore-errors
-        (kill-buffer melpazoid-buffer))
-      (let ((file-buf (create-file-buffer file)))
-        (with-current-buffer file-buf
-          (setq buffer-file-name file)
-          (insert-file-contents file)
-          (melpazoid-check-sharp-quotes)
-          (melpazoid-check-misc))
-        (let ((err-buf (get-buffer melpazoid-buffer)))
-          (when (and err-buf
-                     (buffer-live-p err-buf)
-                     (> (buffer-size err-buf) 0))
-            (with-current-buffer err-buf
-              (goto-char (point-min))
-              (while (and (< (point) (point-max))
-                          (looking-at (rx (+ anything))))
-                (let* ((err (substring (thing-at-point 'line t) 2))
-                       (loc (and (string-match (rx "#L" (group (+ digit))
-                                                   ": ")
-                                               err)
-                                 (read (match-string 1 err))))
-                       (source (with-current-buffer file-buf
-                                 (forward-line (- loc
-                                                  (line-number-at-pos)))
-                                 (string-trim-right
-                                  (thing-at-point 'line t)))))
-                  (message "\n%s> %s" err source)
-                  (setq has-errors t))
-                (forward-line)))))))
-    (when has-errors
-      (throw 'failure t))))
+    (require 'melpazoid)
+    (setq melpazoid--misc-header-printed-p t)
+    (let (has-errors)
+      (dolist (file elinter-package-elisp-files)
+        (ignore-errors
+          (kill-buffer melpazoid-buffer))
+        (let ((file-buf (create-file-buffer file)))
+          (with-current-buffer file-buf
+            (setq buffer-file-name file)
+            (insert-file-contents file)
+            (melpazoid-check-sharp-quotes)
+            (melpazoid-check-misc))
+          (let ((err-buf (get-buffer melpazoid-buffer)))
+            (when (and err-buf
+                       (buffer-live-p err-buf)
+                       (> (buffer-size err-buf) 0))
+              (with-current-buffer err-buf
+                (goto-char (point-min))
+                (while (and (< (point) (point-max))
+                            (looking-at (rx (+ anything))))
+                  (let* ((err (substring (thing-at-point 'line t) 2))
+                         (loc (and (string-match (rx "#L" (group (+ digit))
+                                                     ": ")
+                                                 err)
+                                   (read (match-string 1 err))))
+                         (source (with-current-buffer file-buf
+                                   (forward-line (- loc
+                                                    (line-number-at-pos)))
+                                   (string-trim-right
+                                    (thing-at-point 'line t)))))
+                    (message "\n%s> %s" err source)
+                    (setq has-errors t))
+                  (forward-line)))))))
+      (when has-errors
+        (throw 'failure t)))))
 
 (defun elinter-run-linter (linter)
   (let ((func (intern (concat "elinter-" linter))))
