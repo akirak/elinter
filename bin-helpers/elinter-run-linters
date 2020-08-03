@@ -7,9 +7,11 @@
   "Lint runner for Emacs Lisp projects.")
 
 (defvar elinter-package-elisp-files
-  (split-string (getenv "PACKAGE_ELISP_FILES") " "))
+  (split-string (getenv "PACKAGE_ELISP_FILES") " ")
+  "Input files.")
 
-(defvar elinter-package-main-file (getenv "PACKAGE_MAIN_FILE"))
+(defvar elinter-package-main-file (getenv "PACKAGE_MAIN_FILE")
+  "Main file of the package.")
 
 (defcustom elinter-enabled-linters
   (cl-labels
@@ -22,9 +24,11 @@
   "List of linters to run."
   :type '(repeat string))
 
-(defvar elinter-lint-failures nil)
+(defvar elinter-lint-failures nil
+  "List of linters that have failed.")
 
 (defun elinter-package-lint ()
+  "Run package-lint on the input files."
   (require 'package-lint)
 
   ;; Prevent use of package.el to install packages
@@ -38,6 +42,7 @@
 (defvar elinter-checkdoc-found-errors)
 
 (defun elinter-checkdoc-on-file (file)
+  "Run checkdoc on FILE in batch mode."
   (condition-case err
       (let ((checkdoc-create-error-function
              (lambda (text start end &optional unfixable)
@@ -70,6 +75,7 @@
 ;; Based on the implementation of makem.sh by alphapapa
 ;; https://github.com/alphapapa/makem.sh/blob/master/makem.sh
 (defun elinter-checkdoc ()
+  "Run checkdoc in batch mode."
   (require 'checkdoc)
   (setq elinter-checkdoc-found-errors nil)
   (unless (boundp 'checkdoc-create-error-function)
@@ -84,6 +90,7 @@
     (throw 'failure t)))
 
 (defun elinter-check-declare ()
+  "Run `check-declare' on the input files."
   ;; Based on an equivalent function from makem.sh by alphapapa.
   ;; <https://github.com/alphapapa/makem.sh/blob/master/makem.sh>
   (require 'check-declare)
@@ -96,6 +103,7 @@
       (throw 'failure t))))
 
 (defun elinter-melpazoid ()
+  "Run extra checks from melpazoid on the input files."
   (let ((noninteractive nil))
     (require 'melpazoid)
     (setq melpazoid--misc-header-printed-p t)
@@ -120,6 +128,7 @@
         (throw 'failure t)))))
 
 (defun elinter-run-linter (linter)
+  "Run a LINTER by name."
   (let ((func (intern (concat "elinter-" linter))))
     (condition-case err
         (progn
@@ -138,6 +147,7 @@
          (push linter elinter-lint-failures))))))
 
 (defun elinter-run-linters-and-exit ()
+  "Run the linters and kill Emacs with an appropriate exit code."
   (setq elinter-lint-failures nil)
   (mapc #'elinter-run-linter elinter-enabled-linters)
   (when elinter-lint-failures
