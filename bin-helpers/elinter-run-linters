@@ -12,7 +12,13 @@
 (defvar elinter-package-main-file (getenv "PACKAGE_MAIN_FILE"))
 
 (defcustom elinter-enabled-linters
-  '("package-lint" "checkdoc" "check-declare")
+  (cl-labels
+      ((env-as-list (name) (let ((val (getenv name)))
+                             (and val (split-string val " ")))))
+    (or (env-as-list "ELINTER_LINTERS")
+        '("package-lint"
+          "checkdoc"
+          "check-declare")))
   "List of linters to run."
   :type '(repeat string))
 
