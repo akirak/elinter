@@ -43,6 +43,13 @@ fi
 set -e
 
 if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
+  # Generate autoloads
+  autoloads_file="${PACKAGE_NAME}-autoloads.el"
+  if [[ ! -f "${autoloads_file}" ]]; then
+    emacs --batch -Q -l package --eval \
+      "(package-generate-autoloads \"${PACKAGE_NAME}\" default-directory)"
+  fi
+
   emacs --batch -Q --eval \
      "(with-temp-buffer
          (insert (number-to-string emacs-major-version))
