@@ -134,7 +134,7 @@ copy_package_sources() {
   mkdir -p "${package_source_root}"
   initialdir="$(pwd)"
   for f in ${recipes[*]}; do
-    package="$(basename \""$f\"")"
+    package=$(basename "$f")
     recipe="$(cat "$initialdir/$f")"
     packages+=("$package")
     cd "${package_source_root}"
