@@ -45,6 +45,7 @@ fi
 
 set -e
 
+unset dest
 if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   # Generate autoloads
   autoloads_file="${PACKAGE_NAME}-autoloads.el"
@@ -79,6 +80,24 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   rm "$dest/.envrc"
 
   echo "Installed to $outdir/${major_version}"
+fi
+
+if [[ $result -eq 0 ]]; then
+  echo
+  echo "Perform loadability testing..."
+  set +e
+  if [[ -v dest && -d "$dest" ]]; then
+    cd "$dest"
+  fi
+  for f in *.elc; do
+    echo "Loading $f..."
+    if ! emacs --batch -Q -l "$f"; then
+      result=1
+    fi
+  done
+  if [[ $result -eq 0 ]]; then
+    echo OK
+  fi
 fi
 
 exit $result
