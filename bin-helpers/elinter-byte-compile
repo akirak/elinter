@@ -47,6 +47,7 @@ set -e
 
 unset dest
 if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
+  echo
   # Generate autoloads
   autoloads_file="${PACKAGE_NAME}-autoloads.el"
   if [[ ! -f "${autoloads_file}" ]]; then
