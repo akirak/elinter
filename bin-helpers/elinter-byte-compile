@@ -22,6 +22,9 @@ result=0
 
 rm -f ./*.elc
 
+# Clean up on exit
+trap 'rm -f ./*.elc' 0 1 2 6 15
+
 for f in ${PACKAGE_ELISP_FILES[*]}; do
   echo "Compiling $f..."
   if ! emacs --batch --no-site-file -L . \
@@ -46,6 +49,8 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   # Generate autoloads
   autoloads_file="${PACKAGE_NAME}-autoloads.el"
   if [[ ! -f "${autoloads_file}" ]]; then
+    # shellcheck disable=SC2064
+    trap "rm -f '${autoloads_file}'" 0 1 2 6 15
     emacs --batch -Q -l package --eval \
       "(package-generate-autoloads \"${PACKAGE_NAME}\" default-directory)"
   fi
@@ -69,7 +74,5 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   rm "$dest/.envrc"
   echo "Installed to $outdir/${major_version}"
 fi
-
-rm -f ./*.elc
 
 exit $result
