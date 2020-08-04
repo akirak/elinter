@@ -23,7 +23,13 @@ result=0
 rm -f ./*.elc
 
 # Clean up on exit
-trap 'rm -f ./*.elc' 0 1 2 6 15
+initialdir="$PWD"
+extra_cleanup_files=()
+cleanup() {
+  cd "$initialdir"
+  rm -vf ./*.elc "${extra_cleanup_files[*]}"
+}
+trap cleanup 0 1 2 6 15
 
 for f in ${PACKAGE_ELISP_FILES[*]}; do
   echo "Compiling $f..."
@@ -51,8 +57,7 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   # Generate autoloads
   autoloads_file="${PACKAGE_NAME}-autoloads.el"
   if [[ ! -f "${autoloads_file}" ]]; then
-    # shellcheck disable=SC2064
-    trap "rm -f '${autoloads_file}'" 0 1 2 6 15
+    extra_cleanup_files+=("${autoloads_file}")
     emacs --batch -Q -l package --eval \
       "(package-generate-autoloads \"${PACKAGE_NAME}\" default-directory)"
   fi
@@ -72,9 +77,9 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
     mkdir -p "$dest"
     rsync -rL . "$dest"
   else
-    rm -rf "$dest"
     mkdir -p "$dest"
-    cp -ar -t "$dest" ./* ./*.*
+    rm -rf "$dest"
+    cp -Lr . "$dest"
   fi
 
   # .envrc is created for elinter, so it should be deleted
