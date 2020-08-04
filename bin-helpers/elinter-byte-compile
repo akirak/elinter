@@ -88,6 +88,8 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   echo "Installed to $outdir/${major_version}"
 fi
 
+# Loadability testing, inspired by melpazoid
+# TODO: Make loadability testing optional
 if [[ $result -eq 0 ]]; then
   echo
   echo "Perform loadability testing..."
