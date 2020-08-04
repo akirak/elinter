@@ -12,4 +12,4 @@ The =main= Nix derivation provides =elinter= executable.
 It takes MELPA-style recipe files as arguments and runs linting tasks and =byte-compile= on local source files by default.
 
 You can omit the recipe files by putting them in =.recipes= directory in the working directory.
-Recipes can be generated using [[https://github.com/akirak/decask.el][decask.el]] from a local copy of the MELPA repository.
+Recipes can be generated or copied from a local copy of MELPA using [[https://github.com/akirak/decask.el][decask.el]].
