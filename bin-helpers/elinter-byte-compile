@@ -55,12 +55,15 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
       "(package-generate-autoloads \"${PACKAGE_NAME}\" default-directory)"
   fi
 
+  # Obtain the major version of Emacs used to build the package
   emacs --batch -Q --eval \
      "(with-temp-buffer
          (insert (number-to-string emacs-major-version))
          (write-region (point-min) (point-max) \".elinter-emacs-version\"))"
   major_version="$(cat .elinter-emacs-version)"
   rm .elinter-emacs-version
+
+  # Transfer artifacts
   dest="$outdir/${major_version}/${PACKAGE_NAME}"
   if command -v rsync >/dev/null; then
     echo "Using rsync to copy the artifacts"
@@ -71,7 +74,10 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
     mkdir -p "$dest"
     cp -ar -t "$dest" ./* ./*.*
   fi
+
+  # .envrc is created for elinter, so it should be deleted
   rm "$dest/.envrc"
+
   echo "Installed to $outdir/${major_version}"
 fi
 
