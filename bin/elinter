@@ -13,9 +13,7 @@ os_cache_root() {
       echo "${XDG_CACHE_HOME:-$HOME/.cache}"
       ;;
     darwin*)
-      # TODO: Set the cache directory
-      echo macOS is not supported yet >&2
-      exit 1
+      echo "$HOME/Library/Caches"
       ;;
   esac
 }
