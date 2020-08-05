@@ -1,15 +1,47 @@
 * elinter
-This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently in alpha, and most of its basic features are not implemented yet.
+This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an early alpha stage, and most of its planned features are not implemented yet.
 ** Installation
-Clone this repository and run
+#+begin_src sh
+nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
+#+end_src
+
+Alternatively, you can clone this repository and run
 
 #+begin_src sh
-  nix-env -iA main
+nix-env -iA main
 #+end_src
 ** Usage
+*** Use case #1: Lint and compile packages in the current working tree
+First create package recipes in =.recipes= directory.
+You can use [[https://github.com/akirak/decask.el][decask.el]] to copy existing recipes from a local copy of MELPA.
+
+Then run the following command to lint and compile source files in the repository:
+
+#+begin_src sh
+elinter
+#+end_src
+
+To perform extra checks from [[https://github.com/riscy/melpazoid/][melpazoid]] as done in PR reviews on MELPA, add =--melpazoid= flag:
+
+#+begin_src sh
+elinter --melpazoid
+#+end_src
+
+To only lint packages and prevent from byte-compiling, add =-l= flag:
+
+#+begin_src sh
+elinter -l
+#+end_src
+
+To only byte-compile source files, add =-b= flag:
+
+#+begin_src sh
+elinter -b
+#+end_src
+*** Details
+**** elinter command
 The =main= Nix derivation provides =elinter= executable.
+It takes recipe files as command-line arguments.
+If no recipe file is given as an argument, it looks for ones in =.recipes= directory in the working directory.
 
-It takes MELPA-style recipe files as arguments and runs linting tasks and =byte-compile= on local source files by default.
 
-You can omit the recipe files by putting them in =.recipes= directory in the working directory.
-Recipes can be generated or copied from a local copy of MELPA using [[https://github.com/akirak/decask.el][decask.el]].
