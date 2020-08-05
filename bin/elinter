@@ -75,6 +75,10 @@ Options:
 HELP
 }
 
+version() {
+  echo "elinter version ${ELINTER_VERSION:?Unknown version}"
+}
+
 # TODO: Use enhanced getopt to parse command line arguments
 # See https://gist.github.com/hoylen/6607180 for example
 
@@ -86,7 +90,7 @@ while [[ $# -gt 0 ]]; do
       exit
       ;;
     -V|--version)
-      echo "elinter v${ELINTER_VERSION:?Unknown version}"
+      version
       exit
       ;;
     -c|--clean)

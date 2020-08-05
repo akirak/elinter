@@ -3,7 +3,7 @@
 with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 rec {
-  main = stdenv.mkDerivation {
+  main = stdenv.mkDerivation rec {
     name = "elinter";
     version = "0";
 
@@ -27,6 +27,7 @@ rec {
       makeWrapper ${./bin/elinter} $out/bin/elinter \
         --argv0 elinter \
         --prefix PATH : ${linters + "/bin"} \
+        --set ELINTER_VERSION $version \
         --set ELINTER_NIX_LIB_DIR $lib
     '';
   };
