@@ -61,12 +61,19 @@ else
   linters=(package-lint checkdoc check-declare)
 fi
 
-# TODO: Add help
-help_body=<<HELP
-Usage: elinter [FLAGS] RECIPES.. [-- ARGS]
+usage() {
+  # Follow the style in docopt https://docopt.org/
+  cat <<HELP
+Usage: elinter [options] <recipe>...
 
-  -c      Clean up cache before operation
+Options:
+  -l             Do only linting (skip byte-compile)
+  -b             Do only byte-compile (skip linting)
+  -c             Clean up cache before operation
+  --melpazoid    Turn on melpazoid checks in the linting phase
+  -V, --version  Show version
 HELP
+}
 
 # TODO: Use enhanced getopt to parse command line arguments
 # See https://gist.github.com/hoylen/6607180 for example
@@ -74,6 +81,14 @@ HELP
 # Loop arguments until it becomes empty
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h|--help)
+      usage
+      exit
+      ;;
+    -V|--version)
+      echo "elinter v${ELINTER_VERSION:?Unknown version}"
+      exit
+      ;;
     -c|--clean)
       cleanup=1
       ;;
