@@ -175,7 +175,7 @@ for_each_package_sources() {
   set +e
   local r=0
   for package in ${packages[*]}; do
-    # Spawn a subshell to isolate the environment, e.g. variables
+    # Fork a subshell to isolate the environment, e.g. variables
     if ! (
       cd "${package_source_root}/$package"
       # shellcheck disable=SC1091
