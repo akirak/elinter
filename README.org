@@ -1,6 +1,16 @@
 * elinter
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an early alpha stage, and most of its planned features are not implemented yet.
+** Prerequisites
+=elinter= runs on UNIX-like operating systems that can run [[https://nixos.org/][Nix]] (currently Linux and macOS).
 ** Installation
+=elinter= depends on Nix, so you have to install Nix first:
+
+#+begin_src sh
+bash <(curl -L https://nixos.org/nix/install)
+#+end_src
+
+=elinter= can be installed using Nix:
+
 #+begin_src sh
 nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
 #+end_src
@@ -10,6 +20,9 @@ Alternatively, you can clone this repository and run
 #+begin_src sh
 nix-env -iA main
 #+end_src
+
+Optionally, you can use [[https://github.com/xzfc/cached-nix-shell][cached-nix-shell]] for improving =nix-shell= startup time.
+Install the program in =PATH=, and =elinter= will automatically detect it.
 ** Usage
 *** Use case #1: Lint and compile packages in the current working tree
 First create package recipes in =.recipes= directory.
