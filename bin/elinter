@@ -31,13 +31,6 @@ cache_dir="${ELINTER_CACHE_ROOT:-$(os_cache_root)/elinter}"
 package_source_root="${cache_dir}/pkg-src"
 # package_output_root="${cache_dir}/pkg-out"
 
-if nix_shell_bin="$(command -v cached-nix-shell)"; then
-  echo "Using cached-nix-shell"
-  echo
-else
-  nix_shell_bin=nix-shell
-fi
-
 # Directory containing recipes
 recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 
@@ -230,6 +223,13 @@ lint_and_compile_package() {
 ####################
 # Main entry point #
 ####################
+
+if nix_shell_bin="$(command -v cached-nix-shell)"; then
+  echo "Using cached-nix-shell"
+  echo
+else
+  nix_shell_bin=nix-shell
+fi
 
 if [[ -v cleanup && $cleanup = 1 ]]; then
   cleanup_cache
