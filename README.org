@@ -52,7 +52,7 @@ To only byte-compile source files, add =-b= flag:
 elinter -b
 #+end_src
 *** Use case #2: Run lint on the latest snapshot of the remote repository specified in a recipe
-This is like the use case 1, but it clones a remote repository specified in the recipe instead of working on source files in the working directory.
+This is like the use case 1, but it clones the remote repository specified in the recipe rather than work on source files in the working directory.
 
 =elinter= command accepts recipe files. When =-r= flag is given, it clones remote Git repositories according to the recipes.
 This can be easily integrated into the MELPA PR workflow:
