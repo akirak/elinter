@@ -46,7 +46,7 @@ op=lint_and_compile
 recipes=()
 packages=()
 unset cleanup
-remote=false
+unset remote
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
@@ -89,7 +89,7 @@ while [[ $# -gt 0 ]]; do
       exit
       ;;
     -r)
-      remote=true
+      remote=1
       ;;
     -c|--clean)
       cleanup=1
@@ -152,10 +152,14 @@ copy_package_sources() {
     package=$(basename "$f")
     recipe="$(cat "$initialdir/$f")"
     packages+=("$package")
+    src="$initialdir"
     cd "${package_source_root}"
-    if [[ $remote = true ]]; then
+    if [[ -v remote && $remote = 1 ]]; then
       # Clean up the source every time
       rm -rf "$package"
+      src=$(nix-instantiate --eval --strict \
+              "${nix_lib_dir}/fetchSource.nix" \
+              --argstr recipe "$recipe" | tr -d \")
     elif [[ -d "$package" ]]; then
       # TODO: Check for updates in the working tree
       echo
@@ -165,8 +169,7 @@ copy_package_sources() {
     fi
     instruction=$(nix-build "${nix_lib_dir}/copySource.nix" \
             --no-out-link --quiet --no-build-output \
-            --arg remote "$remote" \
-            --argstr recipe "$recipe" --argstr src "$initialdir")
+            --argstr recipe "$recipe" --argstr src "$src")
     mkdir "$package"
     cd "${package_source_root}/$package"
     # shellcheck disable=SC1090

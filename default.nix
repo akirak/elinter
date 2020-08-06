@@ -21,7 +21,7 @@ rec {
       mkdir -p $out/share/elinter
       lib=$out/share/elinter
       cd $src
-      cp -r -t $lib nix copySource.nix emacs.nix
+      cp -r -t $lib nix copySource.nix fetchSource.nix emacs.nix
 
       mkdir -p $out/bin
       makeWrapper ${./bin/elinter} $out/bin/elinter \
