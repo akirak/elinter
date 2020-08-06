@@ -99,7 +99,7 @@ if [[ $result -eq 0 ]]; then
   fi
   for f in *.elc; do
     echo "Loading $f..."
-    if ! emacs --batch -Q -l "$f"; then
+    if ! emacs --batch -Q -L . -l "$f"; then
       result=1
     fi
   done
