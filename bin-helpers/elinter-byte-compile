@@ -27,7 +27,7 @@ initialdir="$PWD"
 extra_cleanup_files=()
 cleanup() {
   cd "$initialdir"
-  rm -vf ./*.elc "${extra_cleanup_files[*]}"
+  rm -f ./*.elc "${extra_cleanup_files[*]}"
 }
 trap cleanup 0 1 2 6 15
 
