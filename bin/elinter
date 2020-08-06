@@ -46,6 +46,7 @@ op=lint_and_compile
 recipes=()
 packages=()
 unset cleanup
+remote=false
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
@@ -64,6 +65,7 @@ Options:
   -b             Do only byte-compile (skip linting)
   -c             Clean up cache before operation
   --melpazoid    Turn on melpazoid checks in the linting phase
+  -r             Fetch the source code from a remote server
   -V, --version  Show version
 HELP
 }
@@ -85,6 +87,9 @@ while [[ $# -gt 0 ]]; do
     -V|--version)
       version
       exit
+      ;;
+    -r)
+      remote=true
       ;;
     -c|--clean)
       cleanup=1
@@ -148,8 +153,11 @@ copy_package_sources() {
     recipe="$(cat "$initialdir/$f")"
     packages+=("$package")
     cd "${package_source_root}"
-    # TODO: Check for updates in the working tree
-    if [[ -d "$package" ]]; then
+    if [[ $remote = true ]]; then
+      # Clean up the source every time
+      rm -rf "$package"
+    elif [[ -d "$package" ]]; then
+      # TODO: Check for updates in the working tree
       echo
       echo "Reusing the previous for $package:"
       ls "$package"
@@ -157,6 +165,7 @@ copy_package_sources() {
     fi
     instruction=$(nix-build "${nix_lib_dir}/copySource.nix" \
             --no-out-link --quiet --no-build-output \
+            --arg remote "$remote" \
             --argstr recipe "$recipe" --argstr src "$initialdir")
     mkdir "$package"
     cd "${package_source_root}/$package"
