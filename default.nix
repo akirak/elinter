@@ -43,13 +43,9 @@ rec {
 
     installPhase =
       let
-        lint-runner = writeTextFile {
-          name = "elinter-run-linters";
-          executable = true;
-          text = ''
-            exec emacs -Q --batch --script ${./lisp/elinter-run-linters.el} "$@"
-          '';
-        };
+        lint-runner = writeShellScript "elinter-run-linters" ''
+          exec emacs -Q --batch --script ${./lisp/elinter-run-linters.el} "$@"
+        '';
       in
         ''
           mkdir -p $out/bin
