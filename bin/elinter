@@ -34,9 +34,6 @@ package_source_root="${cache_dir}/pkg-src"
 # Directory containing recipes
 recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 
-# Export emacs_version to make it available in nix-shell
-export EMACS_VERSION
-
 ###################################
 # Read the command line arguments #
 ###################################
@@ -65,6 +62,8 @@ Options:
   -b             Do only byte-compile (skip linting)
   -c             Clean up cache before operation
   --melpazoid    Turn on melpazoid checks in the linting phase
+  -e|--emacs VERSION
+                 Set the Emacs version
   -r             Fetch the source code from a remote server
   -V, --version  Show version
 HELP
@@ -94,6 +93,10 @@ while [[ $# -gt 0 ]]; do
     -c|--clean)
       cleanup=1
       ;;
+    -e|--emacs)
+      EMACS_VERSION="$2"
+      shift
+      ;;
     -b|--compile)
       op=compile
       ;;
@@ -120,6 +123,25 @@ done
 #############
 # Functions #
 #############
+
+set_emacs() {
+  case "${EMACS_VERSION}" in
+    '')
+      emacs=emacs
+      ;;
+    snapshot)
+      emacs="emacs-snapshot"
+      ;;
+    *)
+      if [[ "${EMACS_VERSION}" =~ ^[[:digit:]]+\.[[:digit:]]$ ]]; then
+        emacs="emacs-${EMACS_VERSION/./-}"
+      else
+        echo "Unsupported Emacs version: ${EMACS_VERSION}" >&2
+        exit 1
+      fi
+      ;;
+  esac
+}
 
 discover_recipes() {
   echo "Looking for recipes in ${recipes_dir}..."
@@ -193,6 +215,7 @@ for_each_package_sources() {
       # shellcheck disable=SC1091
       source .envrc
       echo "On package ${PACKAGE_NAME}:"
+      set_emacs
       # shellcheck disable=SC2048
       $*
     ); then
@@ -210,6 +233,7 @@ for_each_package_sources() {
 
 emacs_dev_shell() {
   "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A development \
+          --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --argstr enabledLinters "${linters[*]}" \
           "$@"

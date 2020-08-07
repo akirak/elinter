@@ -42,8 +42,15 @@ let
       ++ map (name: epkgs."${name}") (filter (name: elem name [ "package-lint" ]) linters)
     );
 
+  emacs-ci = import (import ./nix/sources.nix).nix-emacs-ci;
+
+  package =
+    if match "emacs-.+" emacs != null
+    then emacs-ci."${emacs}"
+    else pkgs."${emacs}";
+
   emacsForCI = emacsWithPackagesFromPackageRequires {
-    package = pkgs."${emacs}";
+    inherit package;
     packageElisp = readFile (/. + mainFile);
     extraEmacsPackages = linterPackages;
   };
