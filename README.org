@@ -2,9 +2,6 @@
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an early alpha stage, and most of its planned features are not implemented yet.
 ** Prerequisites
 =elinter= runs on UNIX-like operating systems that can run [[https://nixos.org/][Nix]] (currently Linux and macOS).
-
-If you are using Linux, you will require =coreutils= 8.30 or later for [[https://jhermann.github.io/blog/linux/know-how/2020/02/28/env_with_arguments.html][multiple argument support by env]].
-This is shipped with Debian 10 (Buster), Ubuntu 20.04, Fedora 30, etc. NixOS 20.03 supports this.
 ** Installation
 =elinter= depends on Nix, so you have to install Nix first:
 
@@ -22,6 +19,12 @@ Alternatively, you can clone this repository and run
 
 #+begin_src sh
 nix-env -iA main
+#+end_src
+
+Optionally, it is recommended to install [[https://github.com/cachix/cachix][cachix]] and enable cached binaries:
+
+#+begin_src sh
+cachix use emacs-ci
 #+end_src
 
 Optionally, you can use [[https://github.com/xzfc/cached-nix-shell][cached-nix-shell]] for improving =nix-shell= startup time.
