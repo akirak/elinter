@@ -124,23 +124,41 @@ done
 # Functions #
 #############
 
-set_emacs() {
+emacs_versions() {
   case "${EMACS_VERSION}" in
+    min|latest|all)
+      nix-instantiate --eval --strict \
+        --arg elispFile "./${PACKAGE_MAIN_FILE}" \
+        --argstr spec "${EMACS_VERSION}" \
+        "${nix_lib_dir}/dynamicVersions.nix" \
+        | tr '"[]' '   '
+      ;;
+    *)
+     echo "${EMACS_VERSION}"
+     ;;
+  esac
+}
+
+set_emacs() {
+  case "${emacs_version}" in
     '')
       emacs=emacs
+      return
       ;;
     snapshot)
       emacs="emacs-snapshot"
       ;;
     *)
-      if [[ "${EMACS_VERSION}" =~ ^[[:digit:]]+\.[[:digit:]]$ ]]; then
-        emacs="emacs-${EMACS_VERSION/./-}"
+      if [[ "${emacs_version}" =~ ^[[:digit:]]+\.[[:digit:]]$ ]]; then
+        emacs="emacs-${emacs_version/./-}"
       else
-        echo "Unsupported Emacs version: ${EMACS_VERSION}" >&2
+        echo "Unsupported Emacs version: ${emacs_version}" >&2
         exit 1
       fi
       ;;
   esac
+  echo
+  echo "Using $emacs"
 }
 
 discover_recipes() {
@@ -215,9 +233,14 @@ for_each_package_sources() {
       # shellcheck disable=SC1091
       source .envrc
       echo "On package ${PACKAGE_NAME}:"
-      set_emacs
-      # shellcheck disable=SC2048
-      $*
+      for emacs_version in $(emacs_versions); do
+        set_emacs
+        # shellcheck disable=SC2048
+        if ! $*; then
+          r=1
+        fi
+      done
+      exit $r
     ); then
       r=1
     fi
