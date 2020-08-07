@@ -1,5 +1,43 @@
 * elinter
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an early alpha stage, and most of its planned features are not implemented yet.
+** Planned features [35%]
+The following is a list of features that should be supported by this project.
+Maybe I'll announce this project officially when the progress reaches around 80%.
+
+Linting (extracted from [[https://github.com/alphapapa/makem.sh][makem.sh]] + inspiration from [[https://github.com/gonewest818/elisp-lint][elisp-lint]]):
+
+- [X] checkdoc
+- [X] package-lint
+- [X] check-declare
+- [X] melpazoid (sharp quotes and other experimental checks)
+- [ ] ELSA
+- [ ] indentation
+- [ ] regular expressions
+- [ ] whitespace
+
+Testing:
+
+- [ ] buttercup
+- [ ] ert-runner
+- [ ] Start Emacs with any arguments
+
+Configuration:
+
+- [X] Allow specifying an Emacs version available in =nix-emacs-ci=
+- [X] Determining Emacs versions based on the package header
+- [ ] Activate extra packages listed in =Cask= file
+- [ ] Let the user define his/her own Nix overrides
+
+Integration:
+
+- [X] CLI for local use
+- [ ] Git pre-commit hook (run static checks only on modified files)
+- [ ] GitHub Actions
+
+Reporting:
+
+- [ ] Colorizing statuses
+- [ ] Produce structured output for GitHub Actions
 ** Prerequisites
 =elinter= runs on UNIX-like operating systems that can run [[https://nixos.org/][Nix]] (currently Linux and macOS).
 ** Installation
@@ -30,7 +68,7 @@ cachix use emacs-ci
 Optionally, you can use [[https://github.com/xzfc/cached-nix-shell][cached-nix-shell]] for improving =nix-shell= startup time.
 Install the program in =PATH=, and =elinter= will automatically detect it.
 ** Usage
-*** Use case #1: Lint and compile packages in the current working tree
+*** Use case #1: Local source + in-repository recipes
 First create package recipes in =.recipes= directory.
 You can use [[https://github.com/akirak/decask.el][decask.el]] to copy existing recipes from a local copy of MELPA.
 
@@ -57,7 +95,7 @@ To only byte-compile source files, add =-b= flag:
 #+begin_src sh
 elinter -b
 #+end_src
-*** Use case #2: Run lint on the latest snapshot of the remote repository specified in a recipe
+*** Use case #2: Local recipes + remote sources
 This is like the use case 1, but it clones the remote repository specified in the recipe rather than work on source files in the working directory.
 
 =elinter= command accepts recipe files. When =-r= flag is given, it clones remote Git repositories according to the recipes.
@@ -67,8 +105,8 @@ This can be easily integrated into the MELPA PR workflow:
 cd ~/your-melpa-fork
 elinter -r recipes/your-package
 #+end_src
-*** Details
-**** elinter command
+** Technical details
+*** elinter command
 The =main= Nix derivation provides =elinter= executable.
 It takes recipe files as command-line arguments.
 If no recipe file is given as an argument, it looks for ones in =.recipes= directory in the working directory.
