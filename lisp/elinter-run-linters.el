@@ -1,4 +1,3 @@
-#!/usr/bin/env -S emacs -Q --batch --script
 ;; -*- lexical-binding: t -*-
 (require 'cl-lib)
 (require 'subr-x)

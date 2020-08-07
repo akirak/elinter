@@ -41,15 +41,21 @@ rec {
 
     phases = [ "installPhase" ];
 
-    # Since I want to have the executable elisp scripts run by various
-    # version of Emacs, I have to prevent from patching shebangs,
-    # i.e. keep '!/usr/bin/env emacs'.
-    dontPatchShebangs = true;
-
-    installPhase = ''
-      mkdir -p $out/bin
-      cp $src/bin-helpers/* $out/bin
-    '';
+    installPhase =
+      let
+        lint-runner = writeTextFile {
+          name = "elinter-run-linters";
+          executable = true;
+          text = ''
+            exec emacs -Q --batch --script ${./lisp/elinter-run-linters.el} "$@"
+          '';
+        };
+      in
+        ''
+          mkdir -p $out/bin
+          cp $src/bin-helpers/* $out/bin
+          cp ${lint-runner} $out/bin/elinter-run-linters
+        '';
   };
 
   # It is possible to use makem.sh for linting, but its interface
