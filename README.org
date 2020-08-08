@@ -1,6 +1,6 @@
 * elinter
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an early alpha stage, and most of its planned features are not implemented yet.
-** Planned features [35%]
+** Planned features [38%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -15,6 +15,12 @@ Linting (extracted from [[https://github.com/alphapapa/makem.sh][makem.sh]] + in
 - [ ] regular expressions
 - [ ] whitespace
 
+Building packages:
+
+- [X] Byte-compile
+- [X] Loadability testing
+- [X] Produce a package with =*-autoloads.el= file
+
 Testing:
 
 - [ ] buttercup
@@ -26,7 +32,9 @@ Configuration:
 - [X] Allow specifying an Emacs version available in =nix-emacs-ci=
 - [X] Determining Emacs versions based on the package header
 - [ ] Activate extra packages listed in =Cask= file
-- [ ] Let the user define his/her own Nix overrides
+- [ ] Let the user define custom package derivations
+- [ ] Allow updating emacs-overlay independently from the upstream
+- [ ] Switch to flakes
 
 Integration:
 
