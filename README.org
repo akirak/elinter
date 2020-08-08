@@ -118,5 +118,14 @@ elinter -r recipes/your-package
 The =main= Nix derivation provides =elinter= executable.
 It takes recipe files as command-line arguments.
 If no recipe file is given as an argument, it looks for ones in =.recipes= directory in the working directory.
+** Credits, inspiration sources, and alternatives
+=elinter= is influenced by or using code from the following projects:
 
+- [[https://github.com/nix-community/emacs-overlay/][emacs-overlay]] from the Nix community, its =emacsWithPackagesFromPackageRequires= parser by Steve Purcell, and [[https://github.com/talyz/fromElisp][fromElisp]] parser by Kim Lindberger (used in [[https://github.com/akirak/nix-elisp-helpers][my Nix library]]).
+- [[https://github.com/alphapapa/makem.sh][makem.sh]] by Adam Porter (alphapapa), for some of its linting code and the idea of extensive use of bash
+- [[https://github.com/riscy/melpazoid/][melpazoid]] by Chris Rayner (riscy), for extra linting features and the idea of sandboxing
+- [[https://github.com/conao3/keg.el/][keg.el]] by Naoya Yamashita (conao3), for its recipe-oriented configuration API
+- [[https://github.com/DamienCassou/nix-hello-world][nix-hello-world]] by Damien Cassou, for configuring Nix projects
+- [[https://gitea.petton.fr/DamienCassou/makel][makel]] by Damien Cassou, for some linting code
 
+=elinter= is an improvement upon the previous version, which was helped by [[https://github.com/ericdallo][Eric Dallo]] and [[https://github.com/terlar][Terje Larsen]].
