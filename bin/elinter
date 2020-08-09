@@ -133,15 +133,18 @@ emacs_versions() {
         "${nix_lib_dir}/dynamicVersions.nix" \
         | tr '"[]' '   '
       ;;
+    '')
+      echo .
+      ;;
     *)
-     echo "${EMACS_VERSION}"
-     ;;
+      echo "${EMACS_VERSION}"
+      ;;
   esac
 }
 
 set_emacs() {
   case "${emacs_version}" in
-    '')
+    ''|.)
       emacs=emacs
       return
       ;;
