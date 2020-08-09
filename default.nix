@@ -2,6 +2,9 @@
 }:
 with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
+let
+  ansi = fetchTarball (import ./nix/sources.nix).ansi.url;
+in
 rec {
   main = stdenv.mkDerivation rec {
     name = "elinter";
@@ -29,6 +32,7 @@ rec {
         --argv0 elinter \
         --prefix PATH : ${linters + "/bin"} \
         --set ELINTER_VERSION $version \
+        --set ELINTER_ANSI_LIBRARY ${ansi}/ansi \
         --set ELINTER_NIX_LIB_DIR $lib
     '';
   };

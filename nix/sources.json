@@ -1,4 +1,16 @@
 {
+    "ansi": {
+        "branch": "master",
+        "description": "ANSI escape codes in pure bash - change text color, position the cursor, much more",
+        "homepage": null,
+        "owner": "fidian",
+        "repo": "ansi",
+        "rev": "3df8dc2aa8a01b304d48d03b0a9c1489f55391c4",
+        "sha256": "0zdglr6dp9zsmpc4x682fb70syc9kvafnamaln8h9rv9fc2l9cmb",
+        "type": "tarball",
+        "url": "https://github.com/fidian/ansi/archive/3df8dc2aa8a01b304d48d03b0a9c1489f55391c4.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "emacs-overlay": {
         "branch": "master",
         "description": "Bleeding edge emacs overlay [maintainer=@adisbladis] ",
