@@ -1,10 +1,20 @@
 * elinter
-This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an early alpha stage, and most of its planned features are not implemented yet.
-** Planned features [38%]
+This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an alpha stage, and even half of its planned features are not implemented yet.
+** Design goals
+This project is designed with the following goals in mind:
+
+- Support both local use and CI
+- Comprehensive linting using various backends (should be at least as capable as melpazoid, which is created and used by the official reviewer on MELPA)
+- Using Nix to support dependencies that entail specific build procedures, e.g. =emacsql-sqlite=
+- Support projects containing multiple packages in a single repository
+- Ease of setup for new projects and ease of migration, e.g. from Cask, in existing projects
+- Minimal configuration and minimal maintenance
+- Can be integrated into the PR workflow of MELPA
+** Planned features [46%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
-Linting (extracted from [[https://github.com/alphapapa/makem.sh][makem.sh]] + inspiration from [[https://github.com/gonewest818/elisp-lint][elisp-lint]]):
+Linting (the list mostly extracted from [[https://github.com/alphapapa/makem.sh][makem.sh]] + inspiration from [[https://github.com/gonewest818/elisp-lint][elisp-lint]]):
 
 - [X] checkdoc
 - [X] package-lint
@@ -27,14 +37,25 @@ Testing:
 - [ ] ert-runner
 - [ ] Start Emacs with any arguments
 
+Target project types:
+
+- [X] Multi-file packages
+- [ ] Multi-package repositories
+- [ ] Source files in subdirectories
+
+Sources:
+
+- [X] Local repository
+- [X] Remote source repositories
+
 Configuration:
 
 - [X] Allow specifying an Emacs version available in =nix-emacs-ci=
-- [X] Determining Emacs versions based on the package header
+- [X] Determine Emacs versions based on the library headers of individual packages
 - [ ] Activate extra packages listed in =Cask= file
 - [ ] Let the user define custom package derivations
 - [ ] Allow updating emacs-overlay independently from the upstream
-- [ ] Switch to flakes
+- [ ] Switch to Nix flakes
 
 Integration:
 
@@ -44,7 +65,7 @@ Integration:
 
 Reporting:
 
-- [ ] Colorizing statuses
+- [X] Colorizing statuses
 - [ ] Produce structured output for GitHub Actions
 ** Prerequisites
 =elinter= runs on UNIX-like operating systems that can run [[https://nixos.org/][Nix]] (currently Linux and macOS).
@@ -67,7 +88,7 @@ Alternatively, you can clone this repository and run
 nix-env -iA main
 #+end_src
 
-Optionally, it is recommended to install [[https://github.com/cachix/cachix][cachix]] and enable cached binaries:
+Optionally, it is recommended to install [[https://github.com/cachix/cachix][cachix]] and enable cached Emacs binaries:
 
 #+begin_src sh
 cachix use emacs-ci
@@ -106,7 +127,7 @@ elinter -b
 *** Use case #2: Local recipes + remote sources
 This is like the use case 1, but it clones the remote repository specified in the recipe rather than work on source files in the working directory.
 
-=elinter= command accepts recipe files. When =-r= flag is given, it clones remote Git repositories according to the recipes.
+=elinter= command accepts recipe files as arguments. When =-r= flag is given, it clones remote Git repositories according to the recipes.
 This can be easily integrated into the MELPA PR workflow:
 
 #+begin_src sh
@@ -118,6 +139,14 @@ elinter -r recipes/your-package
 The =main= Nix derivation provides =elinter= executable.
 It takes recipe files as command-line arguments.
 If no recipe file is given as an argument, it looks for ones in =.recipes= directory in the working directory.
+*** Emacs version syntax
+=elinter= command supports =-e= option that takes an Emacs version, e.g. =26.3= for Emacs 26.3 and =snapshot= for the latest snapshot. You can use any single version available in nix-emacs-ci.
+
+It also supports the following abstract version specs:
+
+- =min=, the minimum version specified in the library header of each package
+- =latest=, the latest stable version
+- =all=, all versions since the minimum version including the snapshot, in descending order
 ** Credits, inspiration sources, and alternatives
 =elinter= is influenced by or using code from the following projects:
 
