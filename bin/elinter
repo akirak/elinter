@@ -235,6 +235,7 @@ for_each_package_sources() {
       cd "${package_source_root}/$package"
       # shellcheck disable=SC1091
       source .envrc
+      workflow_start_group "Package ${PACKAGE_NAME}"
       ansi --blue --bold "On package ${PACKAGE_NAME}:"
       for emacs_version in $(emacs_versions); do
         set_emacs
@@ -243,6 +244,7 @@ for_each_package_sources() {
           r=1
         fi
       done
+      workflow_end_group
       exit $r
     ); then
       r=1
@@ -286,6 +288,8 @@ lint_and_compile_package() {
 # Main entry point #
 ####################
 
+workflow_start_group "Initialization"
+
 if [[ -v ELINTER_ANSI_LIBRARY && -f "${ELINTER_ANSI_LIBRARY}" ]]; then
   # shellcheck disable=SC1090
   . "${ELINTER_ANSI_LIBRARY}"
@@ -320,6 +324,8 @@ if [[ ${#recipes} -gt 0 ]]; then
   copy_package_sources
   echo
 fi
+
+workflow_end_group
 
 case "$op" in
   lint_and_compile)

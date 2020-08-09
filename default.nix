@@ -4,6 +4,7 @@ with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 let
   ansi = fetchTarball (import ./nix/sources.nix).ansi.url;
+  bashLib = ./lib/workflow.bash;
 in
 rec {
   main = stdenv.mkDerivation rec {
@@ -12,7 +13,7 @@ rec {
 
     nativeBuildInputs = [ makeWrapper ];
 
-    propagatedBuildInputs = [ linters ];
+    propagatedBuildInputs = [ bashLib linters ];
 
     src = gitignoreSource ./.;
 
@@ -21,6 +22,9 @@ rec {
     installPhase = ''
       mkdir -p $out
 
+      cp $src/bin/elinter $out
+      sed -i "2isource ${bashLib}" $out/elinter
+
       mkdir -p $out/share/elinter
       lib=$out/share/elinter
       cd $src
@@ -28,7 +32,7 @@ rec {
         dynamicVersions.nix
 
       mkdir -p $out/bin
-      makeWrapper ${./bin/elinter} $out/bin/elinter \
+      makeWrapper $out/elinter $out/bin/elinter \
         --argv0 elinter \
         --prefix PATH : ${linters + "/bin"} \
         --set ELINTER_VERSION $version \
@@ -43,7 +47,7 @@ rec {
 
     src = gitignoreSource ./.;
 
-    nativeBuildInputs = [ makeWrapper ];
+    nativeBuildInputs = [ makeWrapper bashLib ];
 
     phases = [ "installPhase" ];
 
@@ -70,16 +74,18 @@ rec {
 
       in
         ''
-           mkdir -p $out/bin
+          mkdir -p $out/bin
 
-           # Install the colorizer
-           cp ${colorizer} $out/bin/elinter-colorizer
+          # Install the colorizer
+          cp ${colorizer} $out/bin/elinter-colorizer
 
-           # Patch backend scripts to redirect output to the colorizer
-           for bin in $src/bin-helpers/* ${lint-runner}/bin/*; do
-             makeWrapper $bin $out/bin/`basename $bin` \
-               --run 'exec &> >(elinter-colorizer)'
+          # Patch backend scripts to redirect output to the colorizer
+          for bin in $src/bin-helpers/* ${lint-runner}/bin/*; do
+            makeWrapper $bin $out/bin/`basename $bin` \
+              --run 'exec &> >(elinter-colorizer)'
           done
+
+          sed -i "2i. ${bashLib}" $out/bin/elinter-byte-compile
         '';
   };
 
