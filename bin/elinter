@@ -290,6 +290,11 @@ lint_and_compile_package() {
 
 workflow_start_group "Initialization"
 
+if [[ -v GITHUB_ACTIONS ]]; then
+  # Force setting TERM to enable color output
+  export TERM=ansi
+fi
+
 if [[ -v ELINTER_ANSI_LIBRARY && -f "${ELINTER_ANSI_LIBRARY}" ]]; then
   # shellcheck disable=SC1090
   . "${ELINTER_ANSI_LIBRARY}"
