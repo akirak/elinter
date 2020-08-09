@@ -11,5 +11,7 @@ workflow_start_group() {
 workflow_end_group() {
   if gh_workflow_p; then
     echo "::endgroup ::"
+  else
+    echo
   fi
 }

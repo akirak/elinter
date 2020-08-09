@@ -229,6 +229,13 @@ copy_package_sources() {
 for_each_package_sources() {
   set +e
   local r=0
+  local failed_packages=()
+  local multi_packages
+  if [[ ${#package[*]} -gt 1 ]]; then
+    multi_packages=1
+  else
+    multi_packages=0
+  fi
   for package in ${packages[*]}; do
     # Fork a subshell to isolate the environment, e.g. variables
     if ! (
@@ -248,13 +255,16 @@ for_each_package_sources() {
       exit $r
     ); then
       r=1
+      failed_packages+=("$package")
     fi
-    echo
   done
   if [[ $r -eq 0 ]]; then
     ansi --green "All checks were successful."
   else
     ansi --red "Some checks failed."
+    if [[ ${multi_packages} -gt 0 ]]; then
+      echo "Failed packages: ${failed_packages[*]}"
+    fi
   fi
   return $r
 }
