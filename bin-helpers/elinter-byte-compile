@@ -92,7 +92,7 @@ fi
 # TODO: Make loadability testing optional
 if [[ $result -eq 0 ]]; then
   echo
-  echo "Perform loadability testing..."
+  echo "Checking loadability..."
   set +e
   if [[ -v dest && -d "$dest" ]]; then
     cd "$dest"
