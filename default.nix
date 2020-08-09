@@ -83,12 +83,4 @@ rec {
         '';
   };
 
-  # It is possible to use makem.sh for linting, but its interface
-  # does not fit this framework (e.g. the way it installs packages),
-  # so I won't use it for now.
-  # 
-  # makem = writeScriptBin "makem.sh"
-  #   (readFile ((fetchTarball
-  #     (import ./nix/sources.nix."makem.sh".url) + "/makem.sh")))
-
 }
