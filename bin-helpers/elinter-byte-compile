@@ -31,6 +31,8 @@ cleanup() {
 }
 trap cleanup 0 1 2 6 15
 
+workflow_start_group "Byte-compile"
+
 for f in ${PACKAGE_ELISP_FILES[*]}; do
   echo "Compiling $f..."
   if ! emacs --batch --no-site-file -L . \
@@ -46,14 +48,17 @@ done
 if [[ $result -eq 0 ]]; then
   echo SUCCESS
 else
-  echo FAIL
+  echo FAILED
 fi
+
+workflow_end_group
 
 set -e
 
 unset dest
 if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
-  echo
+  workflow_start_group "Build packages"
+
   # Generate autoloads
   autoloads_file="${PACKAGE_NAME}-autoloads.el"
   if [[ ! -f "${autoloads_file}" ]]; then
@@ -86,12 +91,14 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   rm "$dest/.envrc"
 
   echo "Installed to $outdir/${major_version}"
+
+  workflow_end_group
 fi
 
 # Loadability testing, inspired by melpazoid
 # TODO: Make loadability testing optional
 if [[ $result -eq 0 ]]; then
-  echo
+  workflow_start_group "Loadability checking"
   echo "Checking loadability..."
   set +e
   if [[ -v dest && -d "$dest" ]]; then
@@ -104,8 +111,11 @@ if [[ $result -eq 0 ]]; then
     fi
   done
   if [[ $result -eq 0 ]]; then
-    echo OK
+    echo SUCCESS
+  else
+    echo FAILED
   fi
+  workflow_end_group
 fi
 
 exit $result

@@ -160,7 +160,6 @@ set_emacs() {
       fi
       ;;
   esac
-  echo
   echo "Using $emacs"
 }
 
@@ -252,10 +251,12 @@ for_each_package_sources() {
       done
 
       exit $r
-    ); then
+      ); then
+      ansi --red "Package $package failed in some checks."
       r=1
       failed_packages+=("$package")
     fi
+    echo
   done
   if [[ $r -eq 0 ]]; then
     ansi --green "All checks were successful."
@@ -292,9 +293,7 @@ lint_package() {
 
 compile_package() {
   install_package_deps
-  workflow_start_group "Byte-compile and loadability checking"
   emacs_dev_shell --run elinter-byte-compile
-  workflow_end_group
 }
 
 lint_and_compile_package() {
