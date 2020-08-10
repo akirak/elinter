@@ -17,7 +17,9 @@ let
     in
       rec {
         inherit (recipeAttrs) pname;
-        packageFiles = expandPackageFiles srcRoot recipeAttrs.files;
+        packageFiles =
+          filter (file: match "(.*/)?flycheck_.+\.el" file == null)
+            (expandPackageFiles srcRoot recipeAttrs.files);
         sourceFiles = filter isElisp packageFiles;
         mainFile =
           if length sourceFiles == 1
