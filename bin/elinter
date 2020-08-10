@@ -287,9 +287,7 @@ install_package_deps() {
 
 lint_package() {
   install_package_deps
-  workflow_start_group "Lint"
-  emacs_dev_shell --run elinter-run-linters
-  workflow_end_group
+  workflow_with_group "Lint" emacs_dev_shell --run elinter-run-linters
 }
 
 compile_package() {
