@@ -286,12 +286,29 @@ emacs_dev_shell() {
           "$@"
 }
 
+build_emacs() {
+  nix-build "${nix_lib_dir}/emacs.nix" -A emacsForCI \
+          --argstr emacs "$emacs" \
+          --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
+          --argstr enabledLinters "${linters[*]}" "$@"
+}
+
+install_package_deps() {
+  if ! [[ -v packages_installed ]]; then
+    workflow_start_group "Install dependencies for the package"
+    build_emacs --no-out-link >/dev/null
+    workflow_end_group
+    packages_installed=1
+  fi
+}
+
 lint_package() {
-  export ELINTER_LINTERS="${linters[*]}"
+  install_package_deps
   emacs_dev_shell --run elinter-run-linters
 }
 
 compile_package() {
+  install_package_deps
   emacs_dev_shell --run elinter-byte-compile
 }
 
@@ -347,6 +364,8 @@ fi
 if [[ ${#recipes} -gt 0 ]]; then
   copy_package_sources
 fi
+
+export ELINTER_LINTERS="${linters[*]}"
 
 workflow_end_group
 
