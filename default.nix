@@ -79,13 +79,17 @@ rec {
           # Install the colorizer
           cp ${colorizer} $out/bin/elinter-colorizer
 
+          # Patch the byte-compile helper to enable GitHub workflow features
+          mkdir -p $out/bin-helpers
+          cp $src/bin-helpers/* $out/bin-helpers
+          sed -i "2i. ${bashLib}" $out/bin-helpers/elinter-byte-compile
+
           # Patch backend scripts to redirect output to the colorizer
-          for bin in $src/bin-helpers/* ${lint-runner}/bin/*; do
+          for bin in $out/bin-helpers/* ${lint-runner}/bin/*; do
             makeWrapper $bin $out/bin/`basename $bin` \
               --run 'exec &> >(elinter-colorizer)'
           done
 
-          sed -i "2i. ${bashLib}" $out/bin/elinter-byte-compile
         '';
   };
 
