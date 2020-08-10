@@ -247,6 +247,8 @@ for_each_package_sources() {
         # shellcheck disable=SC2048
         if ! $*; then
           r=1
+          # Skip the following versions if any error occurs
+          break
         fi
       done
 
