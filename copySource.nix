@@ -34,7 +34,7 @@ in
   in
     writeText "emacs-${package.pname}-link-source"
       ''
-        cat > .envrc <<HERE
+        cat > .elinter-env <<HERE
         export PACKAGE_NAME=${pname}
         export PACKAGE_FILES="${baseNames packageFiles}"
         export PACKAGE_ELISP_FILES="${baseNames sourceFiles}"

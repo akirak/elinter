@@ -87,8 +87,8 @@ if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
     cp -Lr . "$dest"
   fi
 
-  # .envrc is created for elinter, so it should be deleted
-  rm "$dest/.envrc"
+  # This file is created for elinter, so it should be deleted
+  rm "$dest/.elinter-env"
 
   echo "Installed to $outdir/${major_version}"
 

@@ -240,7 +240,7 @@ for_each_package_sources() {
       r=0
       cd "${package_source_root}/$package"
       # shellcheck disable=SC1091
-      source .envrc
+      source .elinter-env
 
       ansi --blue --bold "On package ${PACKAGE_NAME}:"
       for emacs_version in $(emacs_versions); do
