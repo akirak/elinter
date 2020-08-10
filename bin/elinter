@@ -270,7 +270,7 @@ for_each_package_sources() {
 }
 
 emacs_dev_shell() {
-  "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A development \
+  "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A shellForCI \
           --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --argstr enabledLinters "${linters[*]}" \

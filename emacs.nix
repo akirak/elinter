@@ -49,16 +49,16 @@ let
     then emacs-ci."${emacs}"
     else pkgs."${emacs}";
 
+in
+rec {
   emacsForCI = emacsWithPackagesFromPackageRequires {
     inherit package;
     packageElisp = readFile (/. + mainFile);
     extraEmacsPackages = linterPackages;
   };
 
-in
-{
   # Shell for linting and testin
-  development = pkgs.mkShell {
+  shellForCI = pkgs.mkShell {
     buildInputs = [
       emacsForCI
     ];
