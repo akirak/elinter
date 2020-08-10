@@ -306,9 +306,13 @@ compile_package() {
 
 lint_and_compile_package() {
   local r=0
+  workflow_start_group "Lint"
   lint_package || r=1
+  workflow_end_group
   echo
+  workflow_start_group "Byte-compile and loadability checking"
   compile_package || r=1
+  workflow_end_group
   return $r
 }
 
