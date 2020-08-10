@@ -242,8 +242,7 @@ for_each_package_sources() {
       # shellcheck disable=SC1091
       source .envrc
 
-      [[ ${multi_packages} = 1 ]] \
-        && workflow_start_group "Package ${PACKAGE_NAME}"
+      workflow_start_group "Package ${PACKAGE_NAME}"
 
       ansi --blue --bold "On package ${PACKAGE_NAME}:"
       for emacs_version in $(emacs_versions); do
@@ -254,11 +253,7 @@ for_each_package_sources() {
         fi
       done
 
-      if [[ ${multi_packages} = 1 ]]; then
-        workflow_end_group
-      else
-        echo
-      fi
+      workflow_end_group
 
       exit $r
     ); then
