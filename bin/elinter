@@ -230,7 +230,6 @@ for_each_package_sources() {
   set +e
   local r=0
   local failed_packages=()
-  local multi_packages
   if [[ ${#package[*]} -gt 1 ]]; then
     multi_packages=1
   else
