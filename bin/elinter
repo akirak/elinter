@@ -337,7 +337,6 @@ fi
 
 if [[ ${#recipes} -gt 0 ]]; then
   copy_package_sources
-  echo
 fi
 
 workflow_end_group
