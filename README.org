@@ -1,5 +1,5 @@
 * elinter
-This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an alpha stage, and even half of its planned features are not implemented yet.
+This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an alpha stage yet.
 ** Design goals
 This project is designed with the following goals in mind:
 
@@ -10,7 +10,7 @@ This project is designed with the following goals in mind:
 - Ease of setup for new projects and ease of migration, e.g. from Cask, in existing projects
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [46%]
+** Planned features [50%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -66,7 +66,7 @@ Integration:
 Reporting:
 
 - [X] Colorizing statuses
-- [ ] Produce structured output for GitHub Actions
+- [X] Produce groups on GitHub Actions
 ** Prerequisites
 =elinter= runs on UNIX-like operating systems that can run [[https://nixos.org/][Nix]] (currently Linux and macOS).
 ** Installation
