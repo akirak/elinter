@@ -72,12 +72,25 @@ rec {
            fi
         '';
 
+        github-logger = writeShellScript "elinter-github-logger" ''
+          sed -f "$(dirname $0)/../lib/github-log.sed"
+        '';
+
       in
         ''
           mkdir -p $out/bin
 
           # Install the colorizer
           cp ${colorizer} $out/bin/elinter-colorizer
+
+          if [[ -v GITHUB_ACTIONS ]]; then
+            mkdir $out/lib
+            cp $src/lib/github-log.sed $out/lib
+            cp ${github-logger} $out/bin/elinter-github-logger
+            extra_substitutors=" | elinter-github-logger"
+          else
+            extra_substitutors=""
+          fi
 
           # Patch the byte-compile helper to enable GitHub workflow features
           mkdir -p $out/bin-helpers
@@ -87,7 +100,7 @@ rec {
           # Patch backend scripts to redirect output to the colorizer
           for bin in $out/bin-helpers/* ${lint-runner}/bin/*; do
             makeWrapper $bin $out/bin/`basename $bin` \
-              --run 'exec &> >(elinter-colorizer)'
+              --run "exec &> >(elinter-colorizer''${extra_substitutors})"
           done
 
         '';
