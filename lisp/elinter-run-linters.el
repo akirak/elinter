@@ -126,12 +126,18 @@
       (when has-errors
         (throw 'failure t)))))
 
+(defvar elinter-continueing nil)
+
 (defun elinter-run-linter (linter)
   "Run a LINTER by name."
   (let ((func (intern (concat "elinter-" linter))))
+    ;; Insert an empty line
+    (if elinter-continueing
+        (message "")
+      (setq elinter-continueing t))
     (condition-case err
         (progn
-          (message "\nRunning %s..." linter)
+          (message "Running %s..." linter)
           (unless (fboundp func)
             (error "Function not found: %s" func))
           (when (catch 'failure

@@ -256,7 +256,8 @@ for_each_package_sources() {
       r=1
       failed_packages+=("$package")
     fi
-    echo
+    # Insert an empty line between packages
+    gh_workflow_p && echo
   done
   if [[ $r -eq 0 ]]; then
     ansi --green "All checks were successful."
@@ -299,9 +300,6 @@ compile_package() {
 lint_and_compile_package() {
   local r=0
   lint_package || r=1
-  if ! gh_workflow_p; then
-    echo
-  fi
   compile_package || r=1
   return $r
 }
