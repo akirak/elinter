@@ -229,7 +229,7 @@ for_each_package_sources() {
   set +e
   local r=0
   local failed_packages=()
-  if [[ ${#package[*]} -gt 1 ]]; then
+  if [[ ${#packages[*]} -gt 1 ]]; then
     multi_packages=1
   else
     multi_packages=0
@@ -237,6 +237,7 @@ for_each_package_sources() {
   for package in ${packages[*]}; do
     # Fork a subshell to isolate the environment, e.g. variables
     if ! (
+      r=0
       cd "${package_source_root}/$package"
       # shellcheck disable=SC1091
       source .envrc
@@ -254,7 +255,7 @@ for_each_package_sources() {
 
       exit $r
       ); then
-      ansi --red "Package $package failed in some checks."
+      ansi --red "Package $package failed on some checks."
       r=1
       failed_packages+=("$package")
     fi
