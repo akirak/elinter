@@ -46,24 +46,21 @@
       (let ((checkdoc-create-error-function
              (lambda (text start end &optional unfixable)
                (setq elinter-checkdoc-found-errors t)
-               (let* ((start-line (count-lines (point-min) (or start (point-min))))
-                      (msg (concat "\n" (checkdoc-buffer-label)
-                                   ":"
-                                   (int-to-string start-line)
-                                   ":"
-                                   (if start
-                                       (save-excursion
-                                         (goto-char start)
-                                         (or (which-function) ""))
-                                     "")
-                                   "\n  "
-                                   text
-                                   (if (and start end (> end start)
-                                            (not (string-equal text
-                                                               "All interactive functions should have documentation")))
-                                       (concat "\n  > " (buffer-substring start end))
-                                     ""))))
-                 (message msg))
+               (let ((start-line (count-lines (point-min) (or start (point-min))))
+                     (col (car (posn-col-row (posn-at-point (or start (point-min)))))))
+                 (message (format-message
+                           "%s:%d:%d: error: %s%s"
+                           (checkdoc-buffer-label)
+                           start-line col
+                           text
+                           (if start
+                               (save-excursion
+                                 (goto-char start)
+                                 (let ((func (which-function)))
+                                   (if func
+                                       (format " (in %s)" func)
+                                     "")))
+                             ""))))
                (list text start end unfixable))))
         (checkdoc-file (file-truename file)))
     (error (progn
@@ -76,6 +73,7 @@
 (defun elinter-checkdoc ()
   "Run checkdoc in batch mode."
   (require 'checkdoc)
+  (require 'which-func)
   (setq elinter-checkdoc-found-errors nil)
   (unless (boundp 'checkdoc-create-error-function)
     (message "Warning: Checkdoc version looks old. Recommend updating")
@@ -90,15 +88,37 @@
 
 (defun elinter-check-declare ()
   "Run `check-declare' on the input files."
-  ;; Based on an equivalent function from makem.sh by alphapapa.
-  ;; <https://github.com/alphapapa/makem.sh/blob/master/makem.sh>
   (require 'check-declare)
-  ;; `check-declare-files' returns a list of errors. It would be
-  ;; possible to retrieve information on the errors from the variable
-  ;; rather than opening the file.
-  (when (apply #'check-declare-files elinter-package-elisp-files)
-    (with-current-buffer check-declare-warning-buffer
-      (message (buffer-string))
+  (require 'warnings)
+  (let (has-errors
+        (initial-warning-minimum-log-level warning-minimum-log-level))
+    (setq warning-minimum-log-level :emergency)
+    (unwind-protect
+        (dolist (file elinter-package-elisp-files)
+          (let* ((truename (file-truename file))
+                 (default-directory (file-name-directory truename))
+                 (errors (check-declare-files
+                          (file-name-nondirectory truename)))
+                 (messages (apply
+                            #'append
+                            (mapcar
+                             (pcase-lambda (`(,fnfile . ,errs))
+                               (mapcar
+                                (pcase-lambda (`(,file ,fn ,msg))
+                                  (format-message
+                                   ;; TODO: Determine whether it is an error or warning
+                                   "%s: error: said `%s' was defined in %s: %s"
+                                   file
+                                   fn
+                                   fnfile
+                                   msg))
+                                errs))
+                             errors))))
+            (when messages
+              (setq has-errors t)
+              (message (string-join messages "\n")))))
+      (setq warning-minimum-log-level initial-warning-minimum-log-level))
+    (when has-errors
       (throw 'failure t))))
 
 (defun elinter-melpazoid ()
