@@ -29,7 +29,7 @@ rec {
       lib=$out/share/elinter
       cd $src
       cp -r -t $lib nix copySource.nix fetchSource.nix emacs.nix \
-        dynamicVersions.nix
+        dynamicVersions.nix emacsTest.nix
 
       mkdir -p $out/bin
       makeWrapper $out/elinter $out/bin/elinter \

@@ -61,6 +61,7 @@ Options:
   -l             Do only linting (skip byte-compile)
   -b             Do only byte-compile (skip linting)
   -c             Clean up cache before operation
+  -s             Enter a shell with the packages
   --melpazoid    Turn on melpazoid checks in the linting phase
   -e|--emacs VERSION
                  Set the Emacs version
@@ -103,8 +104,16 @@ while [[ $# -gt 0 ]]; do
     -l|--lint)
       op=lint
       ;;
+    -s|--shell)
+      op=shell
+      ;;
     --melpazoid)
       linters+=(melpazoid)
+      ;;
+    --)
+      # Keep the rest of the arguments as positional arguments
+      shift
+      break
       ;;
     *)
       if [[ -f "$1" ]]; then
@@ -308,6 +317,31 @@ lint_and_compile_package() {
   return $r
 }
 
+shell_with_packages() {
+  local loadpath=()
+  local mainfiles=()
+  initialdir="$PWD"
+  for package in ${packages[*]}; do
+    unset PACKAGE_NAME
+    unset PACKAGE_FILES
+    unset PACKAGE_ELISP_FILES
+    unset PACKAGE_MAIN_FILE
+    cd "${package_source_root}/$package"
+    # shellcheck disable=SC1091
+    source .elinter-env
+    loadpath+=("$PWD")
+    mainfiles+=("$(readlink -e "${PACKAGE_MAIN_FILE}")")
+  done
+  cd "$initialdir"
+  emacs_version="${EMACS_VERSION}"
+  set_emacs
+  "${nix_shell_bin}" "${nix_lib_dir}/emacsTest.nix" \
+          --argstr emacs "$emacs" \
+          --argstr loadPath "${loadpath[*]@Q}" \
+          --argstr mainFiles "${mainfiles[*]@Q}" \
+          "$@"
+}
+
 ####################
 # Main entry point #
 ####################
@@ -369,6 +403,13 @@ case "$op" in
   compile)
     for_each_package_sources compile_package
     exit $?
+    ;;
+  shell)
+    if [[ $# -eq 0 ]]; then
+      shell_with_packages
+    else
+      shell_with_packages --command "$*"
+    fi
     ;;
   test)
     # TODO:
