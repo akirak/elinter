@@ -1,5 +1,5 @@
 * elinter
-This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is currently at an alpha stage yet.
+This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is still currently at an alpha stage.
 ** Design goals
 This project is designed with the following goals in mind:
 
