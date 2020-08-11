@@ -10,7 +10,7 @@ This project is designed with the following goals in mind:
 - Ease of setup for new projects and ease of migration, e.g. from Cask, in existing projects
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [50%]
+** Planned features [53%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -35,7 +35,7 @@ Testing:
 
 - [ ] buttercup
 - [ ] ert-runner
-- [ ] Start Emacs with any arguments
+- [X] Run any command in an environment with packages under test
 
 Target project types:
 
