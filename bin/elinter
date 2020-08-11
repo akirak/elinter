@@ -223,6 +223,7 @@ copy_package_sources() {
     echo -n "Files: "
     ls
   done
+  cd "$initialdir"
 }
 
 for_each_package_sources() {
