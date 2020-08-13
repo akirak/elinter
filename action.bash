@@ -7,6 +7,8 @@ r=0
 # shellcheck disable=SC1090
 . "$(dirname "$0")/share/workflow.bash"
 
+trap 'exit 1' 1 2 6 15
+
 workflow_start_group "Install cachix"
 if ! command -v cachix >/dev/null; then
   nix-env -iA cachix -f https://cachix.org/api/v1/install
