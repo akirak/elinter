@@ -39,11 +39,12 @@ recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 ###################################
 
 # Initialize variables
-op=lint_and_compile
+op=default_check
 recipes=()
 packages=()
 unset cleanup
 unset remote
+unset test_engine
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
@@ -63,6 +64,7 @@ Options:
   -c             Clean up cache before operation
   -s             Enter a shell with the packages
   --experimental Turn on experimental checks (using melpazoid)
+  -B|--buttercup Run buttercup tests
   -e|--emacs VERSION
                  Set the Emacs version
   -r             Fetch the source code from a remote server
@@ -106,6 +108,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     -s|--shell)
       op=shell
+      ;;
+    -B|--buttercup)
+      test_engine=buttercup
       ;;
     --experimental)
       linters+=(melpazoid)
@@ -342,6 +347,17 @@ shell_with_packages() {
           "$@"
 }
 
+run_tests() {
+  ansi --blue --bold "Tests"
+  case "${test_engine}" in
+    buttercup)
+      shell_with_packages --arg extraPackReqs '["buttercup"]' \
+          --arg extraBuildInputs "import ${nix_lib_dir}/buttercup.nix" \
+          --pure --run "buttercup $*"
+      ;;
+  esac
+}
+
 ####################
 # Main entry point #
 ####################
@@ -392,9 +408,15 @@ export ELINTER_LINTERS="${linters[*]}"
 workflow_end_group
 
 case "$op" in
-  lint_and_compile)
-    for_each_package_sources lint_and_compile_package
-    exit $?
+  default_check)
+    r=0
+    for_each_package_sources lint_and_compile_package || r=1
+    if [[ -v test_engine ]]; then
+      workflow_start_group "Run tests"
+      run_tests "$@" || r=1
+      workflow_end_group
+    fi
+    exit $r
     ;;
   lint)
     for_each_package_sources lint_package

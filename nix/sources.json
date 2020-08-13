@@ -11,6 +11,18 @@
         "url": "https://github.com/fidian/ansi/archive/3df8dc2aa8a01b304d48d03b0a9c1489f55391c4.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "emacs-buttercup": {
+        "branch": "master",
+        "description": "Behavior-Driven Emacs Lisp Testing",
+        "homepage": null,
+        "owner": "jorgenschaefer",
+        "repo": "emacs-buttercup",
+        "rev": "4d974d28d4525533ec72b1e5885f8b72b387c5fb",
+        "sha256": "0n61zpv2zc009aw6ikf4z4bnzpry381v0zvdp7gqk0las0asxybs",
+        "type": "tarball",
+        "url": "https://github.com/jorgenschaefer/emacs-buttercup/archive/4d974d28d4525533ec72b1e5885f8b72b387c5fb.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
     "emacs-overlay": {
         "branch": "master",
         "description": "Bleeding edge emacs overlay [maintainer=@adisbladis] ",

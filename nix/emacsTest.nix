@@ -6,6 +6,8 @@
 , emacs
 , loadPath
 , mainFiles
+, extraPackReqs ? []
+, extraBuildInputs ? (_: [])
 }:
 with builtins;
 with pkgs;
@@ -30,7 +32,7 @@ let
   parseReqs = file:
     parseLib.parsePackagesFromPackageRequires (readFile (/. + file));
 
-  reqs = lib.unique (lib.flatten (map parseReqs (parseQuotedStrings mainFiles)));
+  reqs = lib.flatten (map parseReqs (parseQuotedStrings mainFiles));
 
   package =
     if match "emacs-.+" emacs != null
@@ -40,7 +42,7 @@ let
   emacsWithDependencies =
     (emacsPackagesFor package).emacsWithPackages (
       epkgs:
-        map (name: epkgs.${name}) reqs
+        map (name: epkgs.${name}) (lib.unique (reqs ++ extraPackReqs))
     );
 
   loadPathString = concatStringsSep ":" (parseQuotedStrings loadPath) + ":";
@@ -49,7 +51,7 @@ in
 mkShell {
   buildInputs = [
     emacsWithDependencies
-  ];
+  ] ++ (extraBuildInputs { inherit pkgs; });
 
   shellHook = ''
     export EMACSLOADPATH="${loadPathString}"
