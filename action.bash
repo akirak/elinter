@@ -23,4 +23,6 @@ workflow_start_group "Install elinter"
 nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
 workflow_end_group
 
+echo
+
 elinter -e all --experimental
