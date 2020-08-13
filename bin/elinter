@@ -189,6 +189,8 @@ set_emacs() {
       ;;
   esac
   echo "Using $emacs"
+  # Reset the installation state when the Emacs version changes
+  packages_installed=0
 }
 
 discover_recipes() {
@@ -311,7 +313,7 @@ emacs_dev_shell() {
 }
 
 install_package_deps() {
-  if ! [[ -v packages_installed ]]; then
+  if ! [[ -v packages_installed && "${packages_installed}" = 1 ]]; then
     workflow_start_group "Install dependencies for the package"
     emacs_dev_shell --run exit
     workflow_end_group
