@@ -8,7 +8,7 @@ in
 {
 
   pre-commit-check = pre-commit-hooks.run {
-    src = ../.;
+    src = gitignoreSource ../.;
     excludes = [ "^nix/sources\.nix$" ];
     hooks = {
       shellcheck.enable = true;
