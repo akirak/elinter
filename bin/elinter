@@ -45,6 +45,8 @@ packages=()
 unset cleanup
 unset remote
 unset test_engine
+unset use_cask
+unset cask_file
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
@@ -70,6 +72,7 @@ Options:
   -e|--emacs VERSION
                  Set the Emacs version
   -r             Fetch the source code from a remote server
+  --cask         Detect Cask file and use packages defined in it
   -V, --version  Show version
 HELP
 }
@@ -122,6 +125,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --experimental)
       linters+=(melpazoid)
+      ;;
+    --cask)
+      use_cask=1
       ;;
     --)
       # Keep the rest of the arguments as positional arguments
@@ -361,10 +367,12 @@ run_tests() {
     buttercup)
       shell_with_packages --arg extraPackReqs '["buttercup"]' \
           --arg extraBuildInputs "import ${nix_lib_dir}/buttercup.nix" \
+          --argstr caskFile "${cask_file}" \
           --pure --run "buttercup $*"
       ;;
     ert-runner)
       shell_with_packages --arg extraPackReqs '["ert-runner"]' \
+          --argstr caskFile "${cask_file}" \
           --pure --run "emacs -Q --batch -l ert-runner"
       ;;
   esac
@@ -416,6 +424,14 @@ if [[ ${#recipes} -gt 0 ]]; then
 fi
 
 export ELINTER_LINTERS="${linters[*]}"
+
+if [[ -v use_cask && "${use_cask}" = 1 ]]; then
+  if [[ -f Cask ]]; then
+    cask_file="$(readlink -f Cask)"
+  else
+    echo "No Cask file is found."
+  fi
+fi
 
 workflow_end_group
 

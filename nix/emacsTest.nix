@@ -6,6 +6,7 @@
 , emacs
 , loadPath
 , mainFiles
+, caskFile ? null
 , extraPackReqs ? []
 , extraBuildInputs ? (_: [])
 }:
@@ -32,6 +33,17 @@ let
   parseReqs = file:
     parseLib.parsePackagesFromPackageRequires (readFile (/. + file));
 
+  helpers = (import (import ./sources.nix).nix-elisp-helpers { inherit pkgs; });
+
+  caskPackage = helpers.parseCask (readFile (/. + caskFile));
+
+  caskReqs =
+    if isString caskFile && caskFile != ""
+    then map head (
+      (caskPackage.dependencies or []) ++ ((caskPackage.development or {}).dependencies or [])
+    )
+    else [];
+
   reqs = lib.flatten (map parseReqs (parseQuotedStrings mainFiles));
 
   package =
@@ -42,7 +54,7 @@ let
   emacsWithDependencies =
     (emacsPackagesFor package).emacsWithPackages (
       epkgs:
-        map (name: epkgs.${name}) (lib.unique (reqs ++ extraPackReqs))
+        map (name: epkgs.${name}) (lib.unique (reqs ++ caskReqs ++ extraPackReqs))
     );
 
   loadPathString = concatStringsSep ":" (parseQuotedStrings loadPath) + ":";
