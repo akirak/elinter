@@ -12,11 +12,7 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: install elinter
-      run: nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
-      shell: bash
-    - name: run elinter
-      run: $GITHUB_ACTION_PATH/action.bash
+    - run: $GITHUB_ACTION_PATH/action.bash
       shell: bash
       env:
         ELINTER_ACTION_TASK: setup

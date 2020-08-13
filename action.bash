@@ -4,11 +4,22 @@ err() { echo "$*" >&2; }
 
 r=0
 
-# Install cachix first
+# shellcheck disable=SC1090
+. "$(dirname "$0")/share/workflow.bash"
+
+workflow_start_group "Install cachix"
 if ! command -v cachix >/dev/null; then
   nix-env -iA cachix -f https://cachix.org/api/v1/install
-  cachix use emacs-ci
 fi
+workflow_end_group
+
+workflow_start_group "Enable nix-emacs-ci"
+cachix use emacs-ci
+workflow_end_group
+
+workflow_start_group "Install elinter"
+nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main || exit 1
+workflow_end_group
 
 elinter -l -e snapshot --experimental || r=1
 
