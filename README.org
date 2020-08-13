@@ -10,7 +10,7 @@ This project is designed with the following goals in mind:
 - Ease of setup for new projects and ease of migration, e.g. from Cask, in existing projects
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [53%]
+** Planned features [61%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -33,8 +33,9 @@ Building packages:
 
 Testing:
 
-- [ ] buttercup
-- [ ] ert-runner
+- [X] buttercup
+- [X] ert-runner
+- [ ] ert with test files
 - [X] Run any command in an environment with packages under test
 
 Target project types:
@@ -52,7 +53,7 @@ Configuration:
 
 - [X] Allow specifying an Emacs version available in =nix-emacs-ci=
 - [X] Determine Emacs versions based on the library headers of individual packages
-- [ ] Activate extra packages listed in =Cask= file
+- [X] Activate extra packages listed in =Cask= file
 - [ ] Let the user define custom package derivations
 - [ ] Allow updating emacs-overlay independently from the upstream
 - [ ] Switch to Nix flakes
