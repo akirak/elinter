@@ -5,7 +5,7 @@
 with builtins;
 with pkgs;
 let
-  emacs-ci = import (import ./nix/sources.nix).nix-emacs-ci;
+  emacs-ci = import (import ./sources.nix).nix-emacs-ci;
   knownVersions = map (name: lib.replaceStrings [ "-" ] [ "." ] (lib.removePrefix "emacs-" name)) (attrNames emacs-ci);
   source = readFile elispFile;
   headers = filter (s: isString s && match ";;+ *Package-Requires: .+" s != null) (split "\n" source);

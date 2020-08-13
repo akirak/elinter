@@ -3,7 +3,7 @@
 }:
 with builtins;
 with pkgs;
-with (import (import ./nix/sources.nix).nix-elisp-helpers { inherit pkgs; });
+with (import (import ./sources.nix).nix-elisp-helpers { inherit pkgs; });
 with (parseRecipe recipe);
 let
   path = split "/" repo;

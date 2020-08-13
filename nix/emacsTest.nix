@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {
     overlays = [
-      (import (import ./nix/sources.nix).emacs-overlay)
+      (import (import ./sources.nix).emacs-overlay)
     ];
   }
 , emacs
@@ -25,7 +25,7 @@ let
       );
 
   parseLib = pkgs.callPackage
-    ((import ./nix/sources.nix).emacs-overlay + "/parse.nix") {};
+    ((import ./sources.nix).emacs-overlay + "/parse.nix") {};
 
   parseReqs = file:
     parseLib.parsePackagesFromPackageRequires (readFile (/. + file));

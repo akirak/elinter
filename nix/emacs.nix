@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {
     overlays = [
-      (import (import ./nix/sources.nix).emacs-overlay)
+      (import (import ./sources.nix).emacs-overlay)
     ];
   }
 , # Main file of the package, given as an absolute path string
@@ -21,7 +21,7 @@ let
     then enabledLinters
     else filter isString (split " " enabledLinters);
 
-  melpazoidSource = (import ./nix/sources.nix).melpazoid;
+  melpazoidSource = (import ./sources.nix).melpazoid;
 
   linterPackages = epkgs:
     (
@@ -42,7 +42,7 @@ let
       ++ map (name: epkgs."${name}") (filter (name: elem name [ "package-lint" ]) linters)
     );
 
-  emacs-ci = import (import ./nix/sources.nix).nix-emacs-ci;
+  emacs-ci = import (import ./sources.nix).nix-emacs-ci;
 
   package =
     if match "emacs-.+" emacs != null

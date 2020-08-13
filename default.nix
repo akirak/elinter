@@ -4,7 +4,7 @@ with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 let
   ansi = fetchTarball (import ./nix/sources.nix).ansi.url;
-  bashLib = ./lib/workflow.bash;
+  bashLib = ./share/workflow.bash;
 in
 rec {
   main = stdenv.mkDerivation rec {
@@ -28,8 +28,7 @@ rec {
       mkdir -p $out/share/elinter
       lib=$out/share/elinter
       cd $src
-      cp -r -t $lib nix copySource.nix fetchSource.nix emacs.nix \
-        dynamicVersions.nix emacsTest.nix
+      cp -r -t $lib nix
 
       mkdir -p $out/bin
       makeWrapper $out/elinter $out/bin/elinter \
@@ -37,7 +36,7 @@ rec {
         --prefix PATH : ${linters + "/bin"} \
         --set ELINTER_VERSION $version \
         --set ELINTER_ANSI_LIBRARY ${ansi}/ansi \
-        --set ELINTER_NIX_LIB_DIR $lib
+        --set ELINTER_NIX_LIB_DIR "$lib/nix"
     '';
   };
 
@@ -73,19 +72,20 @@ rec {
         '';
 
         github-logger = writeShellScript "elinter-github-logger" ''
-          sed -f "$(dirname $0)/../lib/github-log.sed"
+          sed -f "$(dirname $0)/../share/elinter/github-log.sed"
         '';
 
       in
         ''
           mkdir -p $out/bin
+          mkdir -p $out/share/elinter
 
           # Install the colorizer
           cp ${colorizer} $out/bin/elinter-colorizer
 
           if [[ -v GITHUB_ACTIONS ]]; then
             mkdir $out/lib
-            cp $src/lib/github-log.sed $out/lib
+            cp $src/share/github-log.sed $out/share/elinter
             cp ${github-logger} $out/bin/elinter-github-logger
             extra_substitutors=" | elinter-github-logger"
           else
