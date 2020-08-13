@@ -188,7 +188,7 @@ set_emacs() {
       fi
       ;;
   esac
-  echo "Using $emacs"
+  ansi --yellow "Using $emacs"
   # Reset the installation state when the Emacs version changes
   packages_installed=0
 }
