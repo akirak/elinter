@@ -9,6 +9,9 @@ r=0
 
 trap 'exit 1' 1 2 6 15
 
+# Close the initial group
+workflow_end_group
+
 workflow_start_group "Install cachix"
 if ! command -v cachix >/dev/null; then
   nix-env -iA cachix -f https://cachix.org/api/v1/install
