@@ -61,6 +61,7 @@ Usage: elinter [options] <recipe>...
 Options:
   -l             Do only linting (skip byte-compile)
   -b             Do only byte-compile (skip linting)
+  -t|--test      Run only tests
   -c             Clean up cache before operation
   -s             Enter a shell with the packages
   --experimental Turn on experimental checks (using melpazoid)
@@ -105,6 +106,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     -l|--lint)
       op=lint
+      ;;
+    -t|--test)
+      op="test"
       ;;
     -s|--shell)
       op=shell
@@ -426,15 +430,16 @@ case "$op" in
     for_each_package_sources compile_package
     exit $?
     ;;
+  test)
+    run_tests "$@"
+    exit $?
+    ;;
   shell)
     if [[ $# -eq 0 ]]; then
       shell_with_packages
     else
       shell_with_packages --command "$*"
     fi
-    ;;
-  test)
-    # TODO:
     ;;
   *)
     echo "Unsupported operation: $op" >&2
