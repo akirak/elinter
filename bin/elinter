@@ -66,6 +66,7 @@ Options:
   -s             Enter a shell with the packages
   --experimental Turn on experimental checks (using melpazoid)
   -B|--buttercup Run buttercup tests
+  -E|--ert-runner Run ert-runner tests
   -e|--emacs VERSION
                  Set the Emacs version
   -r             Fetch the source code from a remote server
@@ -115,6 +116,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     -B|--buttercup)
       test_engine=buttercup
+      ;;
+    -E|--ert-runner)
+      test_engine=ert-runner
       ;;
     --experimental)
       linters+=(melpazoid)
@@ -358,6 +362,10 @@ run_tests() {
       shell_with_packages --arg extraPackReqs '["buttercup"]' \
           --arg extraBuildInputs "import ${nix_lib_dir}/buttercup.nix" \
           --pure --run "buttercup $*"
+      ;;
+    ert-runner)
+      shell_with_packages --arg extraPackReqs '["ert-runner"]' \
+          --pure --run "emacs -Q --batch -l ert-runner"
       ;;
   esac
 }
