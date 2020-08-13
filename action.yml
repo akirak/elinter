@@ -1,20 +1,7 @@
 name: 'elinter'
-description: 'Lint and test Emacs Lisp packages'
-inputs:
-  test:
-    description: 'How to run tests'
-    required: false
-    default: ''
-  testArgs:
-    description: 'Arguments passed to the test runner'
-    required: false
-    default: ''
+description: 'Lint Emacs Lisp packages'
 runs:
   using: 'composite'
   steps:
     - run: $GITHUB_ACTION_PATH/action.bash
       shell: bash
-      env:
-        ELINTER_ACTION_TASK: setup
-        ELINTER_ACTION_TEST: "${{ inputs.test }}"
-        ELINTER_ACTION_TEST_ARGS: "${{ inputs.testArgs }}"
