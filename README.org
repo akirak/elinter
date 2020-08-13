@@ -107,10 +107,10 @@ Then run the following command to lint and compile source files in the repositor
 elinter
 #+end_src
 
-To perform extra checks from [[https://github.com/riscy/melpazoid/][melpazoid]] as done in PR reviews on MELPA, add =--melpazoid= flag:
+To perform extra checks from [[https://github.com/riscy/melpazoid/][melpazoid]] as done in PR reviews on MELPA, add =--experimental= flag:
 
 #+begin_src sh
-elinter --melpazoid
+elinter --experimental
 #+end_src
 
 To only lint packages and prevent from byte-compiling, add =-l= flag:

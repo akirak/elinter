@@ -62,7 +62,7 @@ Options:
   -b             Do only byte-compile (skip linting)
   -c             Clean up cache before operation
   -s             Enter a shell with the packages
-  --melpazoid    Turn on melpazoid checks in the linting phase
+  --experimental Turn on experimental checks (using melpazoid)
   -e|--emacs VERSION
                  Set the Emacs version
   -r             Fetch the source code from a remote server
@@ -107,7 +107,7 @@ while [[ $# -gt 0 ]]; do
     -s|--shell)
       op=shell
       ;;
-    --melpazoid)
+    --experimental)
       linters+=(melpazoid)
       ;;
     --)
