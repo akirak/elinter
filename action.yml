@@ -1,20 +1,17 @@
 name: 'elinter'
 description: 'Lint and test Emacs Lisp packages'
-inputs:
-  test:
-    description: 'How to run tests'
-    required: false
-    default: ''
-  testArgs:
-    description: 'Arguments passed to the test runner'
-    required: false
-    default: ''
 runs:
   using: 'composite'
   steps:
-    - run: $GITHUB_ACTION_PATH/action.bash
+    - name: Install cachix
+      run: 'command -v cachix >/dev/null || nix-env -iA cachix -f https://cachix.org/api/v1/install'
       shell: bash
-      env:
-        ELINTER_ACTION_TASK: setup
-        ELINTER_ACTION_TEST: "${{ inputs.test }}"
-        ELINTER_ACTION_TEST_ARGS: "${{ inputs.testArgs }}"
+    - name: Enable nix-emacs-ci
+      run: cachix use emacs-ci
+      shell: bash
+    - name: Install elinter
+      run: nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
+      shell: bash
+    - name: Run elinter
+      run: elinter -e all --experimental
+      shell: bash
