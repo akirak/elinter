@@ -1,0 +1,13 @@
+name: 'Action CI'
+on:
+  push:
+    paths:
+      - '*.el'
+      - 'action.*'
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: cachix/install-nix-action@v10
+    - uses: actions/checkout@v2
+    - uses: ./

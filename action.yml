@@ -1,0 +1,7 @@
+name: 'elinter'
+description: 'Lint Emacs Lisp packages'
+runs:
+  using: 'composite'
+  steps:
+    - run: $GITHUB_ACTION_PATH/action.bash
+      shell: bash
