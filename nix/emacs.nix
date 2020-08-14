@@ -21,26 +21,7 @@ let
     then enabledLinters
     else filter isString (split " " enabledLinters);
 
-  melpazoidSource = (import ./sources.nix).melpazoid;
-
-  linterPackages = epkgs:
-    (
-      (
-        lib.optional (elem "melpazoid" linters) (
-          epkgs.trivialBuild {
-            pname = "melpazoid";
-            version = "0";
-            src = fetchTarball melpazoidSource.url;
-            postUnpack = "mv $sourceRoot/melpazoid/melpazoid.el $sourceRoot";
-            meta = {
-              inherit (melpazoidSource) description homepage;
-              license = lib.licenses.gpl3;
-            };
-          }
-        )
-      )
-      ++ map (name: epkgs."${name}") (filter (name: elem name [ "package-lint" ]) linters)
-    );
+  linterPackages = epkgs: import ./linterPackages.nix { inherit epkgs lib; } linters;
 
   emacs-ci = import (import ./sources.nix).nix-emacs-ci;
 
