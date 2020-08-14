@@ -54,8 +54,8 @@ Configuration:
 - [X] Allow specifying an Emacs version available in =nix-emacs-ci=
 - [X] Determine Emacs versions based on the library headers of individual packages
 - [X] Activate extra packages listed in =Cask= file
-- [ ] Let the user define custom package derivations
-- [ ] Allow updating emacs-overlay independently from the upstream
+- [ ] Allow defining custom Nix derivations of packages for testing
+- [ ] Allow updating Nix dependencies locally
 - [ ] Switch to Nix flakes
 
 Integration:
