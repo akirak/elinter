@@ -1,5 +1,26 @@
 * elinter
+:PROPERTIES:
+:TOC:      this
+:END:
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is still currently at an alpha stage.
+
+:CONTENTS:
+-  [[#design-goals][Design goals]]
+-  [[#planned-features-67][Planned features [67%]​]]
+-  [[#prerequisites][Prerequisites]]
+-  [[#installation][Installation]]
+-  [[#usage][Usage]]
+  -  [[#use-case-1-local-source--in-repository-recipes][Use case #1: Local source + in-repository recipes]]
+  -  [[#use-case-2-local-recipes--remote-sources][Use case #2: Local recipes + remote sources]]
+  -  [[#use-case-3-github-actions-for-individial-packages][Use case #3: GitHub Actions for individial packages]]
+  -  [[#use-case-4-github-actions-for-batch-linting-your-packages-on-melpa][Use case #4: GitHub Actions for batch-linting your packages on MELPA]]
+  -  [[#use-case-5-git-pre-commit-hook][Use case #5: Git pre-commit hook]]
+-  [[#technical-details][Technical details]]
+  -  [[#elinter-command][elinter command]]
+  -  [[#emacs-version-syntax][Emacs version syntax]]
+  -  [[#sandboxing][Sandboxing]]
+-  [[#credits-inspiration-sources-and-alternatives][Credits, inspiration sources, and alternatives]]
+:END:
 ** Design goals
 This project is designed with the following goals in mind:
 
