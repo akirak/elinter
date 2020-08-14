@@ -12,7 +12,7 @@ with builtins;
 with pkgs;
 let
   # What would be the best way to set the default?
-  defaultLinters = [ "package-lint" ];
+  defaultLinters = [ "checkdoc" "package-lint" "check-declare" ];
 
   linters =
     if enabledLinters == null || enabledLinters == ""
@@ -44,4 +44,7 @@ rec {
       emacsForCI
     ];
   };
+
+  # Export the list for use in file-linter in ../default.nix
+  inherit defaultLinters;
 }
