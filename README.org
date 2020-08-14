@@ -100,7 +100,8 @@ Install the program in =PATH=, and =elinter= will automatically detect it.
 ** Usage
 *** Use case #1: Local source + in-repository recipes
 First create package recipes in =.recipes= directory.
-You can use [[https://github.com/akirak/decask.el][decask.el]] to copy existing recipes from a local copy of MELPA.
+This repository contains =elinter.el= which can be used to copy existing recipes from a local copy of MELPA.
+Just run =elinter= interactive function in Emacs, which first discovers packages and then run lint on source files.
 
 Then run the following command to lint and compile source files in the repository:
 
