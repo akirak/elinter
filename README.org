@@ -155,6 +155,77 @@ elinter -r recipes/your-package --experimental
 #+end_src
 
 The same flags as #1 applies.
+*** Use case #3: GitHub Actions for individial packages
+This repository also provides a GitHub action for checking individual packages on GitHub.
+
+The following is an example workflow. Create a file in =.github/workflows=. Here is [[https://github.com/akirak/elinter/actions?query=workflow%3A%22Action+CI%22][an example output]].
+
+#+begin_src yaml
+  name: CI
+  on:
+    push:
+  jobs:
+    ci:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v2
+      # Nix is required
+      - uses: cachix/install-nix-action@v10
+      # Install elinter and run lint and byte-compile
+      - uses: akirak/elinter@v4
+      # Optional step for running tests
+      - name: 'Run buttercup tests with the latest release of Emacs'
+        run: elinter -t --buttercup -e latest
+#+end_src
+*** Use case #4: GitHub Actions for batch-linting your packages on MELPA
+Since =elinter= command can take recipe files as arguments and fetch remote repositories, it is possible to add a linting workflow to your copy of [[https://github.com/melpa/melpa][MELPA]].
+
+Here is [[https://github.com/akirak/melpa/blob/internal/.github/workflows/akirak.yml][an example workflow definition]] and [[https://github.com/akirak/melpa/actions?query=workflow%3ACI][output]].
+*** Use case #5: Git pre-commit hook
+This repository also provides a script that can be integrated into Git =pre-commit= hook.
+
+=file-linter= attribute in =default.nix= installs =elinter-lint-files=, which takes elisp source files as arguments and performs linting according to in-repository recipes:
+
+#+begin_src sh
+# install the script
+nix-env -if . -A file-linter
+# check source files in your repository
+elinter-lint-files hello.el hello-utils.el
+#+end_src
+
+You can integrate this script using a Git hooks manager, e.g. [[https://pre-commit.com/][pre-commit]].
+If you prefer the Nix way, you can use [[cachix/pre-commit-hooks.nix][cachix/pre-commit-hooks.nix]] to set up a hook as follows:
+
+#+begin_src nix
+  with builtins;
+  with (import <nixpkgs> {});
+  with (import (import ./nix/sources.nix).gitignore { });
+  let
+    pre-commit-hooks = import (import ./nix/sources.nix)."pre-commit-hooks.nix";
+
+    elinter = import (fetchTarball "https://github.com/akirak/elinter/archive/v4.tar.gz") { };
+
+    pre-commit-check = pre-commit-hooks.run {
+      src = gitignoreSource ../.;
+      excludes = [ "^nix/sources\.nix$" ];
+      hooks = {
+        shellcheck.enable = true;
+        nix-linter.enable = true;
+        nixpkgs-fmt.enable = true;
+        elinter = {
+          enable = true;
+          name = "elinter";
+          description = "Lint Emacs Lisp files";
+          entry = "${elinter.file-linter}/bin/elinter-lint-files";
+          files = "\\.el$";
+        };
+      };
+    };
+  in
+  mkShell {
+    shellHook = pre-commit-check.shellHook;
+  }
+#+end_src
 ** Technical details
 *** elinter command
 The =main= Nix derivation provides =elinter= executable.
