@@ -229,8 +229,11 @@ If you prefer the Nix way, you can use [[cachix/pre-commit-hooks.nix][cachix/pre
 ** Technical details
 *** elinter command
 The =main= Nix derivation provides =elinter= executable.
-It takes recipe files as command-line arguments.
-If no recipe file is given as an argument, it looks for ones in =.recipes= directory in the working directory.
+It takes recipe files as command line arguments.
+
+It can also take package names and it refers to source files linked from the sandbox (described below).
+
+If no recipe file or package name is given as an argument, it looks for ones in =.recipes= directory in the working directory.
 *** Emacs version syntax
 =elinter= command supports =-e= option that takes an Emacs version, e.g. =26.3= for Emacs 26.3 and =snapshot= for the latest snapshot. You can use any single version available in nix-emacs-ci.
 
@@ -239,6 +242,22 @@ It also supports the following abstract version specs:
 - =min=, the minimum version specified in the library header of each package
 - =latest=, the latest stable version
 - =all=, all versions since the minimum version including the snapshot, in descending order
+*** Sandboxing
+=elinter= creates symbolic links in a cache directory and operates on them, rather than lint and compile source files directly in the repository.
+This is useful both for simplification and isolation.
+Once symbolic links are created, they are reused across different runs for performance.
+Since they are symbolic links, file modifications are reflected, but file additions/deletions are not applied.
+After you create/delete a source file in the repository, you have to run =elinter= with =-c= arguments to recreate the sandbox:
+
+#+begin_src sh
+elinter -c
+#+end_src
+
+You can use =-c= with other arguments:
+
+#+begin_src sh
+elinter -c -l --experimental
+#+end_src
 ** Credits, inspiration sources, and alternatives
 =elinter= is influenced by or depends on the following projects:
 
