@@ -191,7 +191,10 @@ of the project."
 
 ;;;###autoload
 (defun elinter (args)
-  "Run elinter with ARGS, after discovering packages."
+  "Run elinter with ARGS, after discovering packages.
+
+With a universal prefix argument, it prompts for command line
+arguments passed to elinter."
   (interactive (list (if current-prefix-arg
                          (read-string "Args: " elinter-args
                                       'elinter-args-history)
