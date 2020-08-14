@@ -237,14 +237,15 @@ of the project."
   "Read a remote repository location as fetcher."
   (cl-ecase elinter-user-fetcher
     ((github gitlab)
-     (let ((fetcher elinter-user-fetcher)
-           (user elinter-user-name))
+     (let* ((fetcher elinter-user-fetcher)
+            (user elinter-user-name)
+            (repo (read-string (format-message "Repository on %s (in USER/REPO): " fetcher)
+                               (when user
+                                 (concat user "/"
+                                         (file-name-nondirectory
+                                          (string-remove-suffix "/" default-directory)))))))
        (list :fetcher fetcher
-             :repo (read-string (format-message "Repository on %s: " fetcher)
-                                (when user
-                                  (concat user "/"
-                                          (file-name-nondirectory
-                                           (string-remove-suffix "/" default-directory))))))))
+             :repo (format "\"%s\"" repo))))
     (git
      (list :fetcher elinter-user-fetcher
            :url (read-string "Remote Git URL of the repository: ")))))
