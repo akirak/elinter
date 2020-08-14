@@ -6,7 +6,7 @@
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "25.1") (dash "2.12") (package-build "0-git"))
 ;; Keywords: maint lisp
-;; URL: https://github.com/akirak/elinter.el
+;; URL: https://github.com/akirak/elinter
 
 ;; This file is not part of GNU Emacs.
 
