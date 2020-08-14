@@ -14,6 +14,13 @@ in
       shellcheck.enable = true;
       nix-linter.enable = true;
       nixpkgs-fmt.enable = true;
+      elinter = {
+        enable = true;
+        name = "elinter";
+        description = "Lint Emacs Lisp files";
+        entry = "${(import ../default.nix {}).file-linter}/bin/elinter-lint-files";
+        files = "\\.el$";
+      };
     };
   };
 
