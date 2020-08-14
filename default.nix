@@ -106,4 +106,37 @@ rec {
         '';
   };
 
+  file-linter =
+    let
+      # TODO: Allow overriding this
+      pkgsWithOverlay = import <nixpkgs> {
+        overlays = [
+          (import (import ./nix/sources.nix).emacs-overlay)
+        ];
+      };
+      emacsCi = import (import ./nix/sources.nix).nix-emacs-ci;
+      defaultLinters = (import ./nix/emacs.nix { inherit pkgs; }).defaultLinters;
+      enabledLinters = defaultLinters ++ [ "melpazoid" ];
+      linterPackages = epkgs: import ./nix/linterPackages.nix {
+        inherit epkgs lib;
+      } enabledLinters;
+      emacsForLint =
+        (
+          # Using a snapshot version of Emacs can require several
+          # different versions of Emacs on a host, which requires more
+          # storage space if the developer works on many packages.
+          #
+          # Lock the version to save space.
+          (pkgsWithOverlay.emacsPackagesFor emacsCi.emacs-27-1).emacsWithPackages (
+            epkgs:
+              linterPackages epkgs ++ [ epkgs.package-build ]
+          )
+        );
+    in
+      writeShellScriptBin "elinter-lint-files" ''
+        export ELINTER_LINTERS="${lib.concatStringsSep " " enabledLinters}"
+        exec ${emacsForLint}/bin/emacs -Q --batch --script \
+           ${./lisp/elinter-run-linters.el} "$@"
+      '';
+
 }

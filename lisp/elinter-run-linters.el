@@ -3,10 +3,12 @@
 (require 'subr-x)
 
 (defgroup elinter nil
-  "Lint runner for Emacs Lisp projects.")
+  "Lint runner for Emacs Lisp projects."
+  :group 'maint
+  :group 'lisp)
 
 (defvar elinter-package-elisp-files
-  (split-string (getenv "PACKAGE_ELISP_FILES") " ")
+  (split-string (or (getenv "PACKAGE_ELISP_FILES") "") " ")
   "Input files.")
 
 (defvar elinter-package-main-file (getenv "PACKAGE_MAIN_FILE")
@@ -171,14 +173,66 @@
          (message "FAILED: Unexpected error from %s: %s" linter err)
          (push linter elinter-lint-failures))))))
 
-(defun elinter-run-linters-and-exit ()
-  "Run the linters and kill Emacs with an appropriate exit code."
+(defun elinter-run-linters-current-package ()
+  "Run the linters on the package configured in the variables.
+
+This function returns non-nil if there is any error found."
   (setq elinter-lint-failures nil)
   (mapc #'elinter-run-linter elinter-enabled-linters)
   (when elinter-lint-failures
     (message "\nThe following checks have failed: %s"
              (string-join (nreverse elinter-lint-failures) " ")))
-  (kill-emacs (if elinter-lint-failures 1 0)))
+  elinter-lint-failures)
+
+(defvar package-build-default-files-spec)
+
+(defun elinter-run-linters-on-files (files)
+  "Run the linters on FILES based on the in-repository recipes."
+  (require 'package-build)
+  (cl-labels
+      ((read-recipe (file)
+                    (ignore-errors
+                      (with-temp-buffer
+                        (insert-file-contents file)
+                        (goto-char (point-min))
+                        (read (current-buffer)))))
+       (expand-recipe-files (recipe)
+                            (mapcar #'car
+                                    (package-build-expand-file-specs
+                                     default-directory
+                                     (or (plist-get (cdr recipe) :files)
+                                         package-build-default-files-spec))))
+       (main-file (package-name source-files)
+                  (car (cl-find-if
+                        (lambda (file)
+                          (let ((base (file-name-base file)))
+                            (member base (list (concat package-name ".el")
+                                               (concat package-name "-pkg.el")))))
+                        source-files))))
+    (let* (failure
+           (recipes (mapcar #'read-recipe (directory-files ".recipes" t))))
+      (dolist (recipe recipes)
+        (when recipe
+          (let* ((package-name (symbol-name (car recipe)))
+                 (package-files (expand-recipe-files recipe))
+                 (matches (cl-intersection package-files files
+                                           :test #'file-equal-p)))
+            (when matches
+              (message "Linting files in package %s: %s"
+                       package-name
+                       (string-join matches " "))
+              (setq elinter-package-elisp-files matches
+                    elinter-package-main-file (main-file package-name package-files))
+              (when (elinter-run-linters-current-package)
+                (setq failure t))))))
+      failure)))
+
+(defun elinter-run-linters-and-exit ()
+  "Run the linters and kill Emacs with an appropriate exit code."
+  (let ((failure (if command-line-args-left
+                     (elinter-run-linters-on-files command-line-args-left)
+                   (elinter-run-linters-current-package))))
+    (kill-emacs (if failure 1 0))))
 
 (when noninteractive
   (elinter-run-linters-and-exit))
