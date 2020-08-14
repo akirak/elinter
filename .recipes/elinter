@@ -1,1 +1,1 @@
-(elinter :fetcher github :repo akirak/elinter)
+(elinter :fetcher github :repo "akirak/elinter")
