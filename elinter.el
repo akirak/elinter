@@ -191,8 +191,6 @@ of the project."
 
 ;;;###autoload
 (defun elinter (args)
-
-
   "Run elinter with ARGS, after discovering packages."
   (interactive (list (if current-prefix-arg
                          (read-string "Args: " elinter-args
