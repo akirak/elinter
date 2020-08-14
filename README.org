@@ -5,9 +5,9 @@ This project is designed with the following goals in mind:
 
 - Support both local use and CI
 - Comprehensive linting using various backends (should be at least as capable as melpazoid, which is created and used by the official reviewer on MELPA)
-- Using Nix to support dependencies that entail specific build procedures, e.g. =emacsql-sqlite=
-- Support projects containing multiple packages in a single repository
-- Ease of setup for new projects and ease of migration, e.g. from Cask, in existing projects
+- Use Nix to support dependencies that entail specific build procedures, e.g. =emacsql-sqlite=
+- Support projects containing multiple packages in the same repository
+- Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
 ** Planned features [67%]
@@ -53,9 +53,9 @@ Configuration:
 
 - [X] Allow specifying an Emacs version available in =nix-emacs-ci=
 - [X] Determine Emacs versions based on the library headers of individual packages
-- [X] Activate extra packages listed in =Cask= file
+- [X] Read development dependencies (used for testing) from =Cask= file
 - [ ] Allow defining custom Nix derivations of packages for testing
-- [ ] Allow updating Nix dependencies locally
+- [ ] Allow updating Nix dependencies (including emacs-overlay) locally
 - [ ] Switch to Nix flakes
 
 Integration:
@@ -152,7 +152,7 @@ It also supports the following abstract version specs:
 ** Credits, inspiration sources, and alternatives
 =elinter= is influenced by or depends on the following projects:
 
-- [[https://github.com/nix-community/emacs-overlay/][emacs-overlay]] from the Nix community, its =emacsWithPackagesFromPackageRequires= parser by Steve Purcell, and [[https://github.com/talyz/fromElisp][fromElisp]] parser by Kim Lindberger (used in [[https://github.com/akirak/nix-elisp-helpers][my Nix library]]).
+- [[https://github.com/nix-community/emacs-overlay/][emacs-overlay]] from the Nix community, its =emacsWithPackagesFromPackageRequires= parser by Steve Purcell, and [[https://github.com/talyz/fromElisp][fromElisp]] parser (used in [[https://github.com/akirak/nix-elisp-helpers][my Nix library]]) by Kim Lindberger
 - [[https://github.com/alphapapa/makem.sh][makem.sh]] by Adam Porter (alphapapa), for some of its linting code and the idea of extensive use of bash
 - [[https://github.com/riscy/melpazoid/][melpazoid]] by Chris Rayner (riscy), for extra linting features and the idea of sandboxing
 - [[https://github.com/conao3/keg.el/][keg.el]] by Naoya Yamashita (conao3), for its recipe-oriented configuration API
