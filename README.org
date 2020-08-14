@@ -150,7 +150,7 @@ It also supports the following abstract version specs:
 - =latest=, the latest stable version
 - =all=, all versions since the minimum version including the snapshot, in descending order
 ** Credits, inspiration sources, and alternatives
-=elinter= is influenced by or using code from the following projects:
+=elinter= is influenced by or depends on the following projects:
 
 - [[https://github.com/nix-community/emacs-overlay/][emacs-overlay]] from the Nix community, its =emacsWithPackagesFromPackageRequires= parser by Steve Purcell, and [[https://github.com/talyz/fromElisp][fromElisp]] parser by Kim Lindberger (used in [[https://github.com/akirak/nix-elisp-helpers][my Nix library]]).
 - [[https://github.com/alphapapa/makem.sh][makem.sh]] by Adam Porter (alphapapa), for some of its linting code and the idea of extensive use of bash
