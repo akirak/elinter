@@ -1,10 +1,10 @@
 * elinter
-:PROPERTIES:
-:TOC:      this
-:END:
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is still currently at an alpha stage.
 
-:CONTENTS:
+** Table of contents
+:PROPERTIES:
+:TOC:      siblings
+:END:
 -  [[#design-goals][Design goals]]
 -  [[#planned-features-67][Planned features [67%]​]]
 -  [[#prerequisites][Prerequisites]]
@@ -20,7 +20,7 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
   -  [[#emacs-version-syntax][Emacs version syntax]]
   -  [[#sandboxing][Sandboxing]]
 -  [[#credits-inspiration-sources-and-alternatives][Credits, inspiration sources, and alternatives]]
-:END:
+
 ** Design goals
 This project is designed with the following goals in mind:
 
