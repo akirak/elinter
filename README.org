@@ -12,8 +12,8 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
 -  [[#usage][Usage]]
   -  [[#use-case-1-local-source--in-repository-recipes][Use case #1: Local source + in-repository recipes]]
   -  [[#use-case-2-local-recipes--remote-sources][Use case #2: Local recipes + remote sources]]
-  -  [[#use-case-3-github-actions-for-individial-packages][Use case #3: GitHub Actions for individial packages]]
-  -  [[#use-case-4-github-actions-for-batch-linting-your-packages-on-melpa][Use case #4: GitHub Actions for batch-linting your packages on MELPA]]
+  -  [[#use-case-3-github-workflow-for-individial-packages][Use case #3: GitHub workflow for individial packages]]
+  -  [[#use-case-4-github-workflow-for-batch-linting-your-packages-on-melpa][Use case #4: GitHub workflow for batch-linting your packages on MELPA]]
   -  [[#use-case-5-git-pre-commit-hook][Use case #5: Git pre-commit hook]]
 -  [[#technical-details][Technical details]]
   -  [[#elinter-command][elinter command]]
@@ -176,7 +176,7 @@ elinter -r recipes/your-package --experimental
 #+end_src
 
 The same flags as #1 applies.
-*** Use case #3: GitHub Actions for individial packages
+*** Use case #3: GitHub workflow for individial packages
 This repository also provides a GitHub action for checking individual packages on GitHub.
 
 The following is an example workflow. Create a file in =.github/workflows=. Here is [[https://github.com/akirak/elinter/actions?query=workflow%3A%22Action+CI%22][an example output]].
@@ -198,7 +198,7 @@ The following is an example workflow. Create a file in =.github/workflows=. Here
       - name: 'Run buttercup tests with the latest release of Emacs'
         run: elinter -t --buttercup -e latest
 #+end_src
-*** Use case #4: GitHub Actions for batch-linting your packages on MELPA
+*** Use case #4: GitHub workflow for batch-linting your packages on MELPA
 Since =elinter= command can take recipe files as arguments and fetch remote repositories, it is possible to add a linting workflow to your copy of [[https://github.com/melpa/melpa][MELPA]].
 
 Here is [[https://github.com/akirak/melpa/blob/internal/.github/workflows/akirak.yml][an example workflow definition]] and [[https://github.com/akirak/melpa/actions?query=workflow%3ACI][output]].
