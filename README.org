@@ -6,7 +6,7 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
 :TOC:      siblings
 :END:
 -  [[#design-goals][Design goals]]
--  [[#planned-features-63][Planned features [63%]​]]
+-  [[#planned-features-65][Planned features [65%]​]]
 -  [[#prerequisites][Prerequisites]]
 -  [[#installation][Installation]]
 -  [[#usage][Usage]]
@@ -31,7 +31,7 @@ This project is designed with the following goals in mind:
 - Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [63%]
+** Planned features [65%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -85,14 +85,11 @@ Integration:
 - [X] Git pre-commit hook (run static checks only on modified files)
 - [X] GitHub Actions
 
-GitHub Action features:
-
-- [ ] Produce annotations to point to concrete error locations in source files
-
 Reporting:
 
 - [X] Colorizing statuses
 - [X] Produce groups on GitHub Actions
+- [ ] Produce annotations that point to concrete error locations on GitHub Actions
 ** Prerequisites
 =elinter= runs on UNIX-like operating systems that can run [[https://nixos.org/][Nix]] (currently Linux and macOS).
 ** Installation
