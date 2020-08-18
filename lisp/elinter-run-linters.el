@@ -26,7 +26,8 @@
   :type '(repeat string))
 
 (defcustom elinter-melpazoid-allow-failure
-  (equal "1" (getenv "ELINTER_MELPAZOID_ALLOW_FAILURE"))
+  (let ((env (getenv "ELINTER_MELPAZOID_ALLOW_FAILURE")))
+    (and env (member env '("1" "true"))))
   "Whether to allow failures from the experimental checks."
   :type 'boolean)
 
