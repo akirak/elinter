@@ -27,21 +27,6 @@ echo
 
 flags=()
 
-case "${ELINTER_ACTION_TESTS}" in
-  buttercup)
-    flags+=("--buttercup")
-    ;;
-  ert-runner)
-    flags+=("--ert-runner")
-    ;;
-  '')
-    ;;
-  *)
-    echo "Unsupported test type: ${ELINTER_ACTION_TESTS}" >&2
-    exit 1
-    ;;
-esac
-
 if [[ "${ELINTER_ACTION_EXPERIMENTAL}" != "0" ]]; then
   flags+=("--experimental")
 fi
