@@ -42,5 +42,9 @@ case "${ELINTER_ACTION_TESTS}" in
     ;;
 esac
 
+if [[ "${ELINTER_ACTION_EXPERIMENTAL}" != "0" ]]; then
+  flags+=("--experimental")
+fi
+
 # shellcheck disable=SC2068
-elinter -e all --experimental ${flags[@]}
+elinter -e all ${flags[@]}
