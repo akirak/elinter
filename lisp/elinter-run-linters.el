@@ -179,7 +179,7 @@
             ('warning
              (message "SUCCESS, but there was a warning")
              (push linter elinter-lint-warnings))
-            (t
+            ('t
              (message "FAILED")
              (push linter elinter-lint-errors))))
       (error
