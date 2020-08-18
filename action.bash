@@ -25,4 +25,22 @@ workflow_end_group
 
 echo
 
-elinter -e all --experimental
+flags=()
+
+case "${ELINTER_ACTION_TESTS}" in
+  buttercup)
+    flags+=("--buttercup")
+    ;;
+  ert-runner)
+    flags+=("--ert-runner")
+    ;;
+  '')
+    ;;
+  *)
+    echo "Unsupported test type: ${ELINTER_ACTION_TESTS}" >&2
+    exit 1
+    ;;
+esac
+
+# shellcheck disable=SC2068
+elinter -e all --experimental ${flags[@]}

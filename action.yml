@@ -1,7 +1,15 @@
 name: 'elinter'
 description: 'Lint Emacs Lisp packages'
+inputs:
+  test:
+    description: "Type of test suite to run"
+    required: false
+    default: ''
 runs:
   using: 'composite'
   steps:
     - run: $GITHUB_ACTION_PATH/action.bash
       shell: bash
+      env:
+        ELINTER_ACTION_TESTS: ${{ inputs.test }}
+      # TODO: Add badge
