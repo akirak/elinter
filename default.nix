@@ -61,9 +61,11 @@ rec {
            if command -v tput >/dev/null && [[ $(tput colors) -ge 8 ]]; then
              ANSI_SUCCESS=$(tput setaf 2)$(tput bold)
              ANSI_ERROR=$(tput setaf 1)$(tput bold)
+             ANSI_WARN=$(tput setaf 3)$(tput bold)
              ANSI_CAPTION=$(tput setaf 5)
              ANSI_RESET=$(tput sgr0)
              exec sed -e "s/\\(SUCCESS\\|OK\\)/''${ANSI_SUCCESS}\\1''${ANSI_RESET}/" \
+               -e "s/\\(WARN\\?\\)/''${ANSI_WARN}\\1''${ANSI_RESET}/" \
                -e "s/\\(FAIL\\(ED\\)\\?\\)/''${ANSI_ERROR}\\1''${ANSI_RESET}/" \
                -e "s/^\\(Running\\|Compiling\\|Checking\\) .\\+\\.\\{3\\}$/''${ANSI_CAPTION}\\0''${ANSI_RESET}/"
           else
