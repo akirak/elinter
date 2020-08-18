@@ -178,7 +178,7 @@
                    (message "SUCCESS")
                    nil)
             ('warning
-             (message "SUCCESS, but there was a warning")
+             (message "WARN: Found a warning, but exit successfully")
              (push linter elinter-lint-warnings))
             ('t
              (message "FAILED")
