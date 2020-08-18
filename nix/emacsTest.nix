@@ -46,6 +46,8 @@ let
 
   reqs = lib.flatten (map parseReqs (parseQuotedStrings mainFiles));
 
+  emacs-ci = import (import ./sources.nix).nix-emacs-ci;
+
   package =
     if match "emacs-.+" emacs != null
     then emacs-ci."${emacs}"
