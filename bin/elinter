@@ -359,13 +359,21 @@ shell_with_packages() {
     mainfiles+=("$(readlink -e "${PACKAGE_MAIN_FILE}")")
   done
   cd "$initialdir"
-  emacs_version="${EMACS_VERSION}"
-  set_emacs
-  "${nix_shell_bin}" "${nix_lib_dir}/emacsTest.nix" \
+  local r=0
+  for emacs_version in $(emacs_versions); do
+    set_emacs
+    # shellcheck disable=SC2048
+    if ! "${nix_shell_bin}" "${nix_lib_dir}/emacsTest.nix" \
           --argstr emacs "$emacs" \
           --argstr loadPath "${loadpath[*]@Q}" \
           --argstr mainFiles "${mainfiles[*]@Q}" \
-          "$@"
+          "$@"; then
+      r=1
+      # Skip the following versions if any error occurs
+      break
+    fi
+  done
+  return $r
 }
 
 run_tests() {
