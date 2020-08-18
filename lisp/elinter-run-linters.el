@@ -25,8 +25,16 @@
   "List of linters to run."
   :type '(repeat string))
 
-(defvar elinter-lint-failures nil
+(defcustom elinter-melpazoid-allow-failure
+  (equal "1" (getenv "ELINTER_MELPAZOID_ALLOW_FAILURE"))
+  "Whether to allow failures from the experimental checks."
+  :type 'boolean)
+
+(defvar elinter-lint-errors nil
   "List of linters that have failed.")
+
+(defvar elinter-lint-warnings nil
+  "List of linters that produced warnings.")
 
 (defun elinter-package-lint ()
   "Run package-lint on the input files."
@@ -146,7 +154,9 @@
               (with-current-buffer err-buf
                 (message (string-trim (buffer-string))))))))
       (when has-errors
-        (throw 'failure t)))))
+        (throw 'failure (if elinter-melpazoid-allow-failure
+                            'warning
+                          t))))))
 
 (defvar elinter-continueing nil)
 
@@ -162,27 +172,34 @@
           (message "Running %s..." linter)
           (unless (fboundp func)
             (error "Function not found: %s" func))
-          (when (catch 'failure
-                  (funcall func)
-                  (message "SUCCESS")
-                  nil)
-            (message "FAILED")
-            (push linter elinter-lint-failures)))
+          (pcase (catch 'failure
+                   (funcall func)
+                   (message "SUCCESS")
+                   nil)
+            ('warning
+             (message "SUCCESS, but there was a warning")
+             (push linter elinter-lint-warnings))
+            (t
+             (message "FAILED")
+             (push linter elinter-lint-errors))))
       (error
        (progn
          (message "FAILED: Unexpected error from %s: %s" linter err)
-         (push linter elinter-lint-failures))))))
+         (push linter elinter-lint-errors))))))
 
 (defun elinter-run-linters-current-package ()
   "Run the linters on the package configured in the variables.
 
 This function returns non-nil if there is any error found."
-  (setq elinter-lint-failures nil)
+  (setq elinter-lint-errors nil)
   (mapc #'elinter-run-linter elinter-enabled-linters)
-  (when elinter-lint-failures
+  (when elinter-lint-errors
     (message "\nThe following checks have failed: %s"
-             (string-join (nreverse elinter-lint-failures) " ")))
-  elinter-lint-failures)
+             (string-join (nreverse elinter-lint-errors) " ")))
+  (when elinter-lint-warnings
+    (message "\nThe following checks raised warnings: %s"
+             (string-join (nreverse elinter-lint-warnings) " ")))
+  elinter-lint-errors)
 
 (defvar package-build-default-files-spec)
 
