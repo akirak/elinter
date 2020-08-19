@@ -177,7 +177,7 @@ elinter -r recipes/your-package --experimental
 #+end_src
 
 The same flags as #1 applies.
-*** Use case #3: GitHub workflow for individial packages
+*** Use case #3: GitHub workflow for package repositories
 This repository also provides a GitHub action for checking individual packages on GitHub.
 
 The following is an example workflow. Create a file in =.github/workflows=. Here is [[https://github.com/akirak/elinter/actions?query=workflow%3A%22Action+CI%22][an example output]].
