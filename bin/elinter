@@ -70,6 +70,7 @@ Options:
   --experimental Turn on experimental checks (using melpazoid)
   -B|--buttercup Run buttercup tests
   -E|--ert-runner Run ert-runner tests
+  --ert          Run ert tests defined in files
   -e|--emacs VERSION
                  Set the Emacs version
   -r             Fetch the source code from a remote server
@@ -124,6 +125,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     -E|--ert-runner)
       test_engine=ert-runner
+      ;;
+    --ert)
+      test_engine=ert
       ;;
     --experimental)
       linters+=(melpazoid)
@@ -389,6 +393,18 @@ run_tests() {
       shell_with_packages --arg extraPackReqs '["ert-runner"]' \
           --argstr caskFile "${cask_file}" \
           --pure --run "emacs -Q --batch -l ert-runner"
+      ;;
+    ert)
+      # Extra arguments passed to elinter command are loaded in the
+      # Emacs session.
+      local args=()
+      for arg; do
+        args+=("-l" "$arg")
+      done
+      # ert is a built-in package, so extraPackReqs is unnecessary
+      shell_with_packages \
+          --argstr caskFile "${cask_file}" \
+          --pure --run "emacs -Q --batch -l ert ${args[*]} -f ert-run-tests-batch-and-exit"
       ;;
   esac
 }
