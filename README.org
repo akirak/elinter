@@ -31,7 +31,7 @@ This project is designed with the following goals in mind:
 - Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [65%]
+** Planned features [68%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -56,7 +56,7 @@ Testing:
 
 - [X] [[https://github.com/jorgenschaefer/emacs-buttercup/][buttercup]]
 - [X] [[https://github.com/jorgenschaefer/emacs-buttercup/][ert-runner]]
-- [ ] ert with given test files
+- [X] ert with given test files
 - [X] Run any command in an environment with packages under test
 
 Target project types:
