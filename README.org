@@ -206,7 +206,8 @@ Here is [[https://github.com/akirak/melpa/blob/internal/.github/workflows/akirak
 *** Use case #5: Git pre-commit hook
 This repository also provides a script that can be integrated into Git =pre-commit= hook.
 
-=file-linter= attribute in =default.nix= installs =elinter-lint-files=, which takes elisp source files as arguments and performs linting according to in-repository recipes:
+=elinter-lint-files= script takes elisp source files as arguments and performs linting according to in-repository recipes.
+It is provided as =file-linter= attribute from =default.nix=:
 
 #+begin_src sh
 # install the script
