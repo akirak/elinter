@@ -282,7 +282,7 @@ You can use =-c= with other arguments:
 elinter -c -l --experimental
 #+end_src
 ** Credits, inspiration sources, and alternatives
-=elinter= is influenced by or depends on the following projects:
+=elinter= was influenced by or depends on the following projects:
 
 - [[https://github.com/nix-community/emacs-overlay/][emacs-overlay]] from the Nix community, its =emacsWithPackagesFromPackageRequires= parser by Steve Purcell, and [[https://github.com/talyz/fromElisp][fromElisp]] parser (used in [[https://github.com/akirak/nix-elisp-helpers][my Nix library]]) by Kim Lindberger
 - [[https://github.com/alphapapa/makem.sh][makem.sh]] by Adam Porter (alphapapa), for some of its linting code and the idea of extensive use of bash
