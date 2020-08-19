@@ -83,19 +83,23 @@
 ;; https://github.com/alphapapa/makem.sh/blob/master/makem.sh
 (defun elinter-checkdoc ()
   "Run checkdoc in batch mode."
-  (require 'checkdoc)
-  (require 'which-func)
-  (setq elinter-checkdoc-found-errors nil)
-  (unless (boundp 'checkdoc-create-error-function)
-    (message "Warning: Checkdoc version looks old. Recommend updating")
-    (defvar checkdoc-create-error-function nil)
-    (advice-add #'checkdoc-create-error
-                :override
-                (lambda (text start end &optional unfixable)
-                  (funcall checkdoc-create-error-function text start end unfixable))))
-  (mapc #'elinter-checkdoc-on-file elinter-package-elisp-files)
-  (when elinter-checkdoc-found-errors
-    (throw 'failure t)))
+  (if (version< emacs-version "25")
+      (progn
+        (message "warning: Due to API incompatibility, checkdoc isn't supported on Emacs 24.x")
+        (throw 'failure 'warning))
+    (require 'checkdoc)
+    (require 'which-func)
+    (setq elinter-checkdoc-found-errors nil)
+    (unless (boundp 'checkdoc-create-error-function)
+      (message "warning: Checkdoc version looks old. Recommend updating")
+      (defvar checkdoc-create-error-function nil)
+      (advice-add #'checkdoc-create-error
+                  :override
+                  (lambda (text start end &optional unfixable)
+                    (funcall checkdoc-create-error-function text start end unfixable))))
+    (mapc #'elinter-checkdoc-on-file elinter-package-elisp-files)
+    (when elinter-checkdoc-found-errors
+      (throw 'failure t))))
 
 (defun elinter-check-declare ()
   "Run `check-declare' on the input files."
