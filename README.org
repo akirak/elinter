@@ -136,7 +136,7 @@ Without arguments, it lints and compiles source files in the repository:
 elinter
 #+end_src
 
-To enable extra checks of [[https://github.com/riscy/melpazoid/][melpazoid]] which is performed on reviews on MELPA, add =--experimental= flag:
+To enable experimental checks by [[https://github.com/riscy/melpazoid/][melpazoid]] which you would receive on MELPA PRs, add =--experimental= flag:
 
 #+begin_src sh
 elinter --experimental
