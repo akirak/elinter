@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# This logic is based on makel:
-# <https://gitlab.petton.fr/DamienCassou/makel/blob/master/makel.mk>
-
 unset outdir
 outdir="${ELINTER_COMPILE_OUTDIR}"
 
@@ -35,6 +32,8 @@ workflow_start_group "Byte-compile"
 
 for f in ${PACKAGE_ELISP_FILES[*]}; do
   echo "Compiling $f..."
+  # This logic is based on makel:
+  # <https://gitlab.petton.fr/DamienCassou/makel/blob/master/makel.mk>
   if ! emacs --batch --no-site-file -L . \
       --eval "(setq byte-compile-error-on-warn t)" \
       --funcall batch-byte-compile "$f"
