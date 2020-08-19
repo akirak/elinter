@@ -173,16 +173,17 @@
           (message "Running %s..." linter)
           (unless (fboundp func)
             (error "Function not found: %s" func))
-          (pcase (catch 'failure
-                   (funcall func)
-                   (message "SUCCESS")
-                   nil)
-            ('warning
-             (message "WARN: Found a warning, but exit successfully")
-             (push linter elinter-lint-warnings))
-            ('t
-             (message "FAILED")
-             (push linter elinter-lint-errors))))
+          (let ((result (catch 'failure
+                          (funcall func)
+                          (message "SUCCESS")
+                          nil)))
+            (cond
+             ((eq result 'warning)
+              (message "WARN: Found a warning, but exit successfully")
+              (push linter elinter-lint-warnings))
+             ((eq result t)
+              (message "FAILED")
+              (push linter elinter-lint-errors)))))
       (error
        (progn
          (message "FAILED: Unexpected error from %s: %s" linter err)
