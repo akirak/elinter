@@ -110,21 +110,17 @@
                  (default-directory (file-name-directory truename))
                  (errors (check-declare-files
                           (file-name-nondirectory truename)))
-                 (messages (apply
-                            #'append
-                            (mapcar
-                             (pcase-lambda (`(,fnfile . ,errs))
-                               (mapcar
-                                (pcase-lambda (`(,file ,fn ,msg))
-                                  (format-message
-                                   ;; TODO: Determine whether it is an error or warning
-                                   "%s: error: said `%s' was defined in %s: %s"
-                                   file
-                                   fn
-                                   fnfile
-                                   msg))
-                                errs))
-                             errors))))
+                 (messages (cl-loop for (fnfile . errs) in errors
+                                    append
+                                    (cl-loop for (file fn msg) in errs
+                                             collect
+                                             (format-message
+                                              ;; TODO: Determine whether it is an error or warning
+                                              "%s: error: said `%s' was defined in %s: %s"
+                                              file
+                                              fn
+                                              fnfile
+                                              msg)))))
             (when messages
               (setq has-errors t)
               (message (string-join messages "\n")))))
