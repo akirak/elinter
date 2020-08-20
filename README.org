@@ -124,7 +124,7 @@ Install the program in =PATH=, and =elinter= will automatically detect it.
 First create package recipes in =.recipes= directory.
 The recipe format is [[https://github.com/melpa/melpa/#recipe-format][the same as you would create for MELPA]], and each file should define exactly one package.
 
-You can use =elinter.el,= which is included in this project, to copy existing recipes from your local copy of MELPA.
+You can use =elinter.el=, which is included in this project, to copy existing recipes from your local copy of MELPA.
 First set =elinter-recipes-dir= to the =recipes= directory inside MELPA, and then use =elinter= interactive function.
 It scans source files in the repository, import package recipes, and run lint on source files.
 
