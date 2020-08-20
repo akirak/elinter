@@ -9,6 +9,7 @@
 , caskFile ? null
 , extraPackReqs ? []
 , extraBuildInputs ? (_: [])
+, extraBuildInputsFromNixPkgs ? []
 }:
 with builtins;
 with pkgs;
@@ -61,11 +62,27 @@ let
 
   loadPathString = concatStringsSep ":" (parseQuotedStrings loadPath) + ":";
 
+  normalizedNixBuildInputs =
+    if isString extraBuildInputsFromNixPkgs && extraBuildInputsFromNixPkgs != ""
+    then filter isString (split " " extraBuildInputsFromNixPkgs)
+    else if isList extraBuildInputsFromNixPkgs
+    then extraBuildInputsFromNixPkgs
+    else throw "extraBuildInputsFromNixPkgs must be either a string or a list";
+
+  derivationFromNixPkgName = name:
+    lib.attrByPath (filter isString (split "\\." name))
+      (throw ("Cannot find a derivation in the nixpkgs: " + name))
+      pkgs;
+
+  otherBuildInputs =
+    (extraBuildInputs { inherit pkgs; })
+    ++ map derivationFromNixPkgName normalizedNixBuildInputs;
+
 in
 mkShell {
   buildInputs = [
     emacsWithDependencies
-  ] ++ (extraBuildInputs { inherit pkgs; });
+  ] ++ otherBuildInputs;
 
   shellHook = ''
     export EMACSLOADPATH="${loadPathString}"
