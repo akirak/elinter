@@ -382,29 +382,38 @@ shell_with_packages() {
 
 run_tests() {
   ansi --blue --bold "Tests"
+  local nix_args=()
+  if [[ -n "${cask_file}" ]]; then
+    nix_args+=("--argstr" "caskFile" "${cask_file}")
+  fi
   case "${test_engine}" in
     buttercup)
-      shell_with_packages --arg extraPackReqs '["buttercup"]' \
-          --arg extraBuildInputs "import ${nix_lib_dir}/buttercup.nix" \
-          --argstr caskFile "${cask_file}" \
-          --pure --run "buttercup $*"
+      # shellcheck disable=SC2086
+      shell_with_packages \
+        ${nix_args[*]} \
+        --arg extraPackReqs '["buttercup"]' \
+        --arg extraBuildInputs "import ${nix_lib_dir}/buttercup.nix" \
+        --run "buttercup $*"
       ;;
     ert-runner)
-      shell_with_packages --arg extraPackReqs '["ert-runner"]' \
-          --argstr caskFile "${cask_file}" \
-          --pure --run "emacs -Q --batch -l ert-runner"
+      # shellcheck disable=SC2086
+      shell_with_packages \
+        ${nix_args[*]} \
+        --arg extraPackReqs '["ert-runner"]' \
+        --run "emacs -Q --batch -l ert-runner"
       ;;
     ert)
       # Extra arguments passed to elinter command are loaded in the
       # Emacs session.
-      local args=()
+      local emacs_args=()
       for arg; do
-        args+=("-l" "$arg")
+        emacs_args+=("-l" "$arg")
       done
       # ert is a built-in package, so extraPackReqs is unnecessary
+      # shellcheck disable=SC2086
       shell_with_packages \
-          --argstr caskFile "${cask_file}" \
-          --pure --run "emacs -Q --batch -l ert ${args[*]} -f ert-run-tests-batch-and-exit"
+        ${nix_args[*]} \
+        --run "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
       ;;
   esac
 }
