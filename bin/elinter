@@ -187,7 +187,6 @@ emacs_versions() {
 }
 
 set_emacs() {
-  unset skip_lint_in_this_emacs
   case "${emacs_version}" in
     ''|.)
       emacs=emacs
@@ -197,10 +196,13 @@ set_emacs() {
       emacs="emacs-snapshot"
       ;;
     *)
-      if [[ "${emacs_version}" =~ ^([[:digit:]]+)\.[[:digit:]]$ ]]; then
-        # Skip linting if the Emacs major version is less than 25
-        if [[ ${BASH_REMATCH[1]} -gt 25 ]]; then
-          skip_lint_in_this_emacs=1
+      if [[ "${emacs_version}" =~ ^([[:digit:]]+)\.([[:digit:]])$ ]]; then
+        # Skip linting if the Emacs major version is 24.3 or before
+        local major=${BASH_REMATCH[1]}
+        local minor=${BASH_REMATCH[2]}
+        if [[ $major -lt 24 || ( $major -eq 24 && $minor -le 3 ) ]]; then
+          echo "WARN: Sorry, elinter supports only Emacs 24.4 and later. Skipping" >&2
+          return 1
         fi
         emacs="emacs-${emacs_version/./-}"
       else
@@ -296,7 +298,9 @@ for_each_package_sources() {
 
       ansi --blue --bold "On package ${PACKAGE_NAME}:"
       for emacs_version in $(emacs_versions); do
-        set_emacs
+        if ! set_emacs; then
+          break
+        fi
         # shellcheck disable=SC2048
         if ! $*; then
           r=1
@@ -326,18 +330,10 @@ for_each_package_sources() {
 }
 
 emacs_dev_shell() {
-  local tmp_linters="${linters[*]}"
-
-  # Because Nix fails to build Emacs packages in Emacs 24.3 and before,
-  # any user Emacs packages must be disabled, including melpazoid.el.
-  if [[ "${skip_lint_in_this_emacs}" = 1 ]]; then
-    tmp_linters=""
-  fi
-
   "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A shellForCI \
           --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
-          --argstr enabledLinters "${tmp_linters}" \
+          --argstr enabledLinters "${linters[*]}" \
           "$@"
 }
 
@@ -352,12 +348,6 @@ install_package_deps() {
 
 lint_package() {
   install_package_deps
-
-  if [[ "${skip_lint_in_this_emacs}" = 1 ]]; then
-    echo "WARN: Linting is entirely skipped in this Emacs version"
-    return
-  fi
-
   workflow_with_group "Lint" emacs_dev_shell --run elinter-run-linters
 }
 
@@ -391,7 +381,9 @@ shell_with_packages() {
   cd "$initialdir"
   local r=0
   for emacs_version in $(emacs_versions); do
-    set_emacs
+    if ! set_emacs; then
+      break
+    fi
     # shellcheck disable=SC2048
     if ! "${nix_shell_bin}" "${nix_lib_dir}/emacsTest.nix" \
           --argstr emacs "$emacs" \
