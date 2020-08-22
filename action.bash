@@ -27,11 +27,4 @@ workflow_end_group
 
 echo
 
-flags=()
-
-if [[ "${ELINTER_ACTION_EXPERIMENTAL}" != "0" ]]; then
-  flags+=("--experimental")
-fi
-
-# shellcheck disable=SC2068
-elinter -e all ${flags[@]}
+elinter -e all

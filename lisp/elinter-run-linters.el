@@ -39,10 +39,10 @@ This variable can also be a list of linter names."
   :type '(choice boolean
                  (repeat string)))
 
-(defvar elinter-lint-errors nil
+(defvar elinter-failed-linters nil
   "List of linters that have failed.")
 
-(defvar elinter-lint-warnings nil
+(defvar elinter-warning-linters nil
   "List of linters that produced warnings.")
 
 (defun elinter-package-lint ()
@@ -187,30 +187,36 @@ This variable can also be a list of linter names."
                            nil))
                  (errors (cdr (assoc 'errors result)))
                  (warnings (cdr (assoc 'warnings result))))
-            (when errors
-              (message "FAILED")
-              (push linter elinter-lint-errors))
-            (when warnings
+            (cond
+             ((and warnings
+                   (not errors)
+                   (or (eql t elinter-allow-warnings)
+                       (and (listp elinter-allow-warnings)
+                            (member linter elinter-allow-warnings))))
               (message "WARN: Found warnings, but exit successfully")
-              (push linter elinter-lint-warnings))))
+              (push linter elinter-warning-linters))
+             ((or errors
+                  warnings)
+              (message "FAILED")
+              (push linter elinter-failed-linters)))))
       (error
        (progn
          (message "FAILED: Unexpected error from %s: %s" linter err)
-         (push linter elinter-lint-errors))))))
+         (push linter elinter-failed-linters))))))
 
 (defun elinter-run-linters-current-package ()
   "Run the linters on the package configured in the variables.
 
 This function returns non-nil if there is any error found."
-  (setq elinter-lint-errors nil)
+  (setq elinter-failed-linters nil)
   (mapc #'elinter-run-linter elinter-enabled-linters)
-  (when elinter-lint-errors
+  (when elinter-failed-linters
     (message "\nThe following checks have failed: %s"
-             (string-join (nreverse elinter-lint-errors) " ")))
-  (when elinter-lint-warnings
+             (string-join (nreverse elinter-failed-linters) " ")))
+  (when elinter-warning-linters
     (message "\nThe following checks raised warnings: %s"
-             (string-join (nreverse elinter-lint-warnings) " ")))
-  elinter-lint-errors)
+             (string-join (nreverse elinter-warning-linters) " ")))
+  elinter-failed-linters)
 
 (defvar package-build-default-files-spec)
 
