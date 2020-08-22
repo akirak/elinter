@@ -170,6 +170,8 @@ To only run tests, run it with =-t= along with the =--buttercup=, =--ert-runner=
 #+begin_src sh
 elinter -t --buttercup
 #+end_src
+
+See [[https://github.com/akirak/elinter-demo/blob/master/.github/workflows/test.yml][elinter-demo]] and [[https://github.com/akirak/elinter-demo/actions?query=workflow%3ADemo][its status page]] for concrete examples.
 *** Use case #2: Local recipes + remote sources
 This is like the use case 1, but it clones the remote repository specified in the recipe rather than work on source files in the working directory.
 
