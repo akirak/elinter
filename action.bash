@@ -20,7 +20,9 @@ cachix use emacs-ci
 workflow_end_group
 
 workflow_start_group "Install elinter"
-nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
+if ! command elinter >/dev/null; then
+  nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
+fi
 workflow_end_group
 
 echo
