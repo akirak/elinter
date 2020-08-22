@@ -25,11 +25,19 @@
   "List of linters to run."
   :type '(repeat string))
 
-(defcustom elinter-melpazoid-allow-failure
-  (let ((env (getenv "ELINTER_MELPAZOID_ALLOW_FAILURE")))
-    (and env (member env '("1" "true"))))
-  "Whether to allow failures from the experimental checks."
-  :type 'boolean)
+(defcustom elinter-allow-warnings
+  (cl-labels
+      ((env-as-list (name) (let ((val (getenv name)))
+                             (and val
+                                  (if (member val '("1" "true"))
+                                      t
+                                    (split-string val " "))))))
+    (env-as-list "ELINTER_ALLOW_WARNINGS"))
+  "Whether to successfully exit when only warnings occurrs.
+
+This variable can also be a list of linter names."
+  :type '(choice boolean
+                 (repeat string)))
 
 (defvar elinter-lint-errors nil
   "List of linters that have failed.")
@@ -47,7 +55,8 @@
 
   (setq package-lint-main-file elinter-package-main-file)
   (unless (package-lint-batch-and-exit-1 elinter-package-elisp-files)
-    (throw 'failure t)))
+    ;; TODO: Distinguish between error and warning
+    (throw 'failure '((errors . t)))))
 
 (defvar elinter-checkdoc-found-errors)
 
@@ -99,7 +108,7 @@
                     (funcall checkdoc-create-error-function text start end unfixable))))
     (mapc #'elinter-checkdoc-on-file elinter-package-elisp-files)
     (when elinter-checkdoc-found-errors
-      (throw 'failure t))))
+      (throw 'failure '((errors . t))))))
 
 (defun elinter-check-declare ()
   "Run `check-declare' on the input files."
@@ -130,7 +139,7 @@
               (message (string-join messages "\n")))))
       (setq warning-minimum-log-level initial-warning-minimum-log-level))
     (when has-errors
-      (throw 'failure t))))
+      (throw 'failure '((errors . t))))))
 
 (defun elinter-melpazoid ()
   "Run extra checks from melpazoid on the input files."
@@ -154,10 +163,9 @@
               (setq has-errors t)
               (with-current-buffer err-buf
                 (message (string-trim (buffer-string))))))))
+      ;; TODO: Distinguish between error and warning
       (when has-errors
-        (throw 'failure (if elinter-melpazoid-allow-failure
-                            'warning
-                          t))))))
+        (throw 'failure '((warnings . t)))))))
 
 (defvar elinter-continuing nil)
 
@@ -173,17 +181,18 @@
           (message "Running %s..." linter)
           (unless (fboundp func)
             (error "Function not found: %s" func))
-          (let ((result (catch 'failure
-                          (funcall func)
-                          (message "SUCCESS")
-                          nil)))
-            (cond
-             ((eq result 'warning)
-              (message "WARN: Found a warning, but exit successfully")
-              (push linter elinter-lint-warnings))
-             ((eq result t)
+          (let* ((result (catch 'failure
+                           (funcall func)
+                           (message "SUCCESS")
+                           nil))
+                 (errors (cdr (assoc 'errors result)))
+                 (warnings (cdr (assoc 'warnings result))))
+            (when errors
               (message "FAILED")
-              (push linter elinter-lint-errors)))))
+              (push linter elinter-lint-errors))
+            (when warnings
+              (message "WARN: Found warnings, but exit successfully")
+              (push linter elinter-lint-warnings))))
       (error
        (progn
          (message "FAILED: Unexpected error from %s: %s" linter err)
