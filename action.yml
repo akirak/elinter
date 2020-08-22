@@ -1,16 +1,7 @@
 name: 'elinter'
 description: 'Lint Emacs Lisp packages'
-inputs:
-  experimental:
-    description: 'Turn on experimental checks (true/warn/false)'
-    required: false
-    default: true
 runs:
   using: 'composite'
   steps:
     - run: $GITHUB_ACTION_PATH/action.bash
       shell: bash
-      env:
-        ELINTER_ACTION_EXPERIMENTAL: ${{ inputs.experimental }}
-        ELINTER_MELPAZOID_ALLOW_FAILURE: ${{ inputs.experimental == 'warn' }}
-      # TODO: Add badge
