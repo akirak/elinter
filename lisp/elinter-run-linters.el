@@ -159,15 +159,15 @@
                             'warning
                           t))))))
 
-(defvar elinter-continueing nil)
+(defvar elinter-continuing nil)
 
 (defun elinter-run-linter (linter)
   "Run a LINTER by name."
   (let ((func (intern (concat "elinter-" linter))))
     ;; Insert an empty line
-    (if elinter-continueing
+    (if elinter-continuing
         (message "")
-      (setq elinter-continueing t))
+      (setq elinter-continuing t))
     (condition-case err
         (progn
           (message "Running %s..." linter)
