@@ -27,4 +27,6 @@ workflow_end_group
 
 echo
 
+export ELINTER_LINTERS="${ELINTER_LINTERS:-checkdoc check-declare package-lint melpazoid}"
+
 elinter -e all
