@@ -1,6 +1,11 @@
 * elinter
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is still currently at an alpha stage.
 
+#+begin_html
+<a href="https://github.com/akirak/elinter-demo/actions?query=workflow%3A%22Demo%22">
+<img alt="Build Status" src="https://github.com/akirak/elinter-demo/workflows/Demo/badge.svg" />
+</a>
+#+end_html
 ** Table of contents
 :PROPERTIES:
 :TOC:      siblings
