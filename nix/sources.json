@@ -29,10 +29,10 @@
         "homepage": "",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "4fda326e058568583e9a092982e92a6c4d6a5502",
-        "sha256": "1x1p76m66bfq78c3qfx600iv9cml71fzkylr8qmlczhqm38npi4l",
+        "rev": "24489022f11828ac1100df7022975676a3b502dd",
+        "sha256": "0dbkb5kbzqfh2lljw4sx7lc5jifzway6sil7a6dkdwjyvv89xpji",
         "type": "tarball",
-        "url": "https://github.com/nix-community/emacs-overlay/archive/4fda326e058568583e9a092982e92a6c4d6a5502.tar.gz",
+        "url": "https://github.com/nix-community/emacs-overlay/archive/24489022f11828ac1100df7022975676a3b502dd.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "gitignore": {
@@ -89,10 +89,10 @@
         "homepage": null,
         "owner": "purcell",
         "repo": "nix-emacs-ci",
-        "rev": "34bc3975bb2b5941480089ddb095d2dd9b72241b",
-        "sha256": "0w337hcnpxmfmm10fc8ga1ncjg4r3cs8g8kvq38zaqmgvxyynwcr",
+        "rev": "be82e2f2df127ec6204885019f66984ef28745fd",
+        "sha256": "0ggdwggw31djnvgph08230ls9nfax586ch0b589arwvxlswqnka3",
         "type": "tarball",
-        "url": "https://github.com/purcell/nix-emacs-ci/archive/34bc3975bb2b5941480089ddb095d2dd9b72241b.tar.gz",
+        "url": "https://github.com/purcell/nix-emacs-ci/archive/be82e2f2df127ec6204885019f66984ef28745fd.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "pre-commit-hooks.nix": {
