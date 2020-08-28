@@ -1,9 +1,8 @@
 name: 'Action CI'
 on:
   push:
-    paths:
-      - '*.el'
-      - 'action.*'
+    paths-ignore:
+      - '*.org'
 jobs:
   ci:
     runs-on: ubuntu-latest
