@@ -245,7 +245,11 @@ copy_package_sources() {
   initialdir="$(pwd)"
   for f in ${recipes[*]}; do
     package=$(basename "$f")
-    recipe="$(cat "$initialdir/$f")"
+    if [[ "$f" = /* ]]; then
+      recipe="$(cat "$f")"
+    else
+      recipe="$(cat "$initialdir/$f")"
+    fi
     packages+=("$package")
     src="$initialdir"
     cd "${package_source_root}"
