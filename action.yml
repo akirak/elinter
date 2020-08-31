@@ -5,3 +5,8 @@ runs:
   steps:
     - run: $GITHUB_ACTION_PATH/action.bash
       shell: bash
+    - name: Check license
+      run: |
+        nix-shell "$GITHUB_ACTION_PATH/nix/melpazoid-py.nix" -A shell \
+        "$GITHUB_ACTION_PATH/license.bash"
+      shell: bash
