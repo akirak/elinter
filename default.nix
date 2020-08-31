@@ -54,6 +54,7 @@ rec {
       let
 
         lint-runner = writeShellScriptBin "elinter-run-linters" ''
+          export ELINTER_LINT_CUSTOM_FILE="''${ELINTER_LINT_CUSTOM_FILE:-${./share/lint-options.el}}"
           exec emacs -Q --batch --script ${./lisp/elinter-run-linters.el} "$@"
         '';
 
@@ -137,6 +138,7 @@ rec {
     in
       writeShellScriptBin "elinter-lint-files" ''
         export ELINTER_LINTERS="${lib.concatStringsSep " " enabledLinters}"
+        export ELINTER_LINT_CUSTOM_FILE="''${ELINTER_LINT_CUSTOM_FILE:-${./share/lint-options.el}}"
         exec ${emacsForLint}/bin/emacs -Q --batch --script \
            ${./lisp/elinter-run-linters.el} "$@"
       '';

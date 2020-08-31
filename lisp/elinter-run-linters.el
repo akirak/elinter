@@ -269,6 +269,11 @@ This function returns non-nil if there is any error found."
     (kill-emacs (if failure 1 0))))
 
 (when noninteractive
+  (let ((custom-file (getenv "ELINTER_LINT_CUSTOM_FILE")))
+    (when (and custom-file
+               (file-exists-p custom-file))
+      (load-file custom-file)))
+
   (elinter-run-linters-and-exit))
 
 ;; Local Variables:
