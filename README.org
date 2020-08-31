@@ -36,7 +36,7 @@ This project is designed with the following goals in mind:
 - Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [64%]
+** Planned features [67%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -99,7 +99,7 @@ GitHub Actions:
 - [X] Groups on GitHub Actions
 - [ ] Produce annotations that point to concrete error locations on GitHub Actions
 - [ ] Check if recipes are up to date on MELPA
-- [ ] Fine-grained settings of linting options
+- [X] Fine-grained settings of linting options
 ** Prerequisites
 =elinter= runs on UNIX-like operating systems that can run [[https://nixos.org/][Nix]] (currently Linux and macOS).
 ** Installation
