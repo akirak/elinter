@@ -6,7 +6,10 @@ runs:
     - run: $GITHUB_ACTION_PATH/action.bash
       shell: bash
     - name: Check license
-      run: |
-        nix-shell "$GITHUB_ACTION_PATH/nix/melpazoid-py.nix" -A shell \
-        "$GITHUB_ACTION_PATH/license.bash"
       shell: bash
+      run: |
+        for recipe in .recipes/*; do
+          LOCAL_REPO="$PWD" nix-shell "$GITHUB_ACTION_PATH/nix/melpazoid-py.nix" \
+            -A shell --run "melpazoid --license '$recipe'"
+          exit $?
+        done
