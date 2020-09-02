@@ -315,6 +315,8 @@ You can use =-c= with other arguments:
 #+begin_src sh
 elinter -c -l --experimental
 #+end_src
+** Limitations
+FIXME
 ** Credits, inspiration sources, and alternatives
 =elinter= was influenced by or depends on the following projects:
 
