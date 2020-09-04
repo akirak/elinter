@@ -34,6 +34,26 @@ package_source_root="${cache_dir}/pkg-src"
 # Directory containing recipes
 recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 
+# Enable features that are specific to GitHub Actions
+if [[ "${GITHUB_ACTIONS}" = true ]]; then
+  mkdir -p "${cache_dir}"
+  # Lint and byte-compile errors are saved to this file, which is
+  # actually a symbolic link to a temporary file
+  export ELINTER_LOG_FILE="${cache_dir}/elinter.log"
+
+  # There is no cleanup for temporary files, but I don't care,
+  # since it's on GitHub Actions.
+
+  # Create a new temporary file for every package
+
+  # shellcheck disable=SC2016
+  ELINTER_BEFORE_PACKAGE_HOOK='ln -sf $(mktemp) ${ELINTER_LOG_FILE}'
+  # shellcheck disable=SC2016,SC2089
+  ELINTER_AFTER_PACKAGE_HOOK='rm -f $(readlink -f "${ELINTER_LOG_FILE}")'
+  # Produce errors on a package
+  ELINTER_PACKAGE_FAILURE_HOOK="elinter-github-logger"
+fi
+
 ###################################
 # Read the command line arguments #
 ###################################
@@ -300,6 +320,10 @@ for_each_package_sources() {
       # shellcheck disable=SC1091
       source .elinter-env
 
+      if [[ -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
+        ${ELINTER_BEFORE_PACKAGE_HOOK}
+      fi
+
       ansi --blue --bold "On package ${PACKAGE_NAME}:"
       for emacs_version in $(emacs_versions); do
         if ! set_emacs; then
@@ -313,9 +337,24 @@ for_each_package_sources() {
         fi
       done
 
+      if [[ $r -eq 0 ]]; then
+        if [[ -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
+          ${ELINTER_PACKAGE_SUCCESS_HOOK}
+        fi
+      else
+        ansi --red "Package $package failed on some checks."
+        if [[ -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
+          ${ELINTER_PACKAGE_FAILURE_HOOK}
+        fi
+      fi
+
+      if [[ -n "${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
+        # shellcheck disable=SC2090
+        ${ELINTER_AFTER_PACKAGE_HOOK}
+      fi
+
       exit $r
       ); then
-      ansi --red "Package $package failed on some checks."
       r=1
       failed_packages+=("$package")
     fi

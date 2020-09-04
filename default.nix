@@ -58,7 +58,11 @@ rec {
           exec emacs -Q --batch --script ${./lisp/elinter-run-linters.el} "$@"
         '';
 
-        colorizer = writeShellScript "elinter-colorizer" ''
+        logger = writeShellScript "elinter-logger" ''
+           if [[ -v ELINTER_LOG_FILE && -n "''${ELINTER_LOG_FILE}" ]]; then
+             exec < <(tee -a "''${ELINTER_LOG_FILE}")
+           fi
+
            if command -v tput >/dev/null && [[ $(tput colors) -ge 8 ]]; then
              ANSI_SUCCESS=$(tput setaf 2)$(tput bold)
              ANSI_ERROR=$(tput setaf 1)$(tput bold)
@@ -75,7 +79,19 @@ rec {
         '';
 
         github-logger = writeShellScript "elinter-github-logger" ''
-          sed -f "$(dirname $0)/../share/elinter/github-log.sed"
+          errors=$(mktemp)
+          filelist=$(mktemp)
+
+          sed -f "$(dirname $0)/../share/elinter/github-log.sed" "''${ELINTER_LOG_FILE}" \
+            | grep -E "^::(error|warning)" > $errors
+
+          grep -oP 'file=\K.+(?=,line=)' $errors \
+            | sort | uniq > $filelist
+
+          for f in $(cat $filelist); do
+            echo "$f:"
+            grep -E "^::(error|warning) file=$f," $errors
+          done
         '';
 
       in
@@ -83,27 +99,21 @@ rec {
           mkdir -p $out/bin
           mkdir -p $out/share/elinter
 
-          # Install the colorizer
-          cp ${colorizer} $out/bin/elinter-colorizer
+          # Install the logger
+          cp ${logger} $out/bin/elinter-logger
 
-          if [[ -v GITHUB_ACTIONS ]]; then
-            mkdir $out/lib
-            cp $src/share/github-log.sed $out/share/elinter
-            cp ${github-logger} $out/bin/elinter-github-logger
-            extra_substitutors=" | elinter-github-logger"
-          else
-            extra_substitutors=""
-          fi
+          cp $src/share/github-log.sed $out/share/elinter
+          cp ${github-logger} $out/bin/elinter-github-logger
 
           # Patch the byte-compile helper to enable GitHub workflow features
           mkdir -p $out/bin-helpers
           cp $src/bin-helpers/* $out/bin-helpers
           sed -i "2i. ${bashLib}" $out/bin-helpers/elinter-byte-compile
 
-          # Patch backend scripts to redirect output to the colorizer
+          # Patch backend scripts to redirect output to the logger
           for bin in $out/bin-helpers/* ${lint-runner}/bin/*; do
             makeWrapper $bin $out/bin/`basename $bin` \
-              --run "exec &> >(elinter-colorizer''${extra_substitutors})"
+              --run "exec &> >(elinter-logger)"
           done
 
         '';

@@ -1,0 +1,13 @@
+name: 'Tests'
+on:
+  pull_request:
+  push:
+    paths:
+      - test/*.*
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: cachix/install-nix-action@v10
+    - uses: actions/checkout@v2
+    - run: nix-shell test/shell.nix
