@@ -79,8 +79,19 @@ rec {
         '';
 
         github-logger = writeShellScript "elinter-github-logger" ''
+          errors=$(mktemp)
+          filelist=$(mktemp)
+
           sed -f "$(dirname $0)/../share/elinter/github-log.sed" "''${ELINTER_LOG_FILE}" \
-            | grep -E "^::(error|warning)"
+            | grep -E "^::(error|warning)" > $errors
+
+          grep -oP 'file=\K.+(?=,line=)' $errors \
+            | sort | uniq > $filelist
+
+          for f in $(cat $filelist); do
+            echo "$f:"
+            grep -E "^::(error|warning) file=$f," $errors
+          done
         '';
 
       in
