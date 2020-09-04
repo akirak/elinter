@@ -5,6 +5,10 @@ with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 let
   ansi = fetchTarball (import ./nix/sources.nix).ansi.url;
   bashLib = ./share/workflow.bash;
+  runningInsideGitHubActions =
+    if builtins.getEnv "GITHUB_ACTIONS" == "true"
+    then "true"
+    else "false";
 in
 rec {
   main = stdenv.mkDerivation rec {
@@ -86,7 +90,7 @@ rec {
           # Install the colorizer
           cp ${colorizer} $out/bin/elinter-colorizer
 
-          if [[ -v GITHUB_ACTIONS ]]; then
+          if [[ ${runningInsideGitHubActions} = true ]]; then
             mkdir $out/lib
             cp $src/share/github-log.sed $out/share/elinter
             cp ${github-logger} $out/bin/elinter-github-logger
