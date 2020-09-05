@@ -34,26 +34,6 @@ package_source_root="${cache_dir}/pkg-src"
 # Directory containing recipes
 recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 
-# Enable features that are specific to GitHub Actions
-if [[ "${GITHUB_ACTIONS}" = true ]]; then
-  mkdir -p "${cache_dir}"
-  # Lint and byte-compile errors are saved to this file, which is
-  # actually a symbolic link to a temporary file
-  export ELINTER_LOG_FILE="${cache_dir}/elinter.log"
-
-  # There is no cleanup for temporary files, but I don't care,
-  # since it's on GitHub Actions.
-
-  # Create a new temporary file for every package
-
-  # shellcheck disable=SC2016
-  ELINTER_BEFORE_PACKAGE_HOOK='ln -sf $(mktemp) ${ELINTER_LOG_FILE}'
-  # shellcheck disable=SC2016,SC2089
-  ELINTER_AFTER_PACKAGE_HOOK='rm -f $(readlink -f "${ELINTER_LOG_FILE}")'
-  # Produce errors on a package
-  ELINTER_PACKAGE_FAILURE_HOOK="elinter-github-logger"
-fi
-
 ###################################
 # Read the command line arguments #
 ###################################
@@ -482,6 +462,25 @@ run_tests() {
   esac
 }
 
+setup_github_workflow_annotations() {
+  mkdir -p "${cache_dir}"
+  # Lint and byte-compile errors are saved to this file, which is
+  # actually a symbolic link to a temporary file
+  export ELINTER_LOG_FILE="${cache_dir}/elinter.log"
+
+  # There is no cleanup for temporary files, but I don't care,
+  # since it's on GitHub Actions.
+
+  # Create a new temporary file for every package
+
+  # shellcheck disable=SC2016
+  ELINTER_BEFORE_PACKAGE_HOOK='ln -sf $(mktemp) ${ELINTER_LOG_FILE}'
+  # shellcheck disable=SC2016,SC2089
+  ELINTER_AFTER_PACKAGE_HOOK='rm -f $(readlink -f "${ELINTER_LOG_FILE}")'
+  # Produce errors on a package
+  ELINTER_PACKAGE_FAILURE_HOOK="elinter-github-logger"
+}
+
 ####################
 # Main entry point #
 ####################
@@ -535,6 +534,11 @@ if ! [[ -v use_cask && "${use_cask}" = 0 ]]; then
   elif [[ "${use_cask}" = 1 ]]; then
     echo "WARNING: Cask option is set, but no Cask file is found."
   fi
+fi
+
+# Enable features that are specific to GitHub Actions
+if [[ "${GITHUB_ACTIONS}" = true ]]; then
+  setup_github_annotations
 fi
 
 workflow_end_group
