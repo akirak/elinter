@@ -182,8 +182,7 @@ If the root is nil, it first looks for one."
 COMMAND is a shell command to run, and ROOT is an optional root
 of the project."
   (elinter-with-packages root
-    (compilation-start command t
-                       (lambda (_mode-name) "*elinter run*"))))
+    (compile command)))
 
 (defvar elinter-args "")
 
