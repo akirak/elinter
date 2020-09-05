@@ -41,6 +41,9 @@ in
         export PACKAGE_MAIN_FILE=${baseNameOf mainFile}
         HERE
         for f in ${lib.escapeShellArgs packageFilePaths}; do
-          ln -s $f
+          if ! ln -s $f; then
+            echo "This is possibly due to duplicate file specs in the recipe." >&2
+            exit 1
+          fi
         done
       ''
