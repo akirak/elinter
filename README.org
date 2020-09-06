@@ -30,7 +30,7 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
 This project is designed with the following goals in mind:
 
 - Support both local use and CI
-- Comprehensive linting using various backends (should be at least as capable as [[https://github.com/riscy/melpazoid/][melpazoid]], which is created and used by the official reviewer on [[https://melpa.org/#/][MELPA]])
+- Support various backends for comprehensive linting and produce the same result as [[https://github.com/riscy/melpazoid/][melpazoid]] wherever possible
 - Use [[https://nixos.org/][Nix]] to support dependencies that involve specific build procedures and/or native dependencies, e.g. =emacsql-sqlite=
 - Support projects containing multiple packages in the same repository
 - Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
@@ -261,14 +261,24 @@ If you prefer the Nix way, you can use [[cachix/pre-commit-hooks.nix][cachix/pre
     shellHook = pre-commit-check.shellHook;
   }
 #+end_src
-** Technical details
-*** elinter command
+** References
+*** Installing specific components
+FIXME
+
 The =main= Nix derivation provides =elinter= executable.
-It takes recipe files as command line arguments.
+*** elinter command
+**** Modes of operation
+FIXME
+**** First positional arguments
+FIXME
+
+The first positional arguments before =--= can be recipe files and/or package names.
 
 It can also take package names and it refers to source files linked from the sandbox (described below).
 
 If no recipe file or package name is given as an argument, it looks for ones in =.recipes= directory in the working directory.
+**** Second positional arguments
+FIXME
 *** Emacs version syntax
 =elinter= command supports =-e= option that takes an Emacs version, e.g. =26.3= for Emacs 26.3 and =snapshot= for the latest snapshot. You can use any single version available in nix-emacs-ci.
 
@@ -277,7 +287,19 @@ It also supports the following abstract version specs:
 - =min=, the minimum version specified in the library header of each package
 - =latest=, the latest stable version
 - =all=, all versions since the minimum version including the snapshot, in descending order
+*** Environment variables
+FIXME
+
+|    Variable | elinter | elinter-run-linters |
+|--- =ELINTER_LINTERS= +---------+---------------------|
+| =ELINTER_ALLOW_WARNINGS= |         |                     |
+|    =ELINTER_LINT_CUSTOM_FILE= |         |                     |
 *** Sandboxing
+=elinter= runs linting and testing tasks in sandboxed shell sessions. Sandboxing means two things:
+
+- It creates a new shell environment which unsets environment variables from the parent sessions. This applies to linting and testing.
+- Rather than run on source files in a local working tree, it runs inside a directory containing symbolic links to the source files as if the directory was built by MELPA.
+
 =elinter= creates symbolic links in a cache directory and operates on them, rather than lint and compile source files directly in the repository.
 This is useful both for simplification and isolation.
 Once symbolic links are created, they are reused across different runs for performance.
@@ -293,6 +315,8 @@ You can use =-c= with other arguments:
 #+begin_src sh
 elinter -c -l --experimental
 #+end_src
+** Limitations
+FIXME
 ** Credits, inspiration sources, and alternatives
 =elinter= was influenced by or depends on the following projects:
 
