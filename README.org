@@ -30,7 +30,7 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
 This project is designed with the following goals in mind:
 
 - Support both local use and CI
-- Comprehensive linting using various backends (should be at least as capable as [[https://github.com/riscy/melpazoid/][melpazoid]], which is created and used by the official reviewer on [[https://melpa.org/#/][MELPA]])
+- Support various backends for comprehensive linting and produce the same result as [[https://github.com/riscy/melpazoid/][melpazoid]] wherever possible
 - Use [[https://nixos.org/][Nix]] to support dependencies that involve specific build procedures and/or native dependencies, e.g. =emacsql-sqlite=
 - Support projects containing multiple packages in the same repository
 - Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
