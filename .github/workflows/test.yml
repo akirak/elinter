@@ -11,3 +11,4 @@ jobs:
     - uses: cachix/install-nix-action@v10
     - uses: actions/checkout@v2
     - run: nix-shell test/shell.nix
+    - run: nix-instantiate --eval --strict test/test-recipe-source.nix
