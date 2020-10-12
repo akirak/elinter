@@ -40,14 +40,14 @@ rec {
       # Substitute paths to the library source files.
       substituteInPlace $out/bin/elinter \
         --replace "ansi/ansi" "$lib/ansi" \
-        --replace "share/workflow.bash" "$lib/workflow.bash"
+        --replace "share/workflow.bash" "$lib/workflow.bash" \
+        --replace 'share/nix/' "$lib/nix/"
 
       mkdir -p $out/bin
       wrapProgram $out/bin/elinter \
         --argv0 elinter \
         --prefix PATH : ${linters + "/bin"} \
-        --set ELINTER_VERSION $version \
-        --set ELINTER_NIX_LIB_DIR "$lib/nix"
+        --set ELINTER_VERSION $version
     '';
   };
 

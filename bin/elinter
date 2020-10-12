@@ -6,8 +6,6 @@ set -e
 # Set the defaults #
 ####################
 
-nix_lib_dir="${ELINTER_NIX_LIB_DIR:?Cannot be empty}"
-
 # Directory for storing cache files
 if [[ -v ELINTER_CACHE_ROOT ]]; then
   cache_dir="${ELINTER_CACHE_ROOT}"
@@ -177,7 +175,7 @@ emacs_versions() {
       nix-instantiate --eval --strict \
         --arg elispFile "./${PACKAGE_MAIN_FILE}" \
         --argstr spec "${EMACS_VERSION}" \
-        "${nix_lib_dir}/dynamicVersions.nix" \
+        "share/nix/dynamicVersions.nix" \
         | tr '"[]' '   '
       ;;
     '')
@@ -260,7 +258,7 @@ copy_package_sources() {
       # Clean up the source every time
       rm -rf "$package"
       src=$(nix-instantiate --eval --strict \
-              "${nix_lib_dir}/fetchSource.nix" \
+              "share/nix/fetchSource.nix" \
               --argstr recipe "$recipe" | tr -d \")
     elif [[ -d "$package" ]]; then
       # TODO: Check for updates in the working tree
@@ -269,7 +267,7 @@ copy_package_sources() {
       ls "$package"
       continue
     fi
-    instruction=$(nix-build "${nix_lib_dir}/copySource.nix" \
+    instruction=$(nix-build "share/nix/copySource.nix" \
             --no-out-link --quiet --no-build-output \
             --argstr recipe "$recipe" --argstr src "$src")
     mkdir "$package"
@@ -356,7 +354,7 @@ for_each_package_sources() {
 }
 
 emacs_dev_shell() {
-  "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A shellForCI \
+  "${nix_shell_bin}" "share/nix/emacs.nix" -A shellForCI \
           --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --argstr enabledLinters "${linters[*]}" \
@@ -411,7 +409,7 @@ shell_with_packages() {
       break
     fi
     # shellcheck disable=SC2048
-    if ! "${nix_shell_bin}" "${nix_lib_dir}/emacsTest.nix" \
+    if ! "${nix_shell_bin}" "share/nix/emacsTest.nix" \
           --argstr emacs "$emacs" \
           --argstr loadPath "${loadpath[*]@Q}" \
           --argstr mainFiles "${mainfiles[*]@Q}" \
@@ -439,7 +437,7 @@ run_tests() {
       shell_with_packages \
         ${nix_args[*]} \
         --arg extraPackReqs '["buttercup"]' \
-        --arg extraBuildInputs "import ${nix_lib_dir}/buttercup.nix" \
+        --arg extraBuildInputs "import share/nix/buttercup.nix" \
         --run "buttercup $*"
       ;;
     ert-runner)
