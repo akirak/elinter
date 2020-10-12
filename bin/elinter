@@ -24,7 +24,11 @@ else
   esac
 fi
 
-config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
+if [[ -v ELINTER_CONFIG_ROOT ]]; then
+  config_dir="${ELINTER_CONFIG_ROOT}"
+else
+  config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
+fi
 
 user_nix_sources="${config_dir}/nix/sources.nix"
 
