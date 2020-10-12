@@ -482,6 +482,8 @@ setup_github_workflow_annotations() {
 # this repository.
 # The path should be replaced with an absolute path using
 # substituteInPlace function of Nix.
+# 
+# shellcheck disable=SC1091
 . 'share/workflow.bash'
 
 workflow_start_group "Initialization"
@@ -494,6 +496,8 @@ fi
 # Source "ansi" script to load "ansi" function.
 # 'ansi/ansi' should be replaced with an absolute path using
 # substituteInPlace function of Nix.
+# 
+# shellcheck disable=SC1091
 . 'ansi/ansi'
 
 if nix_shell_bin="$(command -v cached-nix-shell)"; then
