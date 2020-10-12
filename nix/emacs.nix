@@ -19,7 +19,7 @@ let
 
   linterPackages = epkgs: import ./linterPackages.nix { inherit sources epkgs lib; } linters;
 
-  emacs-ci = import (./sourceWithFallback.nix sources "nix-emacs-ci");
+  emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
 
   package =
     if match "emacs-.+" emacs != null
