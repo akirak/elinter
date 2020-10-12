@@ -30,6 +30,8 @@ let
   };
 in
 ''
+  initialdir="$PWD"
   cd ${src}
   ! elinter
+  cd "$initialdir"
 ''
