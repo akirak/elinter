@@ -477,6 +477,12 @@ setup_github_workflow_annotations() {
 # Main entry point #
 ####################
 
+# Load functions related GitHub Actions from share/workflow.bash in
+# this repository.
+# The path should be replaced with an absolute path using
+# substituteInPlace function of Nix.
+. 'share/workflow.bash'
+
 workflow_start_group "Initialization"
 
 if [[ -v GITHUB_ACTIONS ]]; then

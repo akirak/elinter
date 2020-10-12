@@ -4,7 +4,6 @@ with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 let
   ansi = fetchTarball (import ./nix/sources.nix).ansi.url;
-  bashLib = ./share/workflow.bash;
 in
 rec {
   main = stdenv.mkDerivation rec {
@@ -14,7 +13,6 @@ rec {
     nativeBuildInputs = [ makeWrapper ];
 
     propagatedBuildInputs = [
-      bashLib
       linters
     ];
 
@@ -26,16 +24,16 @@ rec {
       mkdir -p $out/bin
 
       cp $src/bin/elinter $out/bin/elinter
-      sed -i "2isource ${bashLib}" $out/bin/elinter
 
       mkdir -p $out/share/elinter
       lib=$out/share/elinter
       cd $src
       cp -r -t $lib nix
-      cp -t $lib ${ansi}/ansi
+      cp -t $lib ${ansi}/ansi $src/share/workflow.bash
 
       substituteInPlace $out/bin/elinter \
-        --replace "ansi/ansi" "$lib/ansi"
+        --replace "ansi/ansi" "$lib/ansi" \
+        --replace "share/workflow.bash" "$lib/workflow.bash"
 
       mkdir -p $out/bin
       wrapProgram $out/bin/elinter \
@@ -52,7 +50,7 @@ rec {
 
     src = gitignoreSource ./.;
 
-    nativeBuildInputs = [ makeWrapper bashLib ];
+    nativeBuildInputs = [ makeWrapper ];
 
     phases = [ "installPhase" ];
 
@@ -109,12 +107,15 @@ rec {
           cp ${logger} $out/bin/elinter-logger
 
           cp $src/share/github-log.sed $out/share/elinter
+          cp $src/share/workflow.bash $out/share/elinter
           cp ${github-logger} $out/bin/elinter-github-logger
 
           # Patch the byte-compile helper to enable GitHub workflow features
           mkdir -p $out/bin-helpers
           cp $src/bin-helpers/* $out/bin-helpers
-          sed -i "2i. ${bashLib}" $out/bin-helpers/elinter-byte-compile
+
+          substituteInPlace $out/bin-helpers/elinter-byte-compile \
+            --replace "share/workflow.bash" "$out/share/elinter/workflow.bash"
 
           # Patch backend scripts to redirect output to the logger
           for bin in $out/bin-helpers/* ${lint-runner}/bin/*; do
