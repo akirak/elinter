@@ -86,7 +86,7 @@ rec {
           errors=$(mktemp)
           filelist=$(mktemp)
 
-          sed -f "$(dirname $0)/../share/elinter/github-log.sed" "''${ELINTER_LOG_FILE}" \
+          sed -f "$(dirname $0)/../share/elinter-linters/github-log.sed" "''${ELINTER_LOG_FILE}" \
             | grep -E "^::(error|warning)" > $errors
 
           grep -oP 'file=\K.+(?=,line=)' $errors \
@@ -101,13 +101,13 @@ rec {
       in
         ''
           mkdir -p $out/bin
-          mkdir -p $out/share/elinter
+          mkdir -p $out/share/elinter-linters
 
           # Install the logger
           cp ${logger} $out/bin/elinter-logger
 
-          cp $src/share/github-log.sed $out/share/elinter
-          cp $src/share/workflow.bash $out/share/elinter
+          cp $src/share/github-log.sed $out/share/elinter-linters
+          cp $src/share/workflow.bash $out/share/elinter-linters
           cp ${github-logger} $out/bin/elinter-github-logger
 
           # Patch the byte-compile helper to enable GitHub workflow features
@@ -115,7 +115,7 @@ rec {
           cp $src/bin-helpers/* $out/bin-helpers
 
           substituteInPlace $out/bin-helpers/elinter-byte-compile \
-            --replace "share/workflow.bash" "$out/share/elinter/workflow.bash"
+            --replace "share/workflow.bash" "$out/share/elinter-linters/workflow.bash"
 
           # Patch backend scripts to redirect output to the logger
           for bin in $out/bin-helpers/* ${lint-runner}/bin/*; do
