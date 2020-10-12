@@ -1,15 +1,11 @@
-{ pkgs ? import <nixpkgs> {
-    overlays = [
-      (import (import ./sources.nix).emacs-overlay)
-    ];
-  }
+{ sources ? null
 , # Main file of the package, given as an absolute path string
   mainFile ? null
 , emacs ? "emacs"
 , enabledLinters ? null
 }:
 with builtins;
-with pkgs;
+with (import ./pkgsWithEmacsOverlay.nix { inherit sources; });
 let
   # What would be the best way to set the default?
   defaultLinters = [ "checkdoc" "package-lint" "check-declare" ];
@@ -21,9 +17,9 @@ let
     then enabledLinters
     else filter isString (split " " enabledLinters);
 
-  linterPackages = epkgs: import ./linterPackages.nix { inherit epkgs lib; } linters;
+  linterPackages = epkgs: import ./linterPackages.nix { inherit sources epkgs lib; } linters;
 
-  emacs-ci = import (import ./sources.nix).nix-emacs-ci;
+  emacs-ci = import (sourceWithFallback.nix sources "nix-emacs-ci");
 
   package =
     if match "emacs-.+" emacs != null

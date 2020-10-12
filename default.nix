@@ -149,17 +149,20 @@ rec {
   # This can be used to implement checks in the Git pre-commit hook.
   file-linter =
     let
-      # TODO: Allow overriding this
-      pkgsWithOverlay = import <nixpkgs> {
-        overlays = [
-          (import (import ./nix/sources.nix).emacs-overlay)
-        ];
-      };
-      emacsCi = import (import ./nix/sources.nix).nix-emacs-ci;
-      defaultLinters = (import ./nix/emacs.nix { inherit pkgs; }).defaultLinters;
+      nonEmpty = s: defaultVal: if s == "" then defaultVal else s;
+      getEnvDefault = name:
+        nonEmpty (builtins.getEnv name);
+      userConfigDir =
+        getEnvDefault "XDG_CONFIG_HOME"
+          ((getEnvDefault "HOME" (throw "HOME cannot be empty")) + "/.config");
+      sourcesNixFile = userConfigDir + "/elinter/nix/sources.nix";
+      sources = /. + sourcesNixFile;
+      pkgsWithOverlay = import ./nix/pkgsWithEmacsOverlay.nix { inherit sources; };
+      emacsCi = import (import ./nix/sourceWithFallback sources "nix-emacs-ci");
+      defaultLinters = (import ./nix/emacs.nix { inherit sources; }).defaultLinters;
       enabledLinters = defaultLinters ++ [ "melpazoid" ];
       linterPackages = epkgs: import ./nix/linterPackages.nix {
-        inherit epkgs lib;
+        inherit sources epkgs lib;
       } enabledLinters;
       emacsForLint =
         (

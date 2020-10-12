@@ -24,10 +24,9 @@ else
   esac
 fi
 
-# config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
 
-# Directory containing niv nix directory
-# niv_root="${ELINTER_NIV_ROOT:-${config_dir}}"
+user_nix_sources="${config_dir}/nix/sources.nix"
 
 package_source_root="${cache_dir}/pkg-src"
 # package_output_root="${cache_dir}/pkg-out"
@@ -175,6 +174,7 @@ emacs_versions() {
       nix-instantiate --eval --strict \
         --arg elispFile "./${PACKAGE_MAIN_FILE}" \
         --argstr spec "${EMACS_VERSION}" \
+        --arg sources "${user_nix_sources}" \
         "share/nix/dynamicVersions.nix" \
         | tr '"[]' '   '
       ;;
@@ -355,6 +355,7 @@ for_each_package_sources() {
 
 emacs_dev_shell() {
   "${nix_shell_bin}" "share/nix/emacs.nix" -A shellForCI \
+          --arg sources "${user_nix_sources}" \
           --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --argstr enabledLinters "${linters[*]}" \
@@ -510,6 +511,10 @@ fi
 if [[ -v cleanup && $cleanup = 1 ]]; then
   cleanup_cache
   echo
+fi
+
+if [[ -f "${user_nix_sources}" ]]; then
+  echo "Using Nix sources maintained by the user"
 fi
 
 # For most operations, at least one recipe is mandatory

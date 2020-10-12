@@ -1,8 +1,4 @@
-{ pkgs ? import <nixpkgs> {
-    overlays = [
-      (import (import ./sources.nix).emacs-overlay)
-    ];
-  }
+{ sources ? null
 , emacs
 , loadPath
 , mainFiles
@@ -12,7 +8,7 @@
 , extraBuildInputsFromNixPkgs ? []
 }:
 with builtins;
-with pkgs;
+with (import ./pkgsWithEmacsOverlay.nix { inherit sources; });
 let
   parseQuotedStrings = str:
     let
@@ -47,7 +43,7 @@ let
 
   reqs = lib.flatten (map parseReqs (parseQuotedStrings mainFiles));
 
-  emacs-ci = import (import ./sources.nix).nix-emacs-ci;
+  emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
 
   package =
     if match "emacs-.+" emacs != null
