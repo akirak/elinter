@@ -2,22 +2,21 @@
 , # Main file of the package, given as an absolute path string
   mainFile ? null
 , emacs ? "emacs"
+  # String
 , enabledLinters ? null
+  # List of string
+, linters ? if builtins.isList enabledLinters
+  then enabledLinters
+  else builtins.filter builtins.isString (builtins.split " " enabledLinters)
 }:
 with builtins;
-with (import ./pkgsWithEmacsOverlay.nix { inherit sources; });
 let
-  # What would be the best way to set the default?
-  defaultLinters = [ "checkdoc" "package-lint" "check-declare" ];
+  pkgs = import ./pkgsWithEmacsOverlay.nix { inherit sources; };
 
-  linters =
-    if enabledLinters == null || enabledLinters == ""
-    then defaultLinters
-    else if isList enabledLinters
-    then enabledLinters
-    else filter isString (split " " enabledLinters);
-
-  linterPackages = epkgs: import ./linterPackages.nix { inherit sources epkgs lib; } linters;
+  linterPackages = epkgs: import ./linterPackages.nix {
+    inherit sources epkgs;
+    inherit (pkgs) lib;
+  } linters;
 
   emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
 
@@ -28,7 +27,7 @@ let
 
 in
 rec {
-  emacsForCI = emacsWithPackagesFromPackageRequires {
+  emacsForCI = pkgs.emacsWithPackagesFromPackageRequires {
     inherit package;
     packageElisp = readFile (/. + mainFile);
     extraEmacsPackages = linterPackages;
@@ -41,6 +40,16 @@ rec {
     ];
   };
 
-  # Export the list for use in file-linter in ../default.nix
-  inherit defaultLinters;
+  # Used for file linter
+  emacsForLint =
+    # Using a snapshot version of Emacs can require several
+    # different versions of Emacs on a host, which requires more
+    # storage space if the developer works on many packages.
+    #
+    # Lock the version to save space.
+    (pkgs.emacsPackagesFor emacs-ci.emacs-27-1).emacsWithPackages (
+      epkgs:
+        linterPackages epkgs ++ [ epkgs.package-build ]
+    );
+
 }

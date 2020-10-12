@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+export ELINTER_LINT_CUSTOM_FILE="${ELINTER_LINT_CUSTOM_FILE:-share/lint-options.el}"
+exec emacs -Q --batch --script 'share/elinter-run-linters.el'
