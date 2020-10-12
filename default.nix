@@ -6,6 +6,11 @@ let
   ansi = fetchTarball (import ./nix/sources.nix).ansi.url;
 in
 rec {
+  # Main derivation: Install elinter executable which is the main
+  # entry point of this application.
+
+  # This derivation only contains installPhase, so it probably can
+  # be replaced with runCommand.
   main = stdenv.mkDerivation rec {
     name = "elinter";
     version = "0";
@@ -25,12 +30,14 @@ rec {
 
       cp $src/bin/elinter $out/bin/elinter
 
+      # Install libraries to share/elinter directory
       mkdir -p $out/share/elinter
       lib=$out/share/elinter
       cd $src
       cp -r -t $lib nix
       cp -t $lib ${ansi}/ansi $src/share/workflow.bash
 
+      # Substitute paths to the library source files.
       substituteInPlace $out/bin/elinter \
         --replace "ansi/ansi" "$lib/ansi" \
         --replace "share/workflow.bash" "$lib/workflow.bash"
@@ -44,6 +51,9 @@ rec {
     '';
   };
 
+  # Install linter executables which wrap linting backends.
+  # Each wrapper must conform to the standard API of elinter,
+  # e.g. pass information via certain environment variables.
   linters = stdenv.mkDerivation {
     name = "elinter-linters";
     version = "0";
@@ -57,11 +67,16 @@ rec {
     installPhase =
       let
 
+        # Wrapper for static checkers written in Emacs Lisp.
         lint-runner = writeShellScriptBin "elinter-run-linters" ''
           export ELINTER_LINT_CUSTOM_FILE="''${ELINTER_LINT_CUSTOM_FILE:-${./share/lint-options.el}}"
           exec emacs -Q --batch --script ${./lisp/elinter-run-linters.el} "$@"
         '';
 
+        # A script which post-processes output from wrappers.
+        # 
+        # It colorizes the output and optionally duplicate the output
+        # to a log file.
         logger = writeShellScript "elinter-logger" ''
            if [[ -v ELINTER_LOG_FILE && -n "''${ELINTER_LOG_FILE}" ]]; then
              exec < <(tee -a "''${ELINTER_LOG_FILE}")
@@ -82,6 +97,8 @@ rec {
            fi
         '';
 
+        # Helper script for GitHub Actions which adds annotations to
+        # indicate error locations.
         github-logger = writeShellScript "elinter-github-logger" ''
           errors=$(mktemp)
           filelist=$(mktemp)
@@ -126,6 +143,10 @@ rec {
         '';
   };
 
+  # Alternative interface which receives files as arguments and run
+  # static linting on them.
+  #
+  # This can be used to implement checks in the Git pre-commit hook.
   file-linter =
     let
       # TODO: Allow overriding this
