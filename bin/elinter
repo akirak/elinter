@@ -6,27 +6,31 @@ set -e
 # Set the defaults #
 ####################
 
-os_cache_root() {
-  # read variables from the command line
+# Directory for storing cache files
+if [[ -v ELINTER_CACHE_ROOT ]]; then
+  cache_dir="${ELINTER_CACHE_ROOT}"
+else
   case "$OSTYPE" in
     linux-gnu*)
-      echo "${XDG_CACHE_HOME:-$HOME/.cache}"
+      cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/elinter"
       ;;
     darwin*)
-      echo "$HOME/Library/Caches"
+      cache_dir="$HOME/Library/Caches/elinter"
+      ;;
+    *)
+      echo "Unsupported ostype: $OSTYPE" >&2
+      exit 1
       ;;
   esac
-}
+fi
 
-nix_lib_dir="${ELINTER_NIX_LIB_DIR:?Cannot be empty}"
+if [[ -v ELINTER_CONFIG_ROOT ]]; then
+  config_dir="${ELINTER_CONFIG_ROOT}"
+else
+  config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
+fi
 
-# Directory for storing cache files
-cache_dir="${ELINTER_CACHE_ROOT:-$(os_cache_root)/elinter}"
-
-# config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
-
-# Directory containing niv nix directory
-# niv_root="${ELINTER_NIV_ROOT:-${config_dir}}"
+user_nix_sources="${config_dir}/nix/sources.nix"
 
 package_source_root="${cache_dir}/pkg-src"
 # package_output_root="${cache_dir}/pkg-out"
@@ -49,6 +53,7 @@ unset test_engine
 # Cask setting is empty by default, but it is still interpreted as 1
 unset cask
 unset cask_file
+unset niv_update
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
@@ -78,6 +83,7 @@ Options:
   --cask         Detect Cask file and use packages defined in it (default)
   --no-cask      Don't use cask file
   --from-nixpkgs Nix packages added to buildInputs for tests (comma-separated)
+  -u|--update    Update Nix dependencies (e.g. emacs-overlay)
   -V, --version  Show version
 HELP
 }
@@ -145,6 +151,9 @@ while [[ $# -gt 0 ]]; do
       nix_packages=(${2/,/ })
       shift
       ;;
+    -u|--update)
+      niv_update=(emacs-overlay nix-emacs-ci melpazoid)
+      ;;
     --)
       # Keep the rest of the arguments as positional arguments
       shift
@@ -174,7 +183,8 @@ emacs_versions() {
       nix-instantiate --eval --strict \
         --arg elispFile "./${PACKAGE_MAIN_FILE}" \
         --argstr spec "${EMACS_VERSION}" \
-        "${nix_lib_dir}/dynamicVersions.nix" \
+        --arg sources "${user_nix_sources}" \
+        "share/nix/dynamicVersions.nix" \
         | tr '"[]' '   '
       ;;
     '')
@@ -214,6 +224,34 @@ set_emacs() {
   ansi --yellow "Using $emacs"
   # Reset the installation state when the Emacs version changes
   packages_installed=0
+}
+
+update_niv_sources() {
+  local targets=("$@")
+
+  # If sources.nix does not exist in the user directory,
+  # first copy the bundled version.
+  if ! [[ -f "${user_nix_sources}" ]]; then
+    echo "Installing sources to ${config_dir}..."
+    mkdir -p "${config_dir}/nix"
+    cp -n -t "${config_dir}/nix" \
+       "share/nix/sources.json" "share/nix/sources.nix"
+    chmod ug+w "${config_dir}/nix/sources.nix" "${config_dir}/nix/sources.json"
+  fi
+
+  if ! command -v niv >/dev/null; then
+    echo "Niv is not installed in PATH." >&2
+    exit 1
+  fi
+
+  echo "Updating Nix dependencies: ${targets[*]}..."
+
+  local initial_dir="$PWD"
+  cd "${config_dir}"
+  for dep in "${targets[@]}"; do
+    niv update "$dep"
+  done
+  cd "${initial_dir}"
 }
 
 discover_recipes() {
@@ -257,7 +295,7 @@ copy_package_sources() {
       # Clean up the source every time
       rm -rf "$package"
       src=$(nix-instantiate --eval --strict \
-              "${nix_lib_dir}/fetchSource.nix" \
+              "share/nix/fetchSource.nix" \
               --argstr recipe "$recipe" | tr -d \")
     elif [[ -d "$package" ]]; then
       # TODO: Check for updates in the working tree
@@ -266,7 +304,7 @@ copy_package_sources() {
       ls "$package"
       continue
     fi
-    instruction=$(nix-build "${nix_lib_dir}/copySource.nix" \
+    instruction=$(nix-build "share/nix/copySource.nix" \
             --no-out-link --quiet --no-build-output \
             --argstr recipe "$recipe" --argstr src "$src")
     mkdir "$package"
@@ -353,7 +391,8 @@ for_each_package_sources() {
 }
 
 emacs_dev_shell() {
-  "${nix_shell_bin}" "${nix_lib_dir}/emacs.nix" -A shellForCI \
+  "${nix_shell_bin}" "share/nix/emacs.nix" -A shellForCI \
+          --arg sources "${user_nix_sources}" \
           --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --argstr enabledLinters "${linters[*]}" \
@@ -408,7 +447,7 @@ shell_with_packages() {
       break
     fi
     # shellcheck disable=SC2048
-    if ! "${nix_shell_bin}" "${nix_lib_dir}/emacsTest.nix" \
+    if ! "${nix_shell_bin}" "share/nix/emacsTest.nix" \
           --argstr emacs "$emacs" \
           --argstr loadPath "${loadpath[*]@Q}" \
           --argstr mainFiles "${mainfiles[*]@Q}" \
@@ -436,7 +475,7 @@ run_tests() {
       shell_with_packages \
         ${nix_args[*]} \
         --arg extraPackReqs '["buttercup"]' \
-        --arg extraBuildInputs "import ${nix_lib_dir}/buttercup.nix" \
+        --arg extraBuildInputs "import share/nix/buttercup.nix" \
         --run "buttercup $*"
       ;;
     ert-runner)
@@ -477,6 +516,14 @@ setup_github_workflow_annotations() {
 # Main entry point #
 ####################
 
+# Load functions related GitHub Actions from share/workflow.bash in
+# this repository.
+# The path should be replaced with an absolute path using
+# substituteInPlace function of Nix.
+# 
+# shellcheck disable=SC1091
+. 'share/workflow.bash'
+
 workflow_start_group "Initialization"
 
 if [[ -v GITHUB_ACTIONS ]]; then
@@ -484,17 +531,12 @@ if [[ -v GITHUB_ACTIONS ]]; then
   export TERM=ansi
 fi
 
-if [[ -v ELINTER_ANSI_LIBRARY && -f "${ELINTER_ANSI_LIBRARY}" ]]; then
-  # shellcheck disable=SC1090
-  . "${ELINTER_ANSI_LIBRARY}"
-else
-  ansi() {
-    while [[ $# -gt 0 && "$1" = --* ]]; do
-      shift
-    done
-    echo "$*"
-  }
-fi
+# Source "ansi" script to load "ansi" function.
+# 'ansi/ansi' should be replaced with an absolute path using
+# substituteInPlace function of Nix.
+# 
+# shellcheck disable=SC1091
+. 'ansi/ansi'
 
 if nix_shell_bin="$(command -v cached-nix-shell)"; then
   echo "Using cached-nix-shell"
@@ -506,6 +548,13 @@ fi
 if [[ -v cleanup && $cleanup = 1 ]]; then
   cleanup_cache
   echo
+fi
+
+if [[ -v niv_update ]]; then
+  update_niv_sources "${niv_update[@]}"
+fi
+if [[ -f "${user_nix_sources}" ]]; then
+  echo "Using Nix sources maintained by the user"
 fi
 
 # For most operations, at least one recipe is mandatory

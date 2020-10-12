@@ -4,60 +4,79 @@ with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 let
   ansi = fetchTarball (import ./nix/sources.nix).ansi.url;
-  bashLib = ./share/workflow.bash;
 in
 rec {
+  # Main derivation: Install elinter executable which is the main
+  # entry point of this application.
+
+  # This derivation only contains installPhase, so it probably can
+  # be replaced with runCommand.
   main = stdenv.mkDerivation rec {
     name = "elinter";
     version = "0";
 
     nativeBuildInputs = [ makeWrapper ];
 
-    propagatedBuildInputs = [ bashLib linters ];
+    propagatedBuildInputs = [
+      linters
+    ];
 
     src = gitignoreSource ./.;
 
     phases = [ "installPhase" ];
 
     installPhase = ''
-      mkdir -p $out
+      mkdir -p $out/bin
 
-      cp $src/bin/elinter $out
-      sed -i "2isource ${bashLib}" $out/elinter
+      cp $src/bin/elinter $out/bin/elinter
 
+      # Install libraries to share/elinter directory
       mkdir -p $out/share/elinter
       lib=$out/share/elinter
       cd $src
       cp -r -t $lib nix
+      cp -t $lib ${ansi}/ansi $src/share/workflow.bash
+
+      # Substitute paths to the library source files.
+      substituteInPlace $out/bin/elinter \
+        --replace "ansi/ansi" "$lib/ansi" \
+        --replace "share/workflow.bash" "$lib/workflow.bash" \
+        --replace 'share/nix/' "$lib/nix/"
 
       mkdir -p $out/bin
-      makeWrapper $out/elinter $out/bin/elinter \
+      wrapProgram $out/bin/elinter \
         --argv0 elinter \
         --prefix PATH : ${linters + "/bin"} \
-        --set ELINTER_VERSION $version \
-        --set ELINTER_ANSI_LIBRARY ${ansi}/ansi \
-        --set ELINTER_NIX_LIB_DIR "$lib/nix"
+        --set ELINTER_VERSION $version
     '';
   };
 
+  # Install linter executables which wrap linting backends.
+  # Each wrapper must conform to the standard API of elinter,
+  # e.g. pass information via certain environment variables.
   linters = stdenv.mkDerivation {
     name = "elinter-linters";
     version = "0";
 
     src = gitignoreSource ./.;
 
-    nativeBuildInputs = [ makeWrapper bashLib ];
+    nativeBuildInputs = [ makeWrapper ];
 
     phases = [ "installPhase" ];
 
     installPhase =
       let
 
+        # Wrapper for static checkers written in Emacs Lisp.
         lint-runner = writeShellScriptBin "elinter-run-linters" ''
           export ELINTER_LINT_CUSTOM_FILE="''${ELINTER_LINT_CUSTOM_FILE:-${./share/lint-options.el}}"
           exec emacs -Q --batch --script ${./lisp/elinter-run-linters.el} "$@"
         '';
 
+        # A script which post-processes output from wrappers.
+        # 
+        # It colorizes the output and optionally duplicate the output
+        # to a log file.
         logger = writeShellScript "elinter-logger" ''
            if [[ -v ELINTER_LOG_FILE && -n "''${ELINTER_LOG_FILE}" ]]; then
              exec < <(tee -a "''${ELINTER_LOG_FILE}")
@@ -78,11 +97,13 @@ rec {
            fi
         '';
 
+        # Helper script for GitHub Actions which adds annotations to
+        # indicate error locations.
         github-logger = writeShellScript "elinter-github-logger" ''
           errors=$(mktemp)
           filelist=$(mktemp)
 
-          sed -f "$(dirname $0)/../share/elinter/github-log.sed" "''${ELINTER_LOG_FILE}" \
+          sed -f "$(dirname $0)/../share/elinter-linters/github-log.sed" "''${ELINTER_LOG_FILE}" \
             | grep -E "^::(error|warning)" > $errors
 
           grep -oP 'file=\K.+(?=,line=)' $errors \
@@ -97,18 +118,21 @@ rec {
       in
         ''
           mkdir -p $out/bin
-          mkdir -p $out/share/elinter
+          mkdir -p $out/share/elinter-linters
 
           # Install the logger
           cp ${logger} $out/bin/elinter-logger
 
-          cp $src/share/github-log.sed $out/share/elinter
+          cp $src/share/github-log.sed $out/share/elinter-linters
+          cp $src/share/workflow.bash $out/share/elinter-linters
           cp ${github-logger} $out/bin/elinter-github-logger
 
           # Patch the byte-compile helper to enable GitHub workflow features
           mkdir -p $out/bin-helpers
           cp $src/bin-helpers/* $out/bin-helpers
-          sed -i "2i. ${bashLib}" $out/bin-helpers/elinter-byte-compile
+
+          substituteInPlace $out/bin-helpers/elinter-byte-compile \
+            --replace "share/workflow.bash" "$out/share/elinter-linters/workflow.bash"
 
           # Patch backend scripts to redirect output to the logger
           for bin in $out/bin-helpers/* ${lint-runner}/bin/*; do
@@ -119,19 +143,26 @@ rec {
         '';
   };
 
+  # Alternative interface which receives files as arguments and run
+  # static linting on them.
+  #
+  # This can be used to implement checks in the Git pre-commit hook.
   file-linter =
     let
-      # TODO: Allow overriding this
-      pkgsWithOverlay = import <nixpkgs> {
-        overlays = [
-          (import (import ./nix/sources.nix).emacs-overlay)
-        ];
-      };
-      emacsCi = import (import ./nix/sources.nix).nix-emacs-ci;
-      defaultLinters = (import ./nix/emacs.nix { inherit pkgs; }).defaultLinters;
+      nonEmpty = s: defaultVal: if s == "" then defaultVal else s;
+      getEnvDefault = name:
+        nonEmpty (builtins.getEnv name);
+      userConfigDir =
+        getEnvDefault "XDG_CONFIG_HOME"
+          ((getEnvDefault "HOME" (throw "HOME cannot be empty")) + "/.config");
+      sourcesNixFile = userConfigDir + "/elinter/nix/sources.nix";
+      sources = /. + sourcesNixFile;
+      pkgsWithOverlay = import ./nix/pkgsWithEmacsOverlay.nix { inherit sources; };
+      emacsCi = import (import ./nix/sourceWithFallback sources "nix-emacs-ci");
+      defaultLinters = (import ./nix/emacs.nix { inherit sources; }).defaultLinters;
       enabledLinters = defaultLinters ++ [ "melpazoid" ];
       linterPackages = epkgs: import ./nix/linterPackages.nix {
-        inherit epkgs lib;
+        inherit sources epkgs lib;
       } enabledLinters;
       emacsForLint =
         (

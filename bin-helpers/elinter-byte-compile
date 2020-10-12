@@ -19,6 +19,12 @@ result=0
 
 rm -f ./*.elc
 
+# Load functions related GitHub Actions from share/workflow.bash in
+# this repository.
+# The path should be replaced with an absolute path using
+# substituteInPlace function of Nix.
+. 'share/workflow.bash'
+
 # Clean up on exit
 initialdir="$PWD"
 extra_cleanup_files=()
