@@ -484,17 +484,10 @@ if [[ -v GITHUB_ACTIONS ]]; then
   export TERM=ansi
 fi
 
-if [[ -v ELINTER_ANSI_LIBRARY && -f "${ELINTER_ANSI_LIBRARY}" ]]; then
-  # shellcheck disable=SC1090
-  . "${ELINTER_ANSI_LIBRARY}"
-else
-  ansi() {
-    while [[ $# -gt 0 && "$1" = --* ]]; do
-      shift
-    done
-    echo "$*"
-  }
-fi
+# Source "ansi" script to load "ansi" function.
+# 'ansi/ansi' should be replaced with an absolute path using
+# substituteInPlace function of Nix.
+. 'ansi/ansi'
 
 if nix_shell_bin="$(command -v cached-nix-shell)"; then
   echo "Using cached-nix-shell"

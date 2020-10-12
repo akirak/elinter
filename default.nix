@@ -13,29 +13,35 @@ rec {
 
     nativeBuildInputs = [ makeWrapper ];
 
-    propagatedBuildInputs = [ bashLib linters ];
+    propagatedBuildInputs = [
+      bashLib
+      linters
+    ];
 
     src = gitignoreSource ./.;
 
     phases = [ "installPhase" ];
 
     installPhase = ''
-      mkdir -p $out
+      mkdir -p $out/bin
 
-      cp $src/bin/elinter $out
-      sed -i "2isource ${bashLib}" $out/elinter
+      cp $src/bin/elinter $out/bin/elinter
+      sed -i "2isource ${bashLib}" $out/bin/elinter
 
       mkdir -p $out/share/elinter
       lib=$out/share/elinter
       cd $src
       cp -r -t $lib nix
+      cp -t $lib ${ansi}/ansi
+
+      substituteInPlace $out/bin/elinter \
+        --replace "ansi/ansi" "$lib/ansi"
 
       mkdir -p $out/bin
-      makeWrapper $out/elinter $out/bin/elinter \
+      wrapProgram $out/bin/elinter \
         --argv0 elinter \
         --prefix PATH : ${linters + "/bin"} \
         --set ELINTER_VERSION $version \
-        --set ELINTER_ANSI_LIBRARY ${ansi}/ansi \
         --set ELINTER_NIX_LIB_DIR "$lib/nix"
     '';
   };
