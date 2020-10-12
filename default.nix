@@ -158,7 +158,7 @@ rec {
       sourcesNixFile = userConfigDir + "/elinter/nix/sources.nix";
       sources = /. + sourcesNixFile;
       pkgsWithOverlay = import ./nix/pkgsWithEmacsOverlay.nix { inherit sources; };
-      emacsCi = import (import ./nix/sourceWithFallback sources "nix-emacs-ci");
+      emacsCi = import (import ./nix/sourceWithFallback.nix sources "nix-emacs-ci");
       defaultLinters = (import ./nix/emacs.nix { inherit sources; }).defaultLinters;
       enabledLinters = defaultLinters ++ [ "melpazoid" ];
       linterPackages = epkgs: import ./nix/linterPackages.nix {
