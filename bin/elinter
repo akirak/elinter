@@ -6,22 +6,25 @@ set -e
 # Set the defaults #
 ####################
 
-os_cache_root() {
-  # read variables from the command line
-  case "$OSTYPE" in
-    linux-gnu*)
-      echo "${XDG_CACHE_HOME:-$HOME/.cache}"
-      ;;
-    darwin*)
-      echo "$HOME/Library/Caches"
-      ;;
-  esac
-}
-
 nix_lib_dir="${ELINTER_NIX_LIB_DIR:?Cannot be empty}"
 
 # Directory for storing cache files
-cache_dir="${ELINTER_CACHE_ROOT:-$(os_cache_root)/elinter}"
+if [[ -v ELINTER_CACHE_ROOT ]]; then
+  cache_dir="${ELINTER_CACHE_ROOT}"
+else
+  case "$OSTYPE" in
+    linux-gnu*)
+      cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/elinter"
+      ;;
+    darwin*)
+      cache_dir="$HOME/Library/Caches/elinter"
+      ;;
+    *)
+      echo "Unsupported ostype: $OSTYPE" >&2
+      exit 1
+      ;;
+  esac
+fi
 
 # config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
 
