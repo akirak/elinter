@@ -49,6 +49,7 @@ unset test_engine
 # Cask setting is empty by default, but it is still interpreted as 1
 unset cask
 unset cask_file
+unset niv_update
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
@@ -78,6 +79,7 @@ Options:
   --cask         Detect Cask file and use packages defined in it (default)
   --no-cask      Don't use cask file
   --from-nixpkgs Nix packages added to buildInputs for tests (comma-separated)
+  -u|--update    Update Nix dependencies (e.g. emacs-overlay)
   -V, --version  Show version
 HELP
 }
@@ -144,6 +146,9 @@ while [[ $# -gt 0 ]]; do
       # shellcheck disable=SC2086,SC2206
       nix_packages=(${2/,/ })
       shift
+      ;;
+    -u|--update)
+      niv_update=(emacs-overlay nix-emacs-ci melpazoid)
       ;;
     --)
       # Keep the rest of the arguments as positional arguments
@@ -215,6 +220,34 @@ set_emacs() {
   ansi --yellow "Using $emacs"
   # Reset the installation state when the Emacs version changes
   packages_installed=0
+}
+
+update_niv_sources() {
+  local targets=("$@")
+
+  # If sources.nix does not exist in the user directory,
+  # first copy the bundled version.
+  if ! [[ -f "${user_nix_sources}" ]]; then
+    echo "Installing sources to ${config_dir}..."
+    mkdir -p "${config_dir}/nix"
+    cp -n -t "${config_dir}/nix" \
+       "share/nix/sources.json" "share/nix/sources.nix"
+    chmod ug+w "${config_dir}/nix/sources.nix" "${config_dir}/nix/sources.json"
+  fi
+
+  if ! command -v niv >/dev/null; then
+    echo "Niv is not installed in PATH." >&2
+    exit 1
+  fi
+
+  echo "Updating Nix dependencies: ${targets[*]}..."
+
+  local initial_dir="$PWD"
+  cd "${config_dir}"
+  for dep in "${targets[@]}"; do
+    niv update "$dep"
+  done
+  cd "${initial_dir}"
 }
 
 discover_recipes() {
@@ -513,6 +546,9 @@ if [[ -v cleanup && $cleanup = 1 ]]; then
   echo
 fi
 
+if [[ -v niv_update ]]; then
+  update_niv_sources "${niv_update[@]}"
+fi
 if [[ -f "${user_nix_sources}" ]]; then
   echo "Using Nix sources maintained by the user"
 fi
