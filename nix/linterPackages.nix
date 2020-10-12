@@ -1,7 +1,7 @@
 { sources ? null, epkgs, lib }: linters:
 with builtins;
 let
-  melpazoidSource = import sourceWithFallback.nix sources "melpazoid";
+  melpazoidSource = import ./sourceWithFallback.nix sources "melpazoid";
 in
 (
   lib.optional (elem "melpazoid" linters) (
