@@ -5,9 +5,15 @@ gh_workflow_p() {
 if gh_workflow_p; then
   workflow_start_group() {
     echo "::group ::$*"
+    workflow_start_time=$(date +%s.%N)
   }
 
   workflow_end_group() {
+    if [[ -v workflow_start_time ]]; then
+      echo "$(date +%s.%N)" - "${workflow_start_time}" \
+        | bc \
+        | xargs printf "%.2f s\n"
+    fi
     echo "::endgroup ::"
   }
 else
