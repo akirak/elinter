@@ -112,13 +112,13 @@ bash <(curl -L https://nixos.org/nix/install)
 =elinter= can be installed using Nix:
 
 #+begin_src sh
-nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
+nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz
 #+end_src
 
 Alternatively, you can clone this repository and run
 
 #+begin_src sh
-nix-env -iA main
+nix-env -if .
 #+end_src
 
 Optionally, it is recommended to install [[https://github.com/cachix/cachix][cachix]] and enable cached Emacs binaries:
@@ -218,18 +218,14 @@ Here is [[https://github.com/akirak/melpa/blob/internal/.github/workflows/akirak
 *** Use case #5: Git pre-commit hook
 This repository also provides a script that can be integrated into Git =pre-commit= hook.
 
-=elinter-lint-files= script takes elisp source files as arguments and performs linting according to in-repository recipes.
-It is provided as =file-linter= attribute from =default.nix=:
+If you run =elinter= with =-g= argument at a repository root, it installs a =pre-commit= hook that
+performs static checks based on the recipe(s).
 
-#+begin_src sh
-# install the script
-nix-env -if . -A file-linter
-# check source files in your repository
-elinter-lint-files hello.el hello-utils.el
-#+end_src
+It uses [[https://pre-commit.com/][pre-commit]], and =.pre-commit-config.yaml= is created at the repository root.
 
-You can integrate this script using a Git hooks manager, e.g. [[https://pre-commit.com/][pre-commit]].
-If you prefer the Nix way, you can use [[cachix/pre-commit-hooks.nix][cachix/pre-commit-hooks.nix]] to set up a hook as follows:
+Note that byte-compilation is not performed by the hook.
+
+Alternatively, you can use [[cachix/pre-commit-hooks.nix][cachix/pre-commit-hooks.nix]] to configure the hook for multiple languages in Nix. The following is an example:
 
 #+begin_src nix
   with builtins;
@@ -261,9 +257,19 @@ If you prefer the Nix way, you can use [[cachix/pre-commit-hooks.nix][cachix/pre
     shellHook = pre-commit-check.shellHook;
   }
 #+end_src
+
+That is, =file-linter= Nix attribute of this repository provides =elinter-lint-files= executable
+which performs static checks on given files, so you can integrate it using any Git hooks manager:
+
+#+begin_src sh
+# install the script
+nix-env -if . -A file-linter
+# check source files in your repository
+elinter-lint-files hello.el hello-utils.el
+#+end_src
 ** Technical details
 *** elinter command
-The =main= Nix derivation provides =elinter= executable.
+The default Nix derivation provides =elinter= executable.
 It takes recipe files as command line arguments.
 
 It can also take package names and it refers to source files linked from the sandbox (described below).
