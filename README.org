@@ -11,7 +11,7 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
 :TOC:      siblings
 :END:
 -  [[#design-goals][Design goals]]
--  [[#planned-features-73][Planned features [73%]​]]
+-  [[#planned-features-69][Planned features [69%]​]]
 -  [[#prerequisites][Prerequisites]]
 -  [[#installation][Installation]]
 -  [[#usage][Usage]]
@@ -37,7 +37,7 @@ This project is designed with the following goals in mind:
 - Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [73%]
+** Planned features [69%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -70,6 +70,7 @@ Target project types:
 - [X] Multi-file packages
 - [ ] Multi-package repositories
 - [ ] Source files in subdirectories
+- [ ] Native dependencies
 
 Sources:
 
@@ -90,6 +91,7 @@ Integration:
 - [X] CLI for local use
 - [X] Git pre-commit hook (run static checks only on modified files)
 - [X] GitHub Actions
+- [ ] GitHub workflow with the latest set of packages (probably as a Docker image)
 
 Reporting:
 
