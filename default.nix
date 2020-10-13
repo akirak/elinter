@@ -55,6 +55,7 @@ let
         ''
           mkdir -p $out/bin
           makeWrapper ${emacsForLint}/bin/emacs $out/bin/elinter-lint-files \
+            --run "exec &> >(${gnugrep}/bin/grep -E -f ${share}/share/elinter/file-linter-patterns.txt)" \
             --add-flags "-Q --batch" \
             --add-flags "--script ${share}/share/elinter/elinter-run-linters.el" \
             --set-default ELINTER_LINTERS "${lintersAsString}" \

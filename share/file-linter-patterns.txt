@@ -1,0 +1,4 @@
+^.+\.el:[[:digit:]]+:[[:digit:]]+: ([Ee]rror|[Ww]arning):
+^.+\.el: ([Ee]rror|[Ww]arning):
+^- .+\.el#L[[:digit:]]+:
+^The following checks have failed:
