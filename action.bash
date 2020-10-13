@@ -21,7 +21,7 @@ workflow_end_group
 
 workflow_start_group "Install elinter"
 if ! command elinter >/dev/null; then
-  nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz -A main
+  nix-env -if https://github.com/akirak/elinter/archive/v4.tar.gz
 fi
 workflow_end_group
 

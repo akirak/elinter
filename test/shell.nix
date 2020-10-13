@@ -2,7 +2,8 @@
 with pkgs;
 mkShell {
   buildInputs = [
-    (import ../default.nix { inherit pkgs; }).main
+    (import ../default.nix { inherit pkgs; })
+
     pkgs.niv
   ];
 
