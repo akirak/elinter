@@ -11,18 +11,19 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
 :TOC:      siblings
 :END:
 -  [[#design-goals][Design goals]]
--  [[#planned-features-65][Planned features [65%]​]]
+-  [[#planned-features-73][Planned features [73%]​]]
 -  [[#prerequisites][Prerequisites]]
 -  [[#installation][Installation]]
 -  [[#usage][Usage]]
   -  [[#use-case-1-local-source--in-repository-recipes][Use case #1: Local source + in-repository recipes]]
   -  [[#use-case-2-local-recipes--remote-sources][Use case #2: Local recipes + remote sources]]
-  -  [[#use-case-3-github-workflow-for-individial-packages][Use case #3: GitHub workflow for individial packages]]
+  -  [[#use-case-3-github-workflow-for-package-repositories][Use case #3: GitHub workflow for package repositories]]
   -  [[#use-case-4-github-workflow-for-batch-linting-your-packages-on-melpa][Use case #4: GitHub workflow for batch-linting your packages on MELPA]]
   -  [[#use-case-5-git-pre-commit-hook][Use case #5: Git pre-commit hook]]
 -  [[#technical-details][Technical details]]
   -  [[#elinter-command][elinter command]]
   -  [[#emacs-version-syntax][Emacs version syntax]]
+  -  [[#updating-packages][Updating packages]]
   -  [[#sandboxing][Sandboxing]]
 -  [[#credits-inspiration-sources-and-alternatives][Credits, inspiration sources, and alternatives]]
 
@@ -82,7 +83,7 @@ Configuration:
 - [X] Read development dependencies (used for testing) from =Cask= file
 - [ ] Allow defining custom Nix package derivations
 - [X] Allow updating Nix dependencies (including [[https://github.com/nix-community/emacs-overlay/][emacs-overlay]]) locally
-- [ ] Switch to [[https://github.com/NixOS/rfcs/pull/49][Nix flakes]]
+- [ ] Add support for better integration with Nix flakes
 
 Integration:
 
