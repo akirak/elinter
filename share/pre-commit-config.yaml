@@ -1,0 +1,11 @@
+repos:
+- repo: local
+  hooks:
+  - id: elinter
+    language: system
+    name: elinter
+    files: "\\.el$"
+    exclude: "^\\.dir-locals\\.el$"
+    entry: 'elinter-lint-files'
+    pass_filenames: true
+    types: [file]

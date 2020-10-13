@@ -54,12 +54,17 @@ unset test_engine
 unset cask
 unset cask_file
 unset niv_update
+unset git_hook
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
   linters=(${linters[*]})
 else
-  linters=(package-lint checkdoc check-declare)
+  # This variable value should be replaced with a literal string to
+  # the default linter set using substituteInPlace function of Nix.
+  #
+  # shellcheck disable=SC2206
+  linters=(${lintersAsString})
 fi
 
 usage() {
@@ -84,6 +89,7 @@ Options:
   --no-cask      Don't use cask file
   --from-nixpkgs Nix packages added to buildInputs for tests (comma-separated)
   -u|--update    Update Nix dependencies (e.g. emacs-overlay)
+  -g             Install pre-commit Git hook
   -V, --version  Show version
 HELP
 }
@@ -153,6 +159,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     -u|--update)
       niv_update=(emacs-overlay nix-emacs-ci melpazoid)
+      ;;
+    -g)
+      git_hook=1
       ;;
     --)
       # Keep the rest of the arguments as positional arguments
@@ -252,6 +261,29 @@ update_niv_sources() {
     niv update "$dep"
   done
   cd "${initial_dir}"
+}
+
+install_git_hook() {
+  if ! [[ -d .git ]]; then
+    ansi --red --bold \
+         "When you add this flag, please run elinter at a Git repository root." >&2
+    return 1
+  fi
+
+  if [[ -f ".git/hooks/pre-commit" ]]; then
+    ansi --red "pre-commit hook is already installed in the repository." >&2
+    return 0
+  fi
+
+  nix-shell -p pre-commit --run "pre-commit install"
+
+  if [[ -f ".pre-commit-config.yaml" ]]; then
+    ansi --red "There is already .pre-commit-config.yaml in the repository. " >&2
+    ansi --red "If you want to replace it, you have to remove the existing one." >&2
+  else
+    cp "share/.pre-commit-config.yaml" .
+    chmod u+w .pre-commit-config.yaml
+  fi
 }
 
 discover_recipes() {
@@ -536,7 +568,7 @@ fi
 # substituteInPlace function of Nix.
 # 
 # shellcheck disable=SC1091
-. 'ansi/ansi'
+. 'share/ansi'
 
 if nix_shell_bin="$(command -v cached-nix-shell)"; then
   echo "Using cached-nix-shell"
@@ -555,6 +587,11 @@ if [[ -v niv_update ]]; then
 fi
 if [[ -f "${user_nix_sources}" ]]; then
   echo "Using Nix sources maintained by the user"
+fi
+
+# This should be run after the possible update of dependencies.
+if [[ -v git_hook && "${git_hook}" = 1 ]]; then
+  install_git_hook
 fi
 
 # For most operations, at least one recipe is mandatory
