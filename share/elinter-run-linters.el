@@ -83,8 +83,8 @@ This variable can also be a list of linter names."
                              ""))))
                (list text start end unfixable))))
         (checkdoc-file (file-truename file)))
-    (error (progn
-             (message err)
+    (error (unless (eq 'user-error (car err))
+             (message "%s" err)
              (message "Checkdoc failed on %s" file)
              (setq elinter-checkdoc-found-errors t)))))
 
