@@ -51,7 +51,7 @@ unset cleanup
 unset remote
 unset test_engine
 # Cask setting is empty by default, but it is still interpreted as 1
-unset cask
+unset use_cask
 unset cask_file
 unset niv_update
 unset git_hook
@@ -187,20 +187,19 @@ done
 #############
 
 emacs_versions() {
-  case "${EMACS_VERSION}" in
+  # Use dot to indicate the default value
+  local version="${EMACS_VERSION:-.}"
+  case "$version" in
     min|latest|all)
       nix-instantiate --eval --strict \
-        --arg elispFile "./${PACKAGE_MAIN_FILE}" \
-        --argstr spec "${EMACS_VERSION}" \
-        --arg sources "${user_nix_sources}" \
-        "share/nix/dynamicVersions.nix" \
+                      --arg elispFile "./${PACKAGE_MAIN_FILE}" \
+                      --argstr spec "$version" \
+                      --arg sources "${user_nix_sources}" \
+                      "share/nix/dynamicVersions.nix" \
         | tr '"[]' '   '
       ;;
-    '')
-      echo .
-      ;;
     *)
-      echo "${EMACS_VERSION}"
+      echo "$version"
       ;;
   esac
 }
@@ -370,7 +369,7 @@ for_each_package_sources() {
       # shellcheck disable=SC1091
       source .elinter-env
 
-      if [[ -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
+      if [[ -v ELINTER_BEFORE_PACKAGE_HOOK && -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
         ${ELINTER_BEFORE_PACKAGE_HOOK}
       fi
 
@@ -388,17 +387,17 @@ for_each_package_sources() {
       done
 
       if [[ $r -eq 0 ]]; then
-        if [[ -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
+        if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
           ${ELINTER_PACKAGE_SUCCESS_HOOK}
         fi
       else
         ansi --red "Package $package failed on some checks."
-        if [[ -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
+        if [[ -v ELINTER_PACKAGE_FAILURE_HOOK && -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
           ${ELINTER_PACKAGE_FAILURE_HOOK}
         fi
       fi
 
-      if [[ -n "${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
+      if [[ -v ELINTER_AFTER_PACKAGE_HOOK && -n "${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
         # shellcheck disable=SC2090
         ${ELINTER_AFTER_PACKAGE_HOOK}
       fi
@@ -595,12 +594,12 @@ if [[ -v git_hook && "${git_hook}" = 1 ]]; then
 fi
 
 # For most operations, at least one recipe is mandatory
-if [[ ${#recipes} -eq 0 && ${#packages} -eq 0 ]]; then
+if [[ ${#recipes[*]} -eq 0 && ${#packages[*]} -eq 0 ]]; then
   discover_recipes
   echo
 fi
 
-if [[ ${#recipes} -gt 0 ]]; then
+if [[ ${#recipes[*]} -gt 0 ]]; then
   copy_package_sources
 fi
 
@@ -609,13 +608,13 @@ export ELINTER_LINTERS="${linters[*]}"
 if ! [[ -v use_cask && "${use_cask}" = 0 ]]; then
   if [[ -f Cask ]]; then
     cask_file="$(readlink -f Cask)"
-  elif [[ "${use_cask}" = 1 ]]; then
+  elif [[ -v use_cask && "${use_cask}" = 1 ]]; then
     echo "WARNING: Cask option is set, but no Cask file is found."
   fi
 fi
 
 # Enable features that are specific to GitHub Actions
-if [[ "${GITHUB_ACTIONS}" = true ]]; then
+if [[ -v GITHUB_ACTIONS && "${GITHUB_ACTIONS}" = true ]]; then
   setup_github_workflow_annotations
 fi
 
