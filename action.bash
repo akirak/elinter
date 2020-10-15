@@ -2,7 +2,7 @@
 
 err() { echo "$*" >&2; }
 
-set -e
+set -euo pipefail
 
 # shellcheck disable=SC1090
 . "$(dirname "$0")/share/workflow.bash"

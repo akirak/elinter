@@ -3,6 +3,8 @@
 # Helper script for GitHub Actions which adds annotations to indicate
 # error locations.
 
+set -euo pipefail
+
 # Because this script is run on GitHub Actions, cleanup needs not
 # performed.
 errors="$(mktemp)"
