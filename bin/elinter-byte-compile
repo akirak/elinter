@@ -2,20 +2,23 @@
 
 set -u
 
-unset outdir
-outdir="${ELINTER_COMPILE_OUTDIR}"
+# You can build the package by setting outdir variable.
+# This feature is disabled for now.
 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -o)
-      if [[ $# -gt 1 ]]; then
-        outdir="$2"
-        shift
-      fi
-      ;;
-  esac
-  shift
-done
+# unset outdir
+# outdir="${ELINTER_COMPILE_OUTDIR}"
+
+# while [[ $# -gt 0 ]]; do
+#   case "$1" in
+#     -o)
+#       if [[ $# -gt 1 ]]; then
+#         outdir="$2"
+#         shift
+#       fi
+#       ;;
+#   esac
+#   shift
+# done
 
 result=0
 
@@ -64,6 +67,9 @@ workflow_end_group
 
 set -e
 
+# This script could provide a feature for building a package,
+# but it is disabled for now.
+# See the beginning of this file.
 unset dest
 if [[ $result -eq 0 && -v outdir && -n "${outdir}" ]]; then
   workflow_start_group "Build packages"
