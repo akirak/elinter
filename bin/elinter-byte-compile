@@ -23,6 +23,8 @@ rm -f ./*.elc
 # this repository.
 # The path should be replaced with an absolute path using
 # substituteInPlace function of Nix.
+#
+# shellcheck disable=SC1091
 . 'share/workflow.bash'
 
 # Clean up on exit
