@@ -309,15 +309,16 @@ cleanup_cache() {
 }
 
 copy_package_sources() {
+  local recipe_file
   echo "Linking package source files..."
   mkdir -p "${package_source_root}"
   initialdir="$(pwd)"
   for f in ${recipes[*]}; do
     package=$(basename "$f")
     if [[ "$f" = /* ]]; then
-      recipe="$(cat "$f")"
+      recipe_file="$(readlink -f "$f")"
     else
-      recipe="$(cat "$initialdir/$f")"
+      recipe_file="$(readlink -f "$initialdir/$f")"
     fi
     packages+=("$package")
     src="$initialdir"
@@ -327,7 +328,7 @@ copy_package_sources() {
       rm -rf "$package"
       src=$(nix-instantiate --eval --strict \
               "share/nix/fetchSource.nix" \
-              --argstr recipe "$recipe" | tr -d \")
+              --argstr recipeFile "${recipe_file}" | tr -d \")
     elif [[ -d "$package" ]]; then
       # TODO: Check for updates in the working tree
       echo
@@ -337,7 +338,7 @@ copy_package_sources() {
     fi
     instruction=$(nix-build "share/nix/copySource.nix" \
             --no-out-link --quiet --no-build-output \
-            --argstr recipe "$recipe" --argstr src "$src")
+            --argstr recipeFile "${recipe_file}" --argstr src "$src")
     mkdir "$package"
     cd "${package_source_root}/$package"
     # shellcheck disable=SC1090
@@ -345,7 +346,7 @@ copy_package_sources() {
     echo
     echo "Package: $package"
     # shellcheck disable=SC2001
-    echo "${recipe}" | sed 's/^/> /'
+    sed 's/^/> /' "${recipe_file}"
     echo -n "Files: "
     ls
   done
