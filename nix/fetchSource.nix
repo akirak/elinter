@@ -1,10 +1,10 @@
 { pkgs ? import <nixpkgs> {}
-, recipe
+, recipeFile
 }:
 with builtins;
 with pkgs;
 with (import (import ./sources.nix).nix-elisp-helpers { inherit pkgs; });
-with (parseRecipe recipe);
+with (parseRecipe (readFile recipeFile));
 let
   path = split "/" repo;
   owner = elemAt path 0;

@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {}
 , src
-, recipe
+, recipeFile
 }:
 with builtins;
 with pkgs;
@@ -10,7 +10,7 @@ let
   srcRoot = gitignoreSource (/. + "/${src}");
   package =
     let
-      recipeAttrs = parseRecipe recipe;
+      recipeAttrs = parseRecipe (readFile recipeFile);
       isElisp = file: match ".+\.el" file != null;
       mainFileRegex = "(.*/)?" + recipeAttrs.pname + "\.el";
       isMainFile = file: match mainFileRegex file != null;
