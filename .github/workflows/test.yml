@@ -2,8 +2,10 @@ name: 'Tests'
 on:
   pull_request:
   push:
-    paths:
-      - test/*.*
+    paths-ignore:
+    - '**.org'
+    branches:
+    - master
 jobs:
   test:
     runs-on: ubuntu-latest
