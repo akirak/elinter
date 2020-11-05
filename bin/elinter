@@ -495,7 +495,7 @@ shell_with_packages() {
 run_tests() {
   ansi --blue --bold "Tests"
   local nix_args=()
-  if [[ -n "${cask_file}" ]]; then
+  if [[ -v cask_file ]]; then
     nix_args+=("--argstr" "caskFile" "${cask_file}")
   fi
   if [[ -v nix_packages && ${#nix_packages[*]} -gt 0 ]]; then
