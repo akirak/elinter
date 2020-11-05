@@ -9,8 +9,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nixpkgs_channel:
+        - nixos-20.03-small
+        - nixos-20.09-small
+        - nixos-unstable-small
     steps:
-    - uses: cachix/install-nix-action@v10
+    - uses: cachix/install-nix-action@v12
+      with:
+        nix_path: nixpkgs=channel:${{ matrix.nixpkgs_channel }}
     - uses: actions/checkout@v2
     - run: nix-shell test/shell.nix
     - run: nix-instantiate --eval --strict test/test-recipe-source.nix
