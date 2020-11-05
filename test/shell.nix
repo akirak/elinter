@@ -8,6 +8,9 @@ mkShell {
   ];
 
   shellHook = ''
+    # To make CI pass, prevent error/warning annotations on GitHub Actions
+    export ELINTER_NO_ANNOTATE_GITHUB=1
+
     ${import ./bad-1.nix {}}
 
     export ELINTER_CONFIG_ROOT="$(mktemp -d)"
