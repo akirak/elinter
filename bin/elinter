@@ -616,7 +616,11 @@ fi
 
 # Enable features that are specific to GitHub Actions
 if [[ -v GITHUB_ACTIONS && "${GITHUB_ACTIONS}" = true ]]; then
-  setup_github_workflow_annotations
+  # Allow preventing annotations by setting ELINTER_NO_ANNOTATE_GITHUB
+  # e.g. for testing error cases
+  if [[ ! -v ELINTER_NO_ANNOTATE_GITHUB ]]; then
+    setup_github_workflow_annotations
+  fi
 fi
 
 workflow_end_group
