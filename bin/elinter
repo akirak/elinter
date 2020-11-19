@@ -6,12 +6,16 @@ set -euo pipefail
 # Set the defaults #
 ####################
 
-# Directory for storing cache files
+# Set the directory for storing cache files.
+#
+# This directory contains an image of individual packages.
 if [[ -v ELINTER_CACHE_ROOT ]]; then
   cache_dir="${ELINTER_CACHE_ROOT}"
 else
+  # Set a different cache directory
   case "$OSTYPE" in
     linux-gnu*)
+      # Use the XDG setting if any
       cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/elinter"
       ;;
     darwin*)
@@ -24,14 +28,21 @@ else
   esac
 fi
 
+# Set the configuration for storing configuration files.
+#
+# Configuration files are mostly about Nix, e.g. the lock file
 if [[ -v ELINTER_CONFIG_ROOT ]]; then
   config_dir="${ELINTER_CONFIG_ROOT}"
 else
+  # Fall back to XDG
+  # TODO: Set a user configuration directory for Darwin
   config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/elinter"
 fi
 
+# The current set of Nix packages
 user_nix_sources="${config_dir}/nix/sources.nix"
 
+# Where package source files (actually symlinks) are stored
 package_source_root="${cache_dir}/pkg-src"
 # package_output_root="${cache_dir}/pkg-out"
 
@@ -42,7 +53,7 @@ recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 # Read the command line arguments #
 ###################################
 
-# Initialize variables
+# Initialize variables used inside this script
 op=default_check
 recipes=()
 packages=()
@@ -55,6 +66,8 @@ unset use_cask
 unset cask_file
 unset niv_update
 unset git_hook
+unset packages_installed
+# Configure the linters from the environment variable
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
   # shellcheck disable=SC2206
@@ -186,11 +199,16 @@ done
 # Functions #
 #############
 
+# Print a list of Emacs versions based on EMACS_VERSION environment
+# variable.
+# 
+# You can set the version(s) from outside of this script.
 emacs_versions() {
   # Use dot to indicate the default value
   local version="${EMACS_VERSION:-.}"
   case "$version" in
     min|latest|all)
+      # Run Nix to retrieve a version list from nix-emacs-ci
       nix-instantiate --eval --strict \
                       --arg elispFile "./${PACKAGE_MAIN_FILE}" \
                       --argstr spec "$version" \
@@ -204,6 +222,14 @@ emacs_versions() {
   esac
 }
 
+# Set `emacs` variable to a derivation name in Nix.
+#
+# Given a version name like 25.1, snapshot, or '.' set in
+# `emacs_version` variable, it sets a proper Nix Emacs package name
+# like emacs-25-1 provided by nix-emacs-ci.
+#
+# This function should be called after `emacs_versions` function for
+# each package.
 set_emacs() {
   case "${emacs_version}" in
     ''|.)
@@ -234,6 +260,9 @@ set_emacs() {
   packages_installed=0
 }
 
+# Update the user Nix sources.json
+#
+# Names of the sources should be given as arguments.
 update_niv_sources() {
   local targets=("$@")
 
@@ -262,6 +291,7 @@ update_niv_sources() {
   cd "${initial_dir}"
 }
 
+# Install pre-commit Git hook
 install_git_hook() {
   if ! [[ -d .git ]]; then
     ansi --red --bold \
@@ -285,6 +315,8 @@ install_git_hook() {
   fi
 }
 
+# Discover recipes from `recipes_dir` and set file names in recipes
+# variable.
 discover_recipes() {
   echo "Looking for recipes in ${recipes_dir}..."
   shopt -s nullglob
@@ -308,41 +340,68 @@ cleanup_cache() {
   rm -rf "${package_source_root}"
 }
 
+# Copy package source files to the cache directory.
+#
+# Recipe files should be given in `recipes` variable.
+# 
+# Unless the packages are from remote sources, you should also start
+# from the repository root.
+#
+# This actually creates symlinks to minimize updates on source
+# modification.
+#
+# If files are added/removed, you have to clean the cache.
 copy_package_sources() {
   local recipe_file
   echo "Linking package source files..."
+  # Ensure the root of the package cache
   mkdir -p "${package_source_root}"
   initialdir="$(pwd)"
+  # Operate on each package recipe
   for f in ${recipes[*]}; do
+    # Use the base name of the recipe file as the package name
     package=$(basename "$f")
+    # Convert to an absolute path
     if [[ "$f" = /* ]]; then
       recipe_file="$(readlink -f "$f")"
     else
       recipe_file="$(readlink -f "$initialdir/$f")"
     fi
+    # Add to a list of package names
     packages+=("$package")
     src="$initialdir"
     cd "${package_source_root}"
     if [[ -v remote && $remote = 1 ]]; then
+      # When using remote source
+      #
       # Clean up the source every time
       rm -rf "$package"
       src=$(nix-instantiate --eval --strict \
               "share/nix/fetchSource.nix" \
               --argstr recipeFile "${recipe_file}" | tr -d \")
     elif [[ -d "$package" ]]; then
+      # If there is an existing cache for the package, print the
+      # information and skip linking.
+      # 
+      # You can ensure linking by explicitly purging all existing
+      # package cache.
+      #
       # TODO: Check for updates in the working tree
       echo
       echo "Reusing the previous settings for $package:"
       ls "$package"
       continue
     fi
+    # Generate a script for linking source files using Nix
     instruction=$(nix-build "share/nix/copySource.nix" \
             --no-out-link --quiet --no-build-output \
             --argstr recipeFile "${recipe_file}" --argstr src "$src")
     mkdir "$package"
     cd "${package_source_root}/$package"
+    # Run the script to link source files
     # shellcheck disable=SC1090
     . "$instruction"
+    # Print the information
     echo
     echo "Package: $package"
     # shellcheck disable=SC2001
@@ -350,12 +409,28 @@ copy_package_sources() {
     echo -n "Files: "
     ls
   done
+  # Restore the working directory
   cd "$initialdir"
 }
 
+# Run operation on each package.
+#
+# The operation is given as the arguments to this function.
+
+# Target packages should be given in `packages` variable, and the
+# packages should be already cached. The cache should contain an
+# environment file '.elinter-env' for individual packages.
+#
+# This function is intended for running static linting.
+# For testing, use `shell_with_packages`.
+# 
+# It supports a hook system to alter the behavior.
 for_each_package_sources() {
+  # Errors are allowed inside this function, but the return code will
+  # be set to 1.
   set +e
   local r=0
+  # Track a list of failed packages
   local failed_packages=()
   if [[ ${#packages[*]} -gt 1 ]]; then
     multi_packages=1
@@ -422,15 +497,21 @@ for_each_package_sources() {
   return $r
 }
 
+# Run a command in a linting environment for a specific package.
+#
+# This should be called inside `for_each_package_sources`.
 emacs_dev_shell() {
   "${nix_shell_bin}" "share/nix/emacs.nix" -A shellForCI \
           --arg sources "${user_nix_sources}" \
           --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
-          --argstr enabledLinters "${linters[*]}" \
+          --argstr linters "${linters[*]}" \
           "$@"
 }
 
+# Install Emacs package dependencies for a specific package.
+#
+# This should be called inside `for_each_package_sources`.
 install_package_deps() {
   if ! [[ -v packages_installed && "${packages_installed}" = 1 ]]; then
     workflow_start_group "Install dependencies for the package"
@@ -440,16 +521,25 @@ install_package_deps() {
   fi
 }
 
+# Run static linting on a specific package.
+#
+# This should be called inside `for_each_package_sources`.
 lint_package() {
   install_package_deps
   workflow_with_group "Lint" emacs_dev_shell --run elinter-run-linters
 }
 
+# Byte-compile a package.
+#
+# This should be called inside `for_each_package_sources`.
 compile_package() {
   install_package_deps
   emacs_dev_shell --run elinter-byte-compile
 }
 
+# Run static linting and byte-compile a package.
+#
+# This should be called inside `for_each_package_sources`.
 lint_and_compile_package() {
   local r=0
   lint_package || r=1
@@ -457,6 +547,8 @@ lint_and_compile_package() {
   return $r
 }
 
+# Run a command in an environment where all package sources are
+# available.
 shell_with_packages() {
   local loadpath=()
   local mainfiles=()
@@ -492,6 +584,7 @@ shell_with_packages() {
   return $r
 }
 
+# Run tests based on `test_engine` variable.
 run_tests() {
   ansi --blue --bold "Tests"
   local nix_args=()
@@ -548,6 +641,8 @@ setup_github_workflow_annotations() {
 # Main entry point #
 ####################
 
+# The order matters here, so don't reorder them carelessly.
+
 # Load functions related GitHub Actions from share/workflow.bash in
 # this repository.
 # The path should be replaced with an absolute path using
@@ -600,6 +695,7 @@ if [[ ${#recipes[*]} -eq 0 && ${#packages[*]} -eq 0 ]]; then
   echo
 fi
 
+# Link package sources defined within the recipes
 if [[ ${#recipes[*]} -gt 0 ]]; then
   copy_package_sources
 fi

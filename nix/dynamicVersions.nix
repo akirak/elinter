@@ -1,3 +1,5 @@
+# Generate a list of Emacs versions from a possibly abstract version
+# spec.
 { pkgs ? import <nixpkgs> {}
 , elispFile ? null
 , spec
@@ -7,10 +9,26 @@ with builtins;
 with pkgs;
 let
   emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
-  knownVersions = map (name: lib.replaceStrings [ "-" ] [ "." ] (lib.removePrefix "emacs-" name)) (attrNames emacs-ci);
-  source = readFile elispFile;
-  headers = filter (s: isString s && match ";;+ *Package-Requires: .+" s != null) (split "\n" source);
+
+  attrNameToVersion = name:
+    lib.replaceStrings [ "-" ] [ "." ]
+      (lib.removePrefix "emacs-" name);
+
+  # List of Emacs versions available from nix-emacs-ci
+  knownVersions = map attrNameToVersion (attrNames emacs-ci);
+
+  # Find a Package-Requires library header line
+  #
+  # This is used for determining the minimum Emacs Version of the
+  # package.
+  #
+  # Since only the first line is matched, the Emacs dependency should
+  # appear at the beginning.
+  isPackageLine = s: isString s && match ";;+ *Package-Requires: .+" s != null;
+  headers = filter isPackageLine (split "\n" (readFile elispFile));
   header = if length headers > 0 then head headers else null;
+
+  # Retrieve the minimum version from the header.
   emacsVersionFromHeader =
     if header != null
     then builtins.match ".+\\(emacs \"([.[:digit:]]+)\"\\).+" header
@@ -19,6 +37,9 @@ let
     if length emacsVersionFromHeader > 0
     then head emacsVersionFromHeader
     else null;
+
+  # Retrieve a sorted list of Emacs versions available, including
+  # "snapshot".
   compareEmacsVersions = v1: v2:
     if v1 == "snapshot" then
       true
@@ -27,12 +48,19 @@ let
     else
       compareVersions v1 v2 >= 0;
   descendingVersions = sort compareEmacsVersions knownVersions;
+
+  # The latest stable version is the first entry excluding snapshot.
   latestStable = head (filter (v: v != "snapshot") descendingVersions);
 in
+
 if spec == "min"
-then [ minVersion ]
+then
+  [ minVersion ]
 else if spec == "latest"
-then [ latestStable ]
+then
+  [ latestStable ]
 else if spec == "all"
-then filter (v: compareEmacsVersions v minVersion) descendingVersions
-else throw "unsupported spec"
+then
+  filter (v: compareEmacsVersions v minVersion) descendingVersions
+else
+  throw "unsupported spec"

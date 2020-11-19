@@ -1,3 +1,4 @@
+# Download a remote source based on recipe
 { pkgs ? import <nixpkgs> {}
 , recipeFile
 }:

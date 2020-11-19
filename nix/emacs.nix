@@ -1,22 +1,24 @@
+# An attribute set containing derivations for linting
 { sources ? null
 , # Main file of the package, given as an absolute path string
   mainFile ? null
 , emacs ? "emacs"
-  # String
-, enabledLinters ? null
-  # List of string
-, linters ? if builtins.isList enabledLinters
-  then enabledLinters
-  else builtins.filter builtins.isString (builtins.split " " enabledLinters)
+  # string or list of strings
+, linters
 }:
 with builtins;
 let
   pkgs = import ./pkgsWithEmacsOverlay.nix { inherit sources; };
 
+  lintersAsStrings =
+    if builtins.isList linters
+    then linters
+    else builtins.filter builtins.isString (builtins.split " " linters);
+
   linterPackages = epkgs: import ./linterPackages.nix {
     inherit sources epkgs;
     inherit (pkgs) lib;
-  } linters;
+  } lintersAsStrings;
 
   emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
 

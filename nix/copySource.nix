@@ -1,3 +1,6 @@
+# A helper for copying (actually linking) source files.
+#
+# This generates a shell script for the task.
 { pkgs ? import <nixpkgs> {}
 , src
 , recipeFile
@@ -7,7 +10,12 @@ with pkgs;
 with (import (import ./sources.nix).nix-elisp-helpers { inherit pkgs; });
 with (import (import ./sources.nix).gitignore { inherit (pkgs) lib; });
 let
+  # Filtered source root
   srcRoot = gitignoreSource (/. + "/${src}");
+  # An attrset that describes the elisp package.
+  #
+  # This is just a temporary variable and does not conform to the
+  # standard conventions in Nix.
   package =
     let
       recipeAttrs = parseRecipe (readFile recipeFile);

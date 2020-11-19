@@ -1,3 +1,4 @@
+# nixpkgs with emacs-overlay
 { sources
 }:
 import <nixpkgs> {
