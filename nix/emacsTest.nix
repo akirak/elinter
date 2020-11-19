@@ -1,3 +1,4 @@
+# nix-shell for elisp package testing
 { sources ? null
 , emacs
 , loadPath

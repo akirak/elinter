@@ -1,3 +1,4 @@
+# Git hook for development
 { pkgs ? import <nixpkgs> {}
 }:
 with pkgs;

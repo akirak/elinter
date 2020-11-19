@@ -1,3 +1,4 @@
+# Provide a list of derivations for linter packages
 { sources ? null, epkgs, lib }: linters:
 with builtins;
 let
