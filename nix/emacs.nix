@@ -5,6 +5,8 @@
 , emacs ? "emacs"
   # string or list of strings
 , linters
+, localPackageNames ? ""
+, localPackageRoot ? null
 }:
 with builtins;
 let
@@ -20,6 +22,9 @@ let
     inherit (pkgs) lib;
   } lintersAsStrings;
 
+  localPackageNamesAsStrings =
+    builtins.filter builtins.isString (builtins.split " " localPackageNames);
+
   emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
 
   package =
@@ -27,19 +32,34 @@ let
     then emacs-ci."${emacs}"
     else pkgs."${emacs}";
 
+  parseLib = pkgs.callPackage
+    ((import ./sources.nix).emacs-overlay + "/parse.nix") {};
+
+  # List of package names declared in Package-Requires header in the
+  # main file
+  packageRequires = parseLib.parsePackagesFromPackageRequires
+    (readFile (/. + mainFile));
+
 in
 rec {
-  emacsForCI = pkgs.emacsWithPackagesFromPackageRequires {
-    inherit package;
-    packageElisp = readFile (/. + mainFile);
-    extraEmacsPackages = linterPackages;
-  };
+  emacsForCI = (pkgs.emacsPackagesFor package).emacsWithPackages (
+    epkgs:
+      linterPackages epkgs
+      ++ map (name: epkgs.${name})
+        (pkgs.lib.subtractLists localPackageNamesAsStrings packageRequires)
+  );
 
-  # Shell for linting and testin
+  # Shell for linting and testing
   shellForCI = pkgs.mkShell {
     buildInputs = [
       emacsForCI
     ];
+
+    EMACSLOADPATH = pkgs.lib.concatMapStrings
+      (name: "${localPackageRoot}/${name}:")
+      (
+        pkgs.lib.intersectLists localPackageNamesAsStrings packageRequires
+      );
   };
 
   # Used for file linter
