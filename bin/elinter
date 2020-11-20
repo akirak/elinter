@@ -506,6 +506,8 @@ emacs_dev_shell() {
           --argstr emacs "$emacs" \
           --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
           --argstr linters "${linters[*]}" \
+          --argstr localPackageNames "${packages[*]}" \
+          --argstr localPackageRoot "${package_source_root}" \
           "$@"
 }
 
