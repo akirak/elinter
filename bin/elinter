@@ -397,7 +397,7 @@ copy_package_sources() {
 # environment file '.elinter-env' for individual packages.
 #
 # This function is intended for running static linting.
-# For testing, use `shell_with_packages`.
+# For testing, use `shell_with_all_packages`.
 # 
 # It supports a hook system to alter the behavior.
 for_each_package_and_version() {
@@ -424,20 +424,21 @@ for_each_package_and_version() {
 
     cd "${package_source_root}/$package"
     workflow_start_group "Install dependencies for the package"
-    emacs_dev_shell --argstr target "$package"
+    emacs_dev_shell_for_lint --argstr target "$package"
+
     workflow_end_group
 
     for action in "$@"; do
       if ! case "$action" in
         lint)
           workflow_with_group "Lint" \
-                              emacs_dev_shell \
+                              emacs_dev_shell_for_lint \
                               --argstr target "$package" \
                               --argstr command elinter-run-linters
           ;;
         compile)
-          emacs_dev_shell --argstr target "$package" \
-                          --argstr command elinter-byte-compile
+          emacs_dev_shell_for_lint --argstr target "$package" \
+                                   --argstr command elinter-byte-compile
           ;;
         *)
           ansi --red --bold "ERROR: Unsupported package action $action" >&2
@@ -484,12 +485,24 @@ for_each_package_and_version() {
 #
 # This should be called inside `for_each_package_sources`.
 emacs_dev_shell() {
-  "${ELINTER_NIX_SHELL}" "share/nix/driver.nix" -A lint \
+  "${ELINTER_NIX_SHELL}" "share/nix/driver.nix" \
                      --arg pkgRoot "${package_source_root}" \
-                     --argstr linters "${linters[*]}" \
                      --argstr emacsVersions "${EMACS_VERSION:-latest}" \
                      "$@" \
                      --run exit
+}
+
+emacs_dev_shell_for_lint() {
+  emacs_dev_shell "-A" lint --argstr linters "${linters[*]}" "$@"
+}
+
+emacs_dev_shell_for_test() {
+  local nix_args=()
+  if [[ -v cask_file ]]; then
+    nix_args+=("--argstr" "caskFile" "${cask_file}")
+  fi
+  # shellcheck disable=SC2086
+  emacs_dev_shell -A test ${nix_args[*]} "$@"
 }
 
 # Install Emacs package dependencies for a specific package.
@@ -506,7 +519,7 @@ install_package_deps() {
 
 # Run a command in an environment where all package sources are
 # available.
-shell_with_packages() {
+shell_with_all_packages() {
   local loadpath=()
   local mainfiles=()
   initialdir="$PWD"
@@ -543,26 +556,18 @@ shell_with_packages() {
 
 # Run tests based on `test_engine` variable.
 run_tests() {
-  ansi --blue --bold "Tests"
-  local nix_args=()
-  if [[ -v cask_file ]]; then
-    nix_args+=("--argstr" "caskFile" "${cask_file}")
-  fi
+  ansi --blue --bold "Tests: ${test_engine}"
   case "${test_engine}" in
     buttercup)
-      # shellcheck disable=SC2086
-      shell_with_packages \
-        ${nix_args[*]} \
+      emacs_dev_shell_for_test \
         --arg extraPackReqs '["buttercup"]' \
         --arg extraBuildInputs "import share/nix/buttercup.nix" \
-        --run "buttercup $*"
+        --argstr command "buttercup $*"
       ;;
     ert-runner)
-      # shellcheck disable=SC2086
-      shell_with_packages \
-        ${nix_args[*]} \
+      emacs_dev_shell_for_test \
         --arg extraPackReqs '["ert-runner"]' \
-        --run "emacs -Q --batch -l ert-runner"
+        --argstr command "emacs -Q --batch -l ert-runner"
       ;;
     ert)
       # Extra arguments passed to elinter command are loaded in the
@@ -572,10 +577,8 @@ run_tests() {
         emacs_args+=("-l" "$arg")
       done
       # ert is a built-in package, so extraPackReqs is unnecessary
-      # shellcheck disable=SC2086
-      shell_with_packages \
-        ${nix_args[*]} \
-        --run "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
+      emacs_dev_shell_for_test \
+        --argstr command "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
       ;;
   esac
 }
@@ -701,9 +704,9 @@ case "$op" in
     ;;
   shell)
     if [[ $# -eq 0 ]]; then
-      shell_with_packages
+      shell_with_all_packages
     else
-      shell_with_packages --command "$*"
+      shell_with_all_packages --command "$*"
     fi
     ;;
   *)

@@ -134,6 +134,9 @@ let
   emacsVersionsSince = minVersion:
     filter (v: compareEmacsVersions v minVersion) descendingEmacsVersions;
 
+  maxEmacsVersion = versions:
+    head (sort compareEmacsVersions versions);
+
   # Find a Package-Requires library header line
   #
   # This is used for determining the minimum Emacs Version of the
@@ -172,5 +175,6 @@ in
   inherit latestStableEmacsVersion;
   inherit descendingEmacsVersions;
   inherit emacsVersionsSince;
+  inherit maxEmacsVersion;
   inherit excludeBuiltinElispPackages;
 }
