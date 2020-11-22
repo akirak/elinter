@@ -5,6 +5,8 @@
 with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 let
+  elinterLib = import ./nix/lib.nix;
+
   linters = [
     "checkdoc"
     "check-declare"
@@ -34,10 +36,14 @@ let
   file-linter =
     let
       emacsForLint = (
-        import ./nix/emacs.nix {
-          inherit linters;
+        import ./nix/emacsForCI.nix {
+          version = elinterLib.latestStableEmacsVersion;
+          elispPackages =
+            elinterLib.excludeBuiltinElispPackages linters
+            ++ [ "package-build" ];
+          libNix = ./nix/lib.nix;
         }
-      ).emacsForLint;
+      ).package;
     in
       runCommandNoCC "elinter-file-linter" {
         propagateBuildInputs = [

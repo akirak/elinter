@@ -157,6 +157,11 @@ let
       assert (length versions > 0);
       head versions;
 
+  builtinPackages = [ "checkdoc" "check-declare" ];
+
+  excludeBuiltinElispPackages =
+    filter (name: ! (elem name builtinPackages));
+
 in
 {
   inherit packageDependenciesFromCask;
@@ -167,4 +172,5 @@ in
   inherit latestStableEmacsVersion;
   inherit descendingEmacsVersions;
   inherit emacsVersionsSince;
+  inherit excludeBuiltinElispPackages;
 }

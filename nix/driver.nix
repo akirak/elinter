@@ -28,13 +28,10 @@ let
     then linters
     else filter isString (builtins.split " " linters);
 
-  builtinPackages = [ "checkdoc" "check-declare" ];
-
   # Some linters are shipped with Emacs.
   # Transform to a list of package names.
   linterPackages =
-    filter (name: ! (elem name builtinPackages))
-      lintersAsStrings;
+    elinterLib.excludeBuiltinElispPackages lintersAsStrings;
 
   localPackageNames = getDirectoryDirs pkgRootAsPath;
 
@@ -149,7 +146,6 @@ in
             # Skip the following versions if any error occurs
             break
           fi
-          echo
         fi
       done
 
