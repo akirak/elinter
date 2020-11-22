@@ -40,7 +40,6 @@ recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 op=default_check
 recipes=()
 packages=()
-nix_packages=()
 unset cleanup
 unset remote
 unset test_engine
@@ -83,7 +82,6 @@ Options:
   -r             Fetch the source code from a remote server
   --cask         Detect Cask file and use packages defined in it (default)
   --no-cask      Don't use cask file
-  --from-nixpkgs Nix packages added to buildInputs for tests (comma-separated)
   -u|--update    Update Nix dependencies (e.g. emacs-overlay)
   -g             Install pre-commit Git hook
   -V, --version  Show version
@@ -147,11 +145,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-cask)
       use_cask=0
-      ;;
-    --from-nixpkgs)
-      # shellcheck disable=SC2086,SC2206
-      nix_packages=(${2/,/ })
-      shift
       ;;
     -u|--update)
       niv_update=(emacs-overlay nix-emacs-ci melpazoid)
@@ -574,9 +567,6 @@ run_tests() {
   local nix_args=()
   if [[ -v cask_file ]]; then
     nix_args+=("--argstr" "caskFile" "${cask_file}")
-  fi
-  if [[ -v nix_packages && ${#nix_packages[*]} -gt 0 ]]; then
-    nix_args+=("--argstr" "extraBuildInputsFromNixPkgs" "${nix_packages[*]}")
   fi
   case "${test_engine}" in
     buttercup)

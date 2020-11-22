@@ -5,7 +5,6 @@
 , caskFile ? null
 , extraPackReqs ? []
 , extraBuildInputs ? (_: [])
-, extraBuildInputsFromNixPkgs ? []
 }:
 with builtins;
 let
@@ -24,18 +23,6 @@ let
       unquotedMainFiles
   );
 
-  normalizedNixBuildInputs =
-    if isString extraBuildInputsFromNixPkgs && extraBuildInputsFromNixPkgs != ""
-    then filter isString (split " " extraBuildInputsFromNixPkgs)
-    else if isList extraBuildInputsFromNixPkgs
-    then extraBuildInputsFromNixPkgs
-    else throw "extraBuildInputsFromNixPkgs must be either a string or a list";
-
-  derivationFromNixPkgName = name:
-    lib.attrByPath (filter isString (split "\\." name))
-      (throw ("Cannot find a derivation in the nixpkgs: " + name))
-      pkgs;
-
 in
 mkShell {
   buildInputs = [
@@ -46,8 +33,7 @@ mkShell {
       }
     )
   ]
-  ++ (extraBuildInputs { inherit pkgs; })
-  ++ (map derivationFromNixPkgName normalizedNixBuildInputs);
+  ++ (extraBuildInputs { inherit pkgs; });
 
   # Environment variables
   EMACSLOADPATH = concatStringsSep ":" (splitQuotedString loadPath) + ":";
