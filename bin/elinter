@@ -404,7 +404,7 @@ for_each_package_and_version() {
   # Errors are allowed inside this function, but the return code will
   # be set to 1.
   set +e
-  local r=0
+  local r
   # Track a list of failed packages
   local failed_packages=()
   if [[ ${#packages[*]} -gt 1 ]]; then
@@ -413,6 +413,8 @@ for_each_package_and_version() {
     multi_packages=0
   fi
   for package in ${packages[*]}; do
+    r=0
+
     # shellcheck disable=SC2157
     if [[ -v ELINTER_BEFORE_PACKAGE_HOOK && -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
       ${ELINTER_BEFORE_PACKAGE_HOOK}
@@ -465,7 +467,7 @@ for_each_package_and_version() {
     # Insert an empty line between packages
     gh_workflow_p && echo
   done
-  if [[ $r -eq 0 ]]; then
+  if [[ ${#failed_packages[*]} -eq 0 ]]; then
     ansi --green "All checks were successful."
   else
     ansi --red "Some checks failed."
