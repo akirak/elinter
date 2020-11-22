@@ -23,10 +23,14 @@ let
   share = runCommandNoCC "elinter-share"
     {
       inherit src;
+      preferLocalBuild = true;
     }
     ''
       mkdir -p $out/share/elinter
       cp -r -t $out/share/elinter $src/share/*.* $src/nix
+
+      substituteInPlace $out/share/elinter/nix/lib.nix \
+        --replace './sources.nix' "$out/share/elinter/nix/sources.nix"
     '';
 
   # Alternative interface which receives files as arguments and run
@@ -46,6 +50,8 @@ let
       ).package;
     in
       runCommandNoCC "elinter-file-linter" {
+        preferLocalBuild = true;
+
         propagateBuildInputs = [
           emacsForLint
           share
@@ -66,6 +72,7 @@ let
         '';
 
   runners = runCommandNoCC "elinter-linters" {
+    preferLocalBuild = true;
     inherit src;
     buildInputs = [
       makeWrapper
@@ -98,6 +105,7 @@ let
   main = symlinkJoin rec {
     name = "elinter";
     version = "0";
+    preferLocalBuild = true;
     paths = [
       share
     ];
