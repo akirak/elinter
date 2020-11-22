@@ -135,10 +135,6 @@ in
     shellHook = ''
       . ${sources.ansi}/ansi
  
-      if [[ -v ELINTER_BEFORE_PACKAGE_HOOK && -n "''${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
-        ''${ELINTER_BEFORE_PACKAGE_HOOK}
-      fi
-
       set +e
       r=0
       for version in ${toBashList concreteEmacsVersions}; do
@@ -156,23 +152,6 @@ in
           echo
         fi
       done
-      set -e
-
-      if [[ $r -eq 0 ]]; then
-        if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "''${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
-          ''${ELINTER_PACKAGE_SUCCESS_HOOK}
-        fi
-      else
-        ansi --red "Package ${target} failed on some checks."
-        if [[ -v ELINTER_PACKAGE_FAILURE_HOOK && -n "''${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
-          ''${ELINTER_PACKAGE_FAILURE_HOOK}
-        fi
-      fi
-
-      if [[ -v ELINTER_AFTER_PACKAGE_HOOK && -n "''${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
-        # shellcheck disable=SC2090
-        ''${ELINTER_AFTER_PACKAGE_HOOK}
-      fi
 
       exit $r
     '';

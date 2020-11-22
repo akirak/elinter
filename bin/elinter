@@ -413,6 +413,13 @@ for_each_package_and_version() {
     multi_packages=0
   fi
   for package in ${packages[*]}; do
+    # shellcheck disable=SC2157
+    if [[ -v ELINTER_BEFORE_PACKAGE_HOOK && -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
+      ${ELINTER_BEFORE_PACKAGE_HOOK}
+    fi
+
+    ansi --blue --bold "On package $package:"
+
     cd "${package_source_root}/$package"
     workflow_start_group "Install dependencies for the package"
     emacs_dev_shell --argstr target "$package"
@@ -437,6 +444,22 @@ for_each_package_and_version() {
       esac; then
         r=1
         failed_packages+=("$package")
+      fi
+
+      if [[ $r -eq 0 ]]; then
+        if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
+          ${ELINTER_PACKAGE_SUCCESS_HOOK}
+        fi
+      else
+        ansi --red "Package $package failed on some checks."
+        if [[ -v ELINTER_PACKAGE_FAILURE_HOOK && -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
+          ${ELINTER_PACKAGE_FAILURE_HOOK}
+        fi
+      fi
+
+      if [[ -v ELINTER_AFTER_PACKAGE_HOOK && -n "${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
+        # shellcheck disable=SC2090
+        ${ELINTER_AFTER_PACKAGE_HOOK}
       fi
     done
     # Insert an empty line between packages
