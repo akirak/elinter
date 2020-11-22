@@ -1,7 +1,4 @@
 { pkgs ? import <nixpkgs> {}
-  # Path to sources.nix specifying dependencies.
-  # Applicable only to file-linter for now.
-, sources ? import ./nix/userSources.nix
   # Whether to turn on experimental checks using melpazoid.
 , useMelpazoid ? false
 }:
@@ -38,7 +35,7 @@ let
     let
       emacsForLint = (
         import ./nix/emacs.nix {
-          inherit sources linters;
+          inherit linters;
         }
       ).emacsForLint;
     in

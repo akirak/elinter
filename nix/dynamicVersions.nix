@@ -3,12 +3,13 @@
 { pkgs ? import <nixpkgs> {}
 , elispFile ? null
 , spec
-, sources
 }:
 with builtins;
 with pkgs;
 let
-  emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
+  elinterLib = import ./lib.nix;
+
+  emacs-ci = import (elinterLib.sourceWithFallback "nix-emacs-ci");
 
   attrNameToVersion = name:
     lib.replaceStrings [ "-" ] [ "." ]

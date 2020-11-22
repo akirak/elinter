@@ -212,7 +212,6 @@ emacs_versions() {
       nix-instantiate --eval --strict \
                       --arg elispFile "./${PACKAGE_MAIN_FILE}" \
                       --argstr spec "$version" \
-                      --arg sources "${user_nix_sources}" \
                       "share/nix/dynamicVersions.nix" \
         | tr '"[]' '   '
       ;;

@@ -1,6 +1,5 @@
 # nix-shell for elisp package testing
-{ sources ? null
-, emacs
+{ emacs
 , loadPath
 , mainFiles
 , caskFile ? null
@@ -9,55 +8,21 @@
 , extraBuildInputsFromNixPkgs ? []
 }:
 with builtins;
-with (import ./pkgsWithEmacsOverlay.nix { inherit sources; });
 let
-  parseQuotedStrings = str:
-    let
-      m = match "'([^']+)'( +(.+))?" str;
-      first = elemAt m 0;
-      rest = elemAt m 2;
-    in
-      if m == null
-      then []
-      else [ first ] ++ (
-        if rest == null
-        then []
-        else parseQuotedStrings rest
-      );
+  elinterLib = import ./lib.nix;
 
-  parseLib = pkgs.callPackage
-    ((import ./sources.nix).emacs-overlay + "/parse.nix") {};
-
-  parseReqs = file:
-    parseLib.parsePackagesFromPackageRequires (readFile (/. + file));
-
-  helpers = (import (import ./sources.nix).nix-elisp-helpers { inherit pkgs; });
-
-  caskPackage = helpers.parseCask (readFile (/. + caskFile));
+  unquotedMainFiles = map (pathStr: /. + pathStr) (elinterLib.splitQuotedString mainFiles);
 
   caskReqs =
     if isString caskFile && caskFile != ""
-    then map head (
-      (caskPackage.dependencies or []) ++ ((caskPackage.development or {}).dependencies or [])
-    )
+    then elinterLib.packageDependenciesFromCask (readFile (/. + caskFile))
     else [];
 
-  reqs = lib.flatten (map parseReqs (parseQuotedStrings mainFiles));
-
-  emacs-ci = import (import ./sourceWithFallback.nix sources "nix-emacs-ci");
-
-  package =
-    if match "emacs-.+" emacs != null
-    then emacs-ci."${emacs}"
-    else pkgs."${emacs}";
-
-  emacsWithDependencies =
-    (emacsPackagesFor package).emacsWithPackages (
-      epkgs:
-        map (name: epkgs.${name}) (lib.unique (reqs ++ caskReqs ++ extraPackReqs))
-    );
-
-  loadPathString = concatStringsSep ":" (parseQuotedStrings loadPath) + ":";
+  reqs = lib.flatten (
+    map
+      (file: elinterLib.packageDependenciesFromMainSource (readFile file))
+      unquotedMainFiles
+  );
 
   normalizedNixBuildInputs =
     if isString extraBuildInputsFromNixPkgs && extraBuildInputsFromNixPkgs != ""
@@ -71,17 +36,19 @@ let
       (throw ("Cannot find a derivation in the nixpkgs: " + name))
       pkgs;
 
-  otherBuildInputs =
-    (extraBuildInputs { inherit pkgs; })
-    ++ map derivationFromNixPkgName normalizedNixBuildInputs;
-
 in
 mkShell {
   buildInputs = [
-    emacsWithDependencies
-  ] ++ otherBuildInputs;
+    (
+      elinterLib.emacsDerivation {
+        inherit emacs;
+        dependencies = lib.unique (reqs ++ caskReqs ++ extraPackReqs);
+      }
+    )
+  ]
+  ++ (extraBuildInputs { inherit pkgs; })
+  ++ (map derivationFromNixPkgName normalizedNixBuildInputs);
 
-  shellHook = ''
-    export EMACSLOADPATH="${loadPathString}"
-  '';
+  # Environment variables
+  EMACSLOADPATH = concatStringsSep ":" (splitQuotedString loadPath) + ":";
 }
