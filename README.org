@@ -41,7 +41,7 @@ This project is designed with the following goals in mind:
 - Allow ease of setup for new projects and ease of migration for existing projects, e.g. from Cask
 - Minimal configuration and minimal maintenance
 - Can be integrated into the PR workflow of MELPA
-** Planned features [69%]
+** Planned features [72%]
 The following is a list of features that should be supported by this project.
 Maybe I'll announce this project officially when the progress reaches around 80%.
 
@@ -72,7 +72,7 @@ Testing:
 Target project types:
 
 - [X] Multi-file packages
-- [ ] Multi-package repositories
+- [X] Multi-package repositories
 - [ ] Source files in subdirectories
 - [ ] Native dependencies
 
