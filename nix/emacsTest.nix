@@ -4,6 +4,7 @@
 , mainFiles
 , caskFile ? null
 , extraPackReqs ? []
+  # Used for installing executables at runtime, e.g. buttercup
 , extraBuildInputs ? (_: [])
 }:
 with builtins;
