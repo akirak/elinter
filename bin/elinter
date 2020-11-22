@@ -561,8 +561,16 @@ run_tests() {
     buttercup)
       emacs_dev_shell_for_test \
         --arg extraPackReqs '["buttercup"]' \
-        --arg extraBuildInputs "import share/nix/buttercup.nix" \
-        --argstr command "buttercup $*"
+        --argstr command "emacs -Q --batch -l buttercup -f buttercup-run-discover $PWD"
+      # Below it the ideal way to run buttercup, but it fails due to
+      # missing site-start.el.
+      #
+      # Actually, site-start.el doesn't exist in the Emacs derivation,
+      # so -Q option is necessary.
+      # I will need a further investigation.
+      #
+      # --arg extraBuildInputs "import share/nix/buttercup.nix" \
+        # --argstr command "buttercup $PWD"
       ;;
     ert-runner)
       emacs_dev_shell_for_test \
