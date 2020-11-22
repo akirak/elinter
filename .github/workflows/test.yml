@@ -25,4 +25,3 @@ jobs:
         cachix use emacs-ci
     - uses: actions/checkout@v2
     - run: nix-shell test/shell.nix
-    - run: nix-instantiate --eval --strict test/test-recipe-source.nix

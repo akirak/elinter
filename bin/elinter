@@ -9,24 +9,7 @@ set -euo pipefail
 # Set the directory for storing cache files.
 #
 # This directory contains an image of individual packages.
-if [[ -v ELINTER_CACHE_ROOT ]]; then
-  cache_dir="${ELINTER_CACHE_ROOT}"
-else
-  # Set a different cache directory
-  case "$OSTYPE" in
-    linux-gnu*)
-      # Use the XDG setting if any
-      cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/elinter"
-      ;;
-    darwin*)
-      cache_dir="$HOME/Library/Caches/elinter"
-      ;;
-    *)
-      echo "Unsupported ostype: $OSTYPE" >&2
-      exit 1
-      ;;
-  esac
-fi
+cache_dir="$PWD/.elinter-cache"
 
 # Set the configuration for storing configuration files.
 #
@@ -43,7 +26,7 @@ fi
 user_nix_sources="${config_dir}/nix/sources.nix"
 
 # Where package source files (actually symlinks) are stored
-package_source_root="${cache_dir}/pkg-src"
+package_source_root="${cache_dir}/pkg"
 # package_output_root="${cache_dir}/pkg-out"
 
 # Directory containing recipes
@@ -57,7 +40,6 @@ recipes_dir=${ELINTER_RECIPES_DIR:-.recipes}
 op=default_check
 recipes=()
 packages=()
-nix_packages=()
 unset cleanup
 unset remote
 unset test_engine
@@ -66,7 +48,6 @@ unset use_cask
 unset cask_file
 unset niv_update
 unset git_hook
-unset packages_installed
 # Configure the linters from the environment variable
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
@@ -100,7 +81,6 @@ Options:
   -r             Fetch the source code from a remote server
   --cask         Detect Cask file and use packages defined in it (default)
   --no-cask      Don't use cask file
-  --from-nixpkgs Nix packages added to buildInputs for tests (comma-separated)
   -u|--update    Update Nix dependencies (e.g. emacs-overlay)
   -g             Install pre-commit Git hook
   -V, --version  Show version
@@ -165,11 +145,6 @@ while [[ $# -gt 0 ]]; do
     --no-cask)
       use_cask=0
       ;;
-    --from-nixpkgs)
-      # shellcheck disable=SC2086,SC2206
-      nix_packages=(${2/,/ })
-      shift
-      ;;
     -u|--update)
       niv_update=(emacs-overlay nix-emacs-ci melpazoid)
       ;;
@@ -198,67 +173,6 @@ done
 #############
 # Functions #
 #############
-
-# Print a list of Emacs versions based on EMACS_VERSION environment
-# variable.
-# 
-# You can set the version(s) from outside of this script.
-emacs_versions() {
-  # Use dot to indicate the default value
-  local version="${EMACS_VERSION:-.}"
-  case "$version" in
-    min|latest|all)
-      # Run Nix to retrieve a version list from nix-emacs-ci
-      nix-instantiate --eval --strict \
-                      --arg elispFile "./${PACKAGE_MAIN_FILE}" \
-                      --argstr spec "$version" \
-                      --arg sources "${user_nix_sources}" \
-                      "share/nix/dynamicVersions.nix" \
-        | tr '"[]' '   '
-      ;;
-    *)
-      echo "$version"
-      ;;
-  esac
-}
-
-# Set `emacs` variable to a derivation name in Nix.
-#
-# Given a version name like 25.1, snapshot, or '.' set in
-# `emacs_version` variable, it sets a proper Nix Emacs package name
-# like emacs-25-1 provided by nix-emacs-ci.
-#
-# This function should be called after `emacs_versions` function for
-# each package.
-set_emacs() {
-  case "${emacs_version}" in
-    ''|.)
-      emacs=emacs
-      return
-      ;;
-    snapshot)
-      emacs="emacs-snapshot"
-      ;;
-    *)
-      if [[ "${emacs_version}" =~ ^([[:digit:]]+)\.([[:digit:]])$ ]]; then
-        # Skip linting if the Emacs major version is 24.3 or before
-        local major=${BASH_REMATCH[1]}
-        local minor=${BASH_REMATCH[2]}
-        if [[ $major -lt 24 || ( $major -eq 24 && $minor -le 3 ) ]]; then
-          echo "WARN: Sorry, elinter supports only Emacs 24.4 and later. Skipping" >&2
-          return 1
-        fi
-        emacs="emacs-${emacs_version/./-}"
-      else
-        echo "Unsupported Emacs version: ${emacs_version}" >&2
-        exit 1
-      fi
-      ;;
-  esac
-  ansi --yellow "Using $emacs"
-  # Reset the installation state when the Emacs version changes
-  packages_installed=0
-}
 
 # Update the user Nix sources.json
 #
@@ -337,7 +251,7 @@ discover_recipes() {
 
 cleanup_cache() {
   echo "Cleaning up the cache directory..."
-  rm -rf "${package_source_root}"
+  rm -rf "${cache_dir}"
 }
 
 # Copy package source files to the cache directory.
@@ -422,14 +336,14 @@ copy_package_sources() {
 # environment file '.elinter-env' for individual packages.
 #
 # This function is intended for running static linting.
-# For testing, use `shell_with_packages`.
+# For testing, use `shell_with_all_packages`.
 # 
 # It supports a hook system to alter the behavior.
-for_each_package_sources() {
+for_each_package_and_version() {
   # Errors are allowed inside this function, but the return code will
   # be set to 1.
   set +e
-  local r=0
+  local r
   # Track a list of failed packages
   local failed_packages=()
   if [[ ${#packages[*]} -gt 1 ]]; then
@@ -438,55 +352,64 @@ for_each_package_sources() {
     multi_packages=0
   fi
   for package in ${packages[*]}; do
-    # Fork a subshell to isolate the environment, e.g. variables
-    if ! (
-      r=0
-      cd "${package_source_root}/$package"
-      # shellcheck disable=SC1091
-      source .elinter-env
+    r=0
 
-      if [[ -v ELINTER_BEFORE_PACKAGE_HOOK && -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
-        ${ELINTER_BEFORE_PACKAGE_HOOK}
-      fi
-
-      ansi --blue --bold "On package ${PACKAGE_NAME}:"
-      for emacs_version in $(emacs_versions); do
-        if ! set_emacs; then
-          break
-        fi
-        # shellcheck disable=SC2048
-        if ! $*; then
-          r=1
-          # Skip the following versions if any error occurs
-          break
-        fi
-      done
-
-      if [[ $r -eq 0 ]]; then
-        if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
-          ${ELINTER_PACKAGE_SUCCESS_HOOK}
-        fi
-      else
-        ansi --red "Package $package failed on some checks."
-        if [[ -v ELINTER_PACKAGE_FAILURE_HOOK && -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
-          ${ELINTER_PACKAGE_FAILURE_HOOK}
-        fi
-      fi
-
-      if [[ -v ELINTER_AFTER_PACKAGE_HOOK && -n "${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
-        # shellcheck disable=SC2090
-        ${ELINTER_AFTER_PACKAGE_HOOK}
-      fi
-
-      exit $r
-      ); then
-      r=1
-      failed_packages+=("$package")
+    # shellcheck disable=SC2157
+    if [[ -v ELINTER_BEFORE_PACKAGE_HOOK && -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
+      ${ELINTER_BEFORE_PACKAGE_HOOK}
     fi
+
+    ansi --blue --bold "On package $package:"
+
+    cd "${package_source_root}/$package"
+    workflow_start_group "Install dependencies for the package"
+    emacs_dev_shell_for_lint --argstr target "$package"
+
+    workflow_end_group
+
+    for action in "$@"; do
+      if ! case "$action" in
+        lint)
+          workflow_with_group "Lint" \
+                              emacs_dev_shell_for_lint \
+                              --argstr target "$package" \
+                              --argstr command elinter-run-linters
+          ;;
+        compile)
+          emacs_dev_shell_for_lint --argstr target "$package" \
+                                   --argstr command elinter-byte-compile
+          ;;
+        *)
+          ansi --red --bold "ERROR: Unsupported package action $action" >&2
+          exit 1
+          ;;
+      esac; then
+        r=1
+        failed_packages+=("$package")
+      fi
+    done
+
+    if [[ $r -eq 0 ]]; then
+      if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
+        ${ELINTER_PACKAGE_SUCCESS_HOOK}
+      fi
+    else
+      ansi --red "Package $package failed on some checks."
+      echo
+      if [[ -v ELINTER_PACKAGE_FAILURE_HOOK && -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
+        ${ELINTER_PACKAGE_FAILURE_HOOK}
+      fi
+    fi
+
+    if [[ -v ELINTER_AFTER_PACKAGE_HOOK && -n "${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
+      # shellcheck disable=SC2090
+      ${ELINTER_AFTER_PACKAGE_HOOK}
+    fi
+
     # Insert an empty line between packages
     gh_workflow_p && echo
   done
-  if [[ $r -eq 0 ]]; then
+  if [[ ${#failed_packages[*]} -eq 0 ]]; then
     ansi --green "All checks were successful."
   else
     ansi --red "Some checks failed."
@@ -501,116 +424,48 @@ for_each_package_sources() {
 #
 # This should be called inside `for_each_package_sources`.
 emacs_dev_shell() {
-  "${nix_shell_bin}" "share/nix/emacs.nix" -A shellForCI \
-          --arg sources "${user_nix_sources}" \
-          --argstr emacs "$emacs" \
-          --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
-          --argstr linters "${linters[*]}" \
-          --argstr localPackageNames "${packages[*]}" \
-          --argstr localPackageRoot "${package_source_root}" \
-          "$@"
+  "${ELINTER_NIX_SHELL}" "share/nix/driver.nix" \
+                     --arg pkgRoot "${package_source_root}" \
+                     --argstr emacsVersions "${EMACS_VERSION:-latest}" \
+                     "$@" \
+                     --run exit
 }
 
-# Install Emacs package dependencies for a specific package.
-#
-# This should be called inside `for_each_package_sources`.
-install_package_deps() {
-  if ! [[ -v packages_installed && "${packages_installed}" = 1 ]]; then
-    workflow_start_group "Install dependencies for the package"
-    emacs_dev_shell --run exit
-    workflow_end_group
-    packages_installed=1
-  fi
+emacs_dev_shell_for_lint() {
+  emacs_dev_shell "-A" lint --argstr linters "${linters[*]}" "$@"
 }
 
-# Run static linting on a specific package.
-#
-# This should be called inside `for_each_package_sources`.
-lint_package() {
-  install_package_deps
-  workflow_with_group "Lint" emacs_dev_shell --run elinter-run-linters
-}
-
-# Byte-compile a package.
-#
-# This should be called inside `for_each_package_sources`.
-compile_package() {
-  install_package_deps
-  emacs_dev_shell --run elinter-byte-compile
-}
-
-# Run static linting and byte-compile a package.
-#
-# This should be called inside `for_each_package_sources`.
-lint_and_compile_package() {
-  local r=0
-  lint_package || r=1
-  compile_package || r=1
-  return $r
-}
-
-# Run a command in an environment where all package sources are
-# available.
-shell_with_packages() {
-  local loadpath=()
-  local mainfiles=()
-  initialdir="$PWD"
-  for package in ${packages[*]}; do
-    unset PACKAGE_NAME
-    unset PACKAGE_FILES
-    unset PACKAGE_ELISP_FILES
-    unset PACKAGE_MAIN_FILE
-    cd "${package_source_root}/$package"
-    # shellcheck disable=SC1091
-    source .elinter-env
-    loadpath+=("$PWD")
-    mainfiles+=("$(readlink -e "${PACKAGE_MAIN_FILE}")")
-  done
-  cd "$initialdir"
-  local r=0
-  for emacs_version in $(emacs_versions); do
-    if ! set_emacs; then
-      break
-    fi
-    # shellcheck disable=SC2048
-    if ! "${nix_shell_bin}" "share/nix/emacsTest.nix" \
-          --argstr emacs "$emacs" \
-          --argstr loadPath "${loadpath[*]@Q}" \
-          --argstr mainFiles "${mainfiles[*]@Q}" \
-          "$@"; then
-      r=1
-      # Skip the following versions if any error occurs
-      break
-    fi
-  done
-  return $r
-}
-
-# Run tests based on `test_engine` variable.
-run_tests() {
-  ansi --blue --bold "Tests"
+emacs_dev_shell_for_test() {
   local nix_args=()
   if [[ -v cask_file ]]; then
     nix_args+=("--argstr" "caskFile" "${cask_file}")
   fi
-  if [[ -v nix_packages && ${#nix_packages[*]} -gt 0 ]]; then
-    nix_args+=("--argstr" "extraBuildInputsFromNixPkgs" "${nix_packages[*]}")
-  fi
+  # shellcheck disable=SC2086
+  emacs_dev_shell -A test ${nix_args[*]} "$@"
+}
+
+# Run tests based on `test_engine` variable.
+run_tests() {
+  ansi --blue --bold "Tests: ${test_engine}"
   case "${test_engine}" in
     buttercup)
-      # shellcheck disable=SC2086
-      shell_with_packages \
-        ${nix_args[*]} \
+      emacs_dev_shell_for_test \
         --arg extraPackReqs '["buttercup"]' \
-        --arg extraBuildInputs "import share/nix/buttercup.nix" \
-        --run "buttercup $*"
+        --argstr command "emacs -Q --batch -l buttercup -f buttercup-run-discover $PWD"
+      # Below it the ideal way to run buttercup, but it fails due to
+      # missing site-start.el.
+      #
+      # Actually, site-start.el doesn't exist in the Emacs derivation,
+      # so -Q option is necessary.
+      # I will need a further investigation.
+      #
+      # --arg extraBuildInputs "import share/nix/buttercup.nix" \
+        # --argstr command "buttercup $PWD"
       ;;
     ert-runner)
-      # shellcheck disable=SC2086
-      shell_with_packages \
-        ${nix_args[*]} \
+      emacs_dev_shell_for_test \
         --arg extraPackReqs '["ert-runner"]' \
-        --run "emacs -Q --batch -l ert-runner"
+        --argstr command "emacs -Q --batch -l ert-runner"
       ;;
     ert)
       # Extra arguments passed to elinter command are loaded in the
@@ -620,10 +475,8 @@ run_tests() {
         emacs_args+=("-l" "$arg")
       done
       # ert is a built-in package, so extraPackReqs is unnecessary
-      # shellcheck disable=SC2086
-      shell_with_packages \
-        ${nix_args[*]} \
-        --run "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
+      emacs_dev_shell_for_test \
+        --argstr command "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
       ;;
   esac
 }
@@ -631,12 +484,12 @@ run_tests() {
 setup_github_workflow_annotations() {
   mkdir -p "${cache_dir}"
   # Lint and byte-compile errors are saved to this file
-  export ELINTER_LOG_FILE="${cache_dir}/elinter.log"
+  export ELINTER_LOG_FILE="$PWD/elinter.log"
 
-  ELINTER_BEFORE_PACKAGE_HOOK="touch ${ELINTER_LOG_FILE}"
-  ELINTER_AFTER_PACKAGE_HOOK="rm -f ${ELINTER_LOG_FILE}"
+  export ELINTER_BEFORE_PACKAGE_HOOK="touch ${ELINTER_LOG_FILE}"
+  export ELINTER_AFTER_PACKAGE_HOOK="rm -f ${ELINTER_LOG_FILE}"
   # Produce errors on a package
-  ELINTER_PACKAGE_FAILURE_HOOK="elinter-github-logger"
+  export ELINTER_PACKAGE_FAILURE_HOOK="elinter-github-logger"
 }
 
 ####################
@@ -667,12 +520,13 @@ fi
 # shellcheck disable=SC1091
 . 'share/ansi'
 
-if nix_shell_bin="$(command -v cached-nix-shell)"; then
+if ELINTER_NIX_SHELL="$(command -v cached-nix-shell)"; then
   echo "Using cached-nix-shell"
   echo
 else
-  nix_shell_bin=nix-shell
+  ELINTER_NIX_SHELL=nix-shell
 fi
+export ELINTER_NIX_SHELL
 
 if [[ -v cleanup && $cleanup = 1 ]]; then
   cleanup_cache
@@ -726,7 +580,7 @@ workflow_end_group
 case "$op" in
   default_check)
     r=0
-    for_each_package_sources lint_and_compile_package || r=1
+    for_each_package_and_version lint compile || r=1
     if [[ -v test_engine ]]; then
       workflow_start_group "Run tests"
       run_tests "$@" || r=1
@@ -735,11 +589,11 @@ case "$op" in
     exit $r
     ;;
   lint)
-    for_each_package_sources lint_package
+    for_each_package_and_version lint
     exit $?
     ;;
   compile)
-    for_each_package_sources compile_package
+    for_each_package_and_version compile
     exit $?
     ;;
   test)
@@ -748,9 +602,9 @@ case "$op" in
     ;;
   shell)
     if [[ $# -eq 0 ]]; then
-      shell_with_packages
+      shell_with_all_packages
     else
-      shell_with_packages --command "$*"
+      shell_with_all_packages --command "$*"
     fi
     ;;
   *)

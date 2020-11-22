@@ -231,11 +231,15 @@ This function returns non-nil if there is any error found."
                         (goto-char (point-min))
                         (read (current-buffer)))))
        (expand-recipe-files (recipe)
-                            (mapcar #'car
-                                    (package-build-expand-file-specs
-                                     default-directory
-                                     (or (plist-get (cdr recipe) :files)
-                                         package-build-default-files-spec))))
+                            (let ((files (plist-get (cdr recipe) :files)))
+                              (mapcar #'car
+                                      (package-build-expand-file-specs
+                                       default-directory
+                                       (if (eq :defaults (car files))
+                                           (append package-build-default-files-spec
+                                                   (cdr files))
+                                         (or files
+                                             package-build-default-files-spec))))))
        (main-file (package-name source-files)
                   (car (cl-find-if
                         (lambda (file)
@@ -272,7 +276,7 @@ This function returns non-nil if there is any error found."
   (let ((custom-file (getenv "ELINTER_LINT_CUSTOM_FILE")))
     (when (and custom-file
                (file-exists-p custom-file))
-      (load-file custom-file)))
+      (load custom-file nil 'nomessage)))
 
   (elinter-run-linters-and-exit))
 

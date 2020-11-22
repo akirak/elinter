@@ -1,13 +1,12 @@
 { pkgs ? import <nixpkgs> {}
-  # Path to sources.nix specifying dependencies.
-  # Applicable only to file-linter for now.
-, sources ? import ./nix/userSources.nix
   # Whether to turn on experimental checks using melpazoid.
 , useMelpazoid ? false
 }:
 with pkgs;
 with (import (import ./nix/sources.nix).gitignore { inherit (pkgs) lib; });
 let
+  elinterLib = import ./nix/lib.nix;
+
   linters = [
     "checkdoc"
     "check-declare"
@@ -37,10 +36,14 @@ let
   file-linter =
     let
       emacsForLint = (
-        import ./nix/emacs.nix {
-          inherit sources linters;
+        import ./nix/emacsForCI.nix {
+          version = elinterLib.latestStableEmacsVersion;
+          elispPackages =
+            elinterLib.excludeBuiltinElispPackages linters
+            ++ [ "package-build" ];
+          libNix = ./nix/lib.nix;
         }
-      ).emacsForLint;
+      ).package;
     in
       runCommandNoCC "elinter-file-linter" {
         propagateBuildInputs = [
