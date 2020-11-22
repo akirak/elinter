@@ -63,5 +63,8 @@ then
 else if spec == "all"
 then
   filter (v: compareEmacsVersions v minVersion) descendingVersions
+else if isString spec
+then
+  [ spec ]
 else
-  throw "unsupported spec"
+  throw "Version spec must be a string"

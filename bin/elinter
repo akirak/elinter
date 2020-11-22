@@ -400,7 +400,7 @@ copy_package_sources() {
 # For testing, use `shell_with_packages`.
 # 
 # It supports a hook system to alter the behavior.
-for_each_package_sources() {
+for_each_package_and_version() {
   # Errors are allowed inside this function, but the return code will
   # be set to 1.
   set +e
@@ -413,51 +413,32 @@ for_each_package_sources() {
     multi_packages=0
   fi
   for package in ${packages[*]}; do
-    # Fork a subshell to isolate the environment, e.g. variables
-    if ! (
-      r=0
-      cd "${package_source_root}/$package"
-      # shellcheck disable=SC1091
-      source .elinter-env
+    cd "${package_source_root}/$package"
+    workflow_start_group "Install dependencies for the package"
+    emacs_dev_shell --argstr target "$package"
+    workflow_end_group
 
-      if [[ -v ELINTER_BEFORE_PACKAGE_HOOK && -n "${ELINTER_BEFORE_PACKAGE_HOOK}" ]]; then
-        ${ELINTER_BEFORE_PACKAGE_HOOK}
+    for action in "$@"; do
+      if ! case "$action" in
+        lint)
+          workflow_with_group "Lint" \
+                              emacs_dev_shell \
+                              --argstr target "$package" \
+                              --argstr command elinter-run-linters
+          ;;
+        compile)
+          emacs_dev_shell --argstr target "$package" \
+                          --argstr command elinter-byte-compile
+          ;;
+        *)
+          ansi --red --bold "ERROR: Unsupported package action $action" >&2
+          exit 1
+          ;;
+      esac; then
+        r=1
+        failed_packages+=("$package")
       fi
-
-      ansi --blue --bold "On package ${PACKAGE_NAME}:"
-      for emacs_version in $(emacs_versions); do
-        if ! set_emacs; then
-          break
-        fi
-        # shellcheck disable=SC2048
-        if ! $*; then
-          r=1
-          # Skip the following versions if any error occurs
-          break
-        fi
-      done
-
-      if [[ $r -eq 0 ]]; then
-        if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
-          ${ELINTER_PACKAGE_SUCCESS_HOOK}
-        fi
-      else
-        ansi --red "Package $package failed on some checks."
-        if [[ -v ELINTER_PACKAGE_FAILURE_HOOK && -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
-          ${ELINTER_PACKAGE_FAILURE_HOOK}
-        fi
-      fi
-
-      if [[ -v ELINTER_AFTER_PACKAGE_HOOK && -n "${ELINTER_AFTER_PACKAGE_HOOK}" ]]; then
-        # shellcheck disable=SC2090
-        ${ELINTER_AFTER_PACKAGE_HOOK}
-      fi
-
-      exit $r
-      ); then
-      r=1
-      failed_packages+=("$package")
-    fi
+    done
     # Insert an empty line between packages
     gh_workflow_p && echo
   done
@@ -476,14 +457,12 @@ for_each_package_sources() {
 #
 # This should be called inside `for_each_package_sources`.
 emacs_dev_shell() {
-  "${nix_shell_bin}" "share/nix/emacs.nix" -A shellForCI \
-          --arg sources "${user_nix_sources}" \
-          --argstr emacs "$emacs" \
-          --argstr mainFile "$(pwd)/${PACKAGE_MAIN_FILE}" \
-          --argstr linters "${linters[*]}" \
-          --argstr localPackageNames "${packages[*]}" \
-          --argstr localPackageRoot "${package_source_root}" \
-          "$@"
+  "${ELINTER_NIX_SHELL}" "share/nix/driver.nix" -A lint \
+                     --arg pkgRoot "${package_source_root}" \
+                     --argstr linters "${linters[*]}" \
+                     --argstr emacsVersions "${EMACS_VERSION:-latest}" \
+                     "$@" \
+                     --run exit
 }
 
 # Install Emacs package dependencies for a specific package.
@@ -492,36 +471,10 @@ emacs_dev_shell() {
 install_package_deps() {
   if ! [[ -v packages_installed && "${packages_installed}" = 1 ]]; then
     workflow_start_group "Install dependencies for the package"
-    emacs_dev_shell --run exit
+    emacs_dev_shell --argstr target "$1"
     workflow_end_group
     packages_installed=1
   fi
-}
-
-# Run static linting on a specific package.
-#
-# This should be called inside `for_each_package_sources`.
-lint_package() {
-  install_package_deps
-  workflow_with_group "Lint" emacs_dev_shell --run elinter-run-linters
-}
-
-# Byte-compile a package.
-#
-# This should be called inside `for_each_package_sources`.
-compile_package() {
-  install_package_deps
-  emacs_dev_shell --run elinter-byte-compile
-}
-
-# Run static linting and byte-compile a package.
-#
-# This should be called inside `for_each_package_sources`.
-lint_and_compile_package() {
-  local r=0
-  lint_package || r=1
-  compile_package || r=1
-  return $r
 }
 
 # Run a command in an environment where all package sources are
@@ -548,7 +501,7 @@ shell_with_packages() {
       break
     fi
     # shellcheck disable=SC2048
-    if ! "${nix_shell_bin}" "share/nix/emacsTest.nix" \
+    if ! "${ELINTER_NIX_SHELL}" "share/nix/emacsTest.nix" \
           --argstr emacs "$emacs" \
           --argstr loadPath "${loadpath[*]@Q}" \
           --argstr mainFiles "${mainfiles[*]@Q}" \
@@ -605,10 +558,10 @@ setup_github_workflow_annotations() {
   # Lint and byte-compile errors are saved to this file
   export ELINTER_LOG_FILE="$PWD/elinter.log"
 
-  ELINTER_BEFORE_PACKAGE_HOOK="touch ${ELINTER_LOG_FILE}"
-  ELINTER_AFTER_PACKAGE_HOOK="rm -f ${ELINTER_LOG_FILE}"
+  export ELINTER_BEFORE_PACKAGE_HOOK="touch ${ELINTER_LOG_FILE}"
+  export ELINTER_AFTER_PACKAGE_HOOK="rm -f ${ELINTER_LOG_FILE}"
   # Produce errors on a package
-  ELINTER_PACKAGE_FAILURE_HOOK="elinter-github-logger"
+  export ELINTER_PACKAGE_FAILURE_HOOK="elinter-github-logger"
 }
 
 ####################
@@ -639,12 +592,13 @@ fi
 # shellcheck disable=SC1091
 . 'share/ansi'
 
-if nix_shell_bin="$(command -v cached-nix-shell)"; then
+if ELINTER_NIX_SHELL="$(command -v cached-nix-shell)"; then
   echo "Using cached-nix-shell"
   echo
 else
-  nix_shell_bin=nix-shell
+  ELINTER_NIX_SHELL=nix-shell
 fi
+export ELINTER_NIX_SHELL
 
 if [[ -v cleanup && $cleanup = 1 ]]; then
   cleanup_cache
@@ -698,7 +652,7 @@ workflow_end_group
 case "$op" in
   default_check)
     r=0
-    for_each_package_sources lint_and_compile_package || r=1
+    for_each_package_and_version lint compile || r=1
     if [[ -v test_engine ]]; then
       workflow_start_group "Run tests"
       run_tests "$@" || r=1
@@ -707,11 +661,11 @@ case "$op" in
     exit $r
     ;;
   lint)
-    for_each_package_sources lint_package
+    for_each_package_and_version lint
     exit $?
     ;;
   compile)
-    for_each_package_sources compile_package
+    for_each_package_and_version compile
     exit $?
     ;;
   test)

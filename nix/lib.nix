@@ -7,8 +7,12 @@ with builtins;
 let
   sources = import ./sources.nix;
 
+  pkgsForLib = import <nixpkgs> {};
+
+  lib = pkgsForLib.lib;
+
   emacsOverlayParseLib =
-    pkgs.callPackage (sources.emacs-overlay + "/parse.nix") {};
+    pkgsForLib.callPackage (sources.emacs-overlay + "/parse.nix") {};
 
   elispHelperLib = import sources.nix-elisp-helpers {};
 
@@ -105,10 +109,62 @@ let
           map (name: epkgs.${name}) dependencies
       );
 
+  attrNameToVersion = name:
+    lib.replaceStrings [ "-" ] [ "." ]
+      (lib.removePrefix "emacs-" name);
+
+  # Retrieve a sorted list of Emacs versions available, including
+  # "snapshot".
+  compareEmacsVersions = v1: v2:
+    if v1 == "snapshot" then
+      true
+    else if v2 == "snapshot" then
+      false
+    else
+      compareVersions v1 v2 >= 0;
+
+  # List of Emacs versions available from nix-emacs-ci, in descending
+  # order
+  descendingEmacsVersions = sort compareEmacsVersions
+    (map attrNameToVersion (attrNames emacs-ci));
+
+  # The latest stable version is the first entry excluding snapshot.
+  latestStableEmacsVersion = head (filter (v: v != "snapshot") descendingEmacsVersions);
+
+  emacsVersionsSince = minVersion:
+    filter (v: compareEmacsVersions v minVersion) descendingEmacsVersions;
+
+  # Find a Package-Requires library header line
+  #
+  # This is used for determining the minimum Emacs Version of the
+  # package.
+  #
+  # Since only the first line is matched, the Emacs dependency should
+  # appear at the beginning.
+  isPackageLine = s: isString s && match ";;+ *Package-Requires: .+" s != null;
+
+  # Retrieve the minimum version from the header.
+  emacsVersionFromHeader = str:
+    let
+      packageRequiresHeaderLines = filter isPackageLine (split "\n" str);
+      header =
+        assert (length packageRequiresHeaderLines > 0);
+        head packageRequiresHeaderLines;
+      versions =
+        assert (header != null);
+        builtins.match ".+\\(emacs \"([.[:digit:]]+)\"\\).+" header;
+    in
+      assert (length versions > 0);
+      head versions;
+
 in
 {
   inherit packageDependenciesFromCask;
   inherit splitQuotedString;
   inherit packageDependenciesFromMainSource;
   inherit emacsDerivation;
+  inherit emacsVersionFromHeader;
+  inherit latestStableEmacsVersion;
+  inherit descendingEmacsVersions;
+  inherit emacsVersionsSince;
 }
