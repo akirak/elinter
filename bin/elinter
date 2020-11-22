@@ -9,24 +9,7 @@ set -euo pipefail
 # Set the directory for storing cache files.
 #
 # This directory contains an image of individual packages.
-if [[ -v ELINTER_CACHE_ROOT ]]; then
-  cache_dir="${ELINTER_CACHE_ROOT}"
-else
-  # Set a different cache directory
-  case "$OSTYPE" in
-    linux-gnu*)
-      # Use the XDG setting if any
-      cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/elinter"
-      ;;
-    darwin*)
-      cache_dir="$HOME/Library/Caches/elinter"
-      ;;
-    *)
-      echo "Unsupported ostype: $OSTYPE" >&2
-      exit 1
-      ;;
-  esac
-fi
+cache_dir="$PWD/.elinter-cache"
 
 # Set the configuration for storing configuration files.
 #
@@ -43,7 +26,7 @@ fi
 user_nix_sources="${config_dir}/nix/sources.nix"
 
 # Where package source files (actually symlinks) are stored
-package_source_root="${cache_dir}/pkg-src"
+package_source_root="${cache_dir}/pkg"
 # package_output_root="${cache_dir}/pkg-out"
 
 # Directory containing recipes
@@ -336,7 +319,7 @@ discover_recipes() {
 
 cleanup_cache() {
   echo "Cleaning up the cache directory..."
-  rm -rf "${package_source_root}"
+  rm -rf "${cache_dir}"
 }
 
 # Copy package source files to the cache directory.
@@ -630,7 +613,7 @@ run_tests() {
 setup_github_workflow_annotations() {
   mkdir -p "${cache_dir}"
   # Lint and byte-compile errors are saved to this file
-  export ELINTER_LOG_FILE="${cache_dir}/elinter.log"
+  export ELINTER_LOG_FILE="$PWD/elinter.log"
 
   ELINTER_BEFORE_PACKAGE_HOOK="touch ${ELINTER_LOG_FILE}"
   ELINTER_AFTER_PACKAGE_HOOK="rm -f ${ELINTER_LOG_FILE}"
