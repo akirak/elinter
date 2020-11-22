@@ -455,6 +455,7 @@ for_each_package_and_version() {
       fi
     else
       ansi --red "Package $package failed on some checks."
+      echo
       if [[ -v ELINTER_PACKAGE_FAILURE_HOOK && -n "${ELINTER_PACKAGE_FAILURE_HOOK}" ]]; then
         ${ELINTER_PACKAGE_FAILURE_HOOK}
       fi
