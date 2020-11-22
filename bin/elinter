@@ -48,7 +48,6 @@ unset use_cask
 unset cask_file
 unset niv_update
 unset git_hook
-unset packages_installed
 # Configure the linters from the environment variable
 if [[ -v ELINTER_LINTERS ]]; then
   mapfile -d' ' -t linters <<<"${ELINTER_LINTERS}"
@@ -174,66 +173,6 @@ done
 #############
 # Functions #
 #############
-
-# Print a list of Emacs versions based on EMACS_VERSION environment
-# variable.
-# 
-# You can set the version(s) from outside of this script.
-emacs_versions() {
-  # Use dot to indicate the default value
-  local version="${EMACS_VERSION:-.}"
-  case "$version" in
-    min|latest|all)
-      # Run Nix to retrieve a version list from nix-emacs-ci
-      nix-instantiate --eval --strict \
-                      --arg elispFile "./${PACKAGE_MAIN_FILE}" \
-                      --argstr spec "$version" \
-                      "share/nix/dynamicVersions.nix" \
-        | tr '"[]' '   '
-      ;;
-    *)
-      echo "$version"
-      ;;
-  esac
-}
-
-# Set `emacs` variable to a derivation name in Nix.
-#
-# Given a version name like 25.1, snapshot, or '.' set in
-# `emacs_version` variable, it sets a proper Nix Emacs package name
-# like emacs-25-1 provided by nix-emacs-ci.
-#
-# This function should be called after `emacs_versions` function for
-# each package.
-set_emacs() {
-  case "${emacs_version}" in
-    ''|.)
-      emacs=emacs
-      return
-      ;;
-    snapshot)
-      emacs="emacs-snapshot"
-      ;;
-    *)
-      if [[ "${emacs_version}" =~ ^([[:digit:]]+)\.([[:digit:]])$ ]]; then
-        # Skip linting if the Emacs major version is 24.3 or before
-        local major=${BASH_REMATCH[1]}
-        local minor=${BASH_REMATCH[2]}
-        if [[ $major -lt 24 || ( $major -eq 24 && $minor -le 3 ) ]]; then
-          echo "WARN: Sorry, elinter supports only Emacs 24.4 and later. Skipping" >&2
-          return 1
-        fi
-        emacs="emacs-${emacs_version/./-}"
-      else
-        echo "Unsupported Emacs version: ${emacs_version}" >&2
-        exit 1
-      fi
-      ;;
-  esac
-  ansi --yellow "Using $emacs"
-  # Reset the installation state when the Emacs version changes
-  packages_installed=0
-}
 
 # Update the user Nix sources.json
 #
@@ -503,55 +442,6 @@ emacs_dev_shell_for_test() {
   fi
   # shellcheck disable=SC2086
   emacs_dev_shell -A test ${nix_args[*]} "$@"
-}
-
-# Install Emacs package dependencies for a specific package.
-#
-# This should be called inside `for_each_package_sources`.
-install_package_deps() {
-  if ! [[ -v packages_installed && "${packages_installed}" = 1 ]]; then
-    workflow_start_group "Install dependencies for the package"
-    emacs_dev_shell --argstr target "$1"
-    workflow_end_group
-    packages_installed=1
-  fi
-}
-
-# Run a command in an environment where all package sources are
-# available.
-shell_with_all_packages() {
-  local loadpath=()
-  local mainfiles=()
-  initialdir="$PWD"
-  for package in ${packages[*]}; do
-    unset PACKAGE_NAME
-    unset PACKAGE_FILES
-    unset PACKAGE_ELISP_FILES
-    unset PACKAGE_MAIN_FILE
-    cd "${package_source_root}/$package"
-    # shellcheck disable=SC1091
-    source .elinter-env
-    loadpath+=("$PWD")
-    mainfiles+=("$(readlink -e "${PACKAGE_MAIN_FILE}")")
-  done
-  cd "$initialdir"
-  local r=0
-  for emacs_version in $(emacs_versions); do
-    if ! set_emacs; then
-      break
-    fi
-    # shellcheck disable=SC2048
-    if ! "${ELINTER_NIX_SHELL}" "share/nix/emacsTest.nix" \
-          --argstr emacs "$emacs" \
-          --argstr loadPath "${loadpath[*]@Q}" \
-          --argstr mainFiles "${mainfiles[*]@Q}" \
-          "$@"; then
-      r=1
-      # Skip the following versions if any error occurs
-      break
-    fi
-  done
-  return $r
 }
 
 # Run tests based on `test_engine` variable.
