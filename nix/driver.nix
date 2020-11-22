@@ -21,6 +21,8 @@ let
 
   pkgsForLib = import <nixpkgs> {};
 
+  lib = pkgsForLib.lib;
+
   lintersAsStrings =
     if builtins.isList linters
     then linters
@@ -66,6 +68,19 @@ let
       elinterLib.packageDependenciesFromMainSource mainSource;
   };
 
+  elispExternalDependenciesFor = pname:
+    lib.flatten
+      (
+        map (
+          dep:
+            (
+              if elem dep localPackageNames
+              then elispExternalDependenciesFor dep
+              else [ dep ]
+            )
+        ) (packageAttrsFor pname).elispDependencies
+      );
+
   packageAttrs = packageAttrsFor target;
 
   # Concrete Emacs versions as a list
@@ -101,8 +116,7 @@ in
     PACKAGE_MAIN_FILE = /. + packageAttrs.mainFile;
 
     elispPackages =
-      linterPackages
-      ++ pkgsForLib.lib.subtractLists localPackageNames packageAttrs.elispDependencies;
+      lib.unique (linterPackages ++ elispExternalDependenciesFor target);
 
     buildInputs = [
       sources.ansi
