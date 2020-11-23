@@ -135,28 +135,27 @@ let
       )
       ++ extraBuildInputs;
 
-      shellHook = ''
-        . ${sources.ansi}/ansi
- 
-        set +e
-        r=0
-        for version in ${toBashList targetEmacsVersions}; do
-          if [[ -n "${command}" ]]; then
+      shellHook =
+        if command != null && command != ""
+        then ''
+          . ${sources.ansi}/ansi
+          set +e
+          r=0
+          for version in ${toBashList targetEmacsVersions}; do
             ansi --yellow "Using $version"
             if ! "''${ELINTER_NIX_SHELL}" --argstr version $version \
-                     --arg elispPackages '${encodeStringList elispPackages}' \
-                     --arg libNix ${./lib.nix} \
-                     --run "${command}" \
-                     -A shell "${emacsForCIPath}"; then
+                      --arg elispPackages '${encodeStringList elispPackages}' \
+                      --arg libNix ${./lib.nix} \
+                      --run "${command}" \
+                      -A shell "${emacsForCIPath}"; then
               r=1
               # Skip the following versions if any error occurs
               break
             fi
-          fi
-        done
-
-        exit $r
-      '';
+          done
+          exit $r
+        ''
+        else "";
     };
 
   caskReqs =
