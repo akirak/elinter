@@ -5,7 +5,7 @@ on:
     paths-ignore:
     - '**.org'
     branches:
-    - master
+    - v4
 jobs:
   test:
     runs-on: ubuntu-latest
