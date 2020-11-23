@@ -436,12 +436,26 @@ emacs_dev_shell_for_lint() {
 }
 
 emacs_dev_shell_for_test() {
+  local command="$1"
+  shift
   local nix_args=()
   if [[ -v cask_file ]]; then
     nix_args+=("--argstr" "caskFile" "${cask_file}")
   fi
+
+  echo "Command to run:"
+  echo "> $command"
+
   # shellcheck disable=SC2086
-  emacs_dev_shell -A test ${nix_args[*]} "$@"
+  if ! workflow_with_group "Install dependencies for tests" \
+       emacs_dev_shell -A test ${nix_args[*]} "$@"; then
+    return 1
+  fi
+
+  # shellcheck disable=SC2086
+  workflow_with_group "Run tests" \
+                      emacs_dev_shell -A test ${nix_args[*]} "$@" \
+                      --argstr command "$command"
 }
 
 # Run tests based on `test_engine` variable.
@@ -450,8 +464,8 @@ run_tests() {
   case "${test_engine}" in
     buttercup)
       emacs_dev_shell_for_test \
-        --arg extraPackReqs '["buttercup"]' \
-        --argstr command "emacs -Q --batch -l buttercup -f buttercup-run-discover $PWD"
+        "emacs -Q --batch -l buttercup -f buttercup-run-discover $PWD" \
+        --arg extraPackReqs '["buttercup"]'
       # Below it the ideal way to run buttercup, but it fails due to
       # missing site-start.el.
       #
@@ -464,8 +478,8 @@ run_tests() {
       ;;
     ert-runner)
       emacs_dev_shell_for_test \
-        --arg extraPackReqs '["ert-runner"]' \
-        --argstr command "emacs -Q --batch -l ert-runner"
+        "emacs -Q --batch -l ert-runner" \
+        --arg extraPackReqs '["ert-runner"]'
       ;;
     ert)
       # Extra arguments passed to elinter command are loaded in the
@@ -476,7 +490,7 @@ run_tests() {
       done
       # ert is a built-in package, so extraPackReqs is unnecessary
       emacs_dev_shell_for_test \
-        --argstr command "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
+        "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
       ;;
   esac
 }
@@ -582,9 +596,7 @@ case "$op" in
     r=0
     for_each_package_and_version lint compile || r=1
     if [[ -v test_engine ]]; then
-      workflow_start_group "Run tests"
       run_tests "$@" || r=1
-      workflow_end_group
     fi
     exit $r
     ;;
