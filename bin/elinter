@@ -327,10 +327,8 @@ copy_package_sources() {
   cd "$initialdir"
 }
 
-# Run operation on each package.
+# Run linting operation on each package.
 #
-# The operation is given as the arguments to this function.
-
 # Target packages should be given in `packages` variable, and the
 # packages should be already cached. The cache should contain an
 # environment file '.elinter-env' for individual packages.
@@ -339,7 +337,7 @@ copy_package_sources() {
 # For testing, see `run_tests`
 # 
 # It supports a hook system to alter the behavior.
-for_each_package_and_version() {
+run_lint_and_compile() {
   # Errors are allowed inside this function, but the return code will
   # be set to 1.
   set +e
@@ -351,6 +349,18 @@ for_each_package_and_version() {
   else
     multi_packages=0
   fi
+  local commands
+  case "$op" in
+    default_check)
+      commands='["elinter-run-linters" "elinter-byte-compile"]'
+      ;;
+    lint)
+      commands='["elinter-run-linters"]'
+      ;;
+    compile)
+      commands='["elinter-byte-compile"]'
+      ;;
+  esac
   initialdir="$PWD"
   for package in ${packages[*]}; do
     r=0
@@ -367,25 +377,11 @@ for_each_package_and_version() {
     emacs_dev_shell_for_lint --argstr target "$package"
     workflow_end_group
 
-    for action in "$@"; do
-      if ! case "$action" in
-        lint)
-          emacs_dev_shell_for_lint --argstr target "$package" \
-                                   --argstr command elinter-run-linters
-          ;;
-        compile)
-          emacs_dev_shell_for_lint --argstr target "$package" \
-                                   --argstr command elinter-byte-compile
-          ;;
-        *)
-          ansi --red --bold "ERROR: Unsupported package action $action" >&2
-          exit 1
-          ;;
-      esac; then
-        r=1
-        failed_packages+=("$package")
-      fi
-    done
+    if ! emacs_dev_shell_for_lint --argstr target "$package" \
+         --arg commands "$commands"; then
+      r=1
+      failed_packages+=("$package")
+    fi
 
     if [[ $r -eq 0 ]]; then
       if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
@@ -454,7 +450,7 @@ emacs_dev_shell_for_test() {
   # shellcheck disable=SC2086
   workflow_with_group "Run tests" \
                       emacs_dev_shell -A test ${nix_args[*]} "$@" \
-                      --argstr command "$command"
+                      --arg commands "[\"$command\"]"
 }
 
 # Run tests based on `test_engine` variable.
@@ -593,18 +589,14 @@ workflow_end_group
 case "$op" in
   default_check)
     r=0
-    for_each_package_and_version lint compile || r=1
+    run_lint_and_compile || r=1
     if [[ -v test_engine ]]; then
       run_tests "$@" || r=1
     fi
     exit $r
     ;;
-  lint)
-    for_each_package_and_version lint
-    exit $?
-    ;;
-  compile)
-    for_each_package_and_version compile
+  lint|compile)
+    run_lint_and_compile
     exit $?
     ;;
   test)
