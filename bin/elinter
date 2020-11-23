@@ -365,7 +365,6 @@ for_each_package_and_version() {
     cd "${package_source_root}/$package"
     workflow_start_group "Install dependencies for the package"
     emacs_dev_shell_for_lint --argstr target "$package"
-
     workflow_end_group
 
     for action in "$@"; do
