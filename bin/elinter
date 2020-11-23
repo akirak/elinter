@@ -336,7 +336,7 @@ copy_package_sources() {
 # environment file '.elinter-env' for individual packages.
 #
 # This function is intended for running static linting.
-# For testing, use `shell_with_all_packages`.
+# For testing, see `run_tests`
 # 
 # It supports a hook system to alter the behavior.
 for_each_package_and_version() {
@@ -600,13 +600,14 @@ case "$op" in
     run_tests "$@"
     exit $?
     ;;
-  shell)
-    if [[ $# -eq 0 ]]; then
-      shell_with_all_packages
-    else
-      shell_with_all_packages --command "$*"
-    fi
-    ;;
+  # This feature is disable for now.
+  # shell)
+  #   if [[ $# -eq 0 ]]; then
+  #     shell_with_all_packages
+  #   else
+  #     shell_with_all_packages --command "$*"
+  #   fi
+  #   ;;
   *)
     echo "Unsupported operation: $op" >&2
     exit 2
