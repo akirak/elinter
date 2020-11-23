@@ -2,7 +2,9 @@ name: 'GitHub Action'
 on:
   push:
     paths-ignore:
-      - '*.org'
+    - '**.org'
+    branches:
+    - master
 jobs:
   ci:
     runs-on: ubuntu-latest

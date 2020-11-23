@@ -327,19 +327,17 @@ copy_package_sources() {
   cd "$initialdir"
 }
 
-# Run operation on each package.
+# Run linting operation on each package.
 #
-# The operation is given as the arguments to this function.
-
 # Target packages should be given in `packages` variable, and the
 # packages should be already cached. The cache should contain an
 # environment file '.elinter-env' for individual packages.
 #
 # This function is intended for running static linting.
-# For testing, use `shell_with_all_packages`.
+# For testing, see `run_tests`
 # 
 # It supports a hook system to alter the behavior.
-for_each_package_and_version() {
+run_lint_and_compile() {
   # Errors are allowed inside this function, but the return code will
   # be set to 1.
   set +e
@@ -351,6 +349,19 @@ for_each_package_and_version() {
   else
     multi_packages=0
   fi
+  local commands
+  case "$op" in
+    default_check)
+      commands='["elinter-run-linters" "elinter-byte-compile"]'
+      ;;
+    lint)
+      commands='["elinter-run-linters"]'
+      ;;
+    compile)
+      commands='["elinter-byte-compile"]'
+      ;;
+  esac
+  initialdir="$PWD"
   for package in ${packages[*]}; do
     r=0
 
@@ -364,30 +375,13 @@ for_each_package_and_version() {
     cd "${package_source_root}/$package"
     workflow_start_group "Install dependencies for the package"
     emacs_dev_shell_for_lint --argstr target "$package"
-
     workflow_end_group
 
-    for action in "$@"; do
-      if ! case "$action" in
-        lint)
-          workflow_with_group "Lint" \
-                              emacs_dev_shell_for_lint \
-                              --argstr target "$package" \
-                              --argstr command elinter-run-linters
-          ;;
-        compile)
-          emacs_dev_shell_for_lint --argstr target "$package" \
-                                   --argstr command elinter-byte-compile
-          ;;
-        *)
-          ansi --red --bold "ERROR: Unsupported package action $action" >&2
-          exit 1
-          ;;
-      esac; then
-        r=1
-        failed_packages+=("$package")
-      fi
-    done
+    if ! emacs_dev_shell_for_lint --argstr target "$package" \
+         --arg commands "$commands"; then
+      r=1
+      failed_packages+=("$package")
+    fi
 
     if [[ $r -eq 0 ]]; then
       if [[ -v ELINTER_PACKAGE_SUCCESS_HOOK && -n "${ELINTER_PACKAGE_SUCCESS_HOOK}" ]]; then
@@ -417,6 +411,7 @@ for_each_package_and_version() {
       echo "Failed packages: ${failed_packages[*]}"
     fi
   fi
+  cd "$initialdir"
   return $r
 }
 
@@ -436,12 +431,26 @@ emacs_dev_shell_for_lint() {
 }
 
 emacs_dev_shell_for_test() {
+  local command="$1"
+  shift
   local nix_args=()
   if [[ -v cask_file ]]; then
     nix_args+=("--argstr" "caskFile" "${cask_file}")
   fi
+
+  echo "Command to run:"
+  echo "> $command"
+
   # shellcheck disable=SC2086
-  emacs_dev_shell -A test ${nix_args[*]} "$@"
+  if ! workflow_with_group "Install dependencies for tests" \
+       emacs_dev_shell -A test ${nix_args[*]} "$@"; then
+    return 1
+  fi
+
+  # shellcheck disable=SC2086
+  workflow_with_group "Run tests" \
+                      emacs_dev_shell -A test ${nix_args[*]} "$@" \
+                      --arg commands "[\"$command\"]"
 }
 
 # Run tests based on `test_engine` variable.
@@ -450,8 +459,8 @@ run_tests() {
   case "${test_engine}" in
     buttercup)
       emacs_dev_shell_for_test \
-        --arg extraPackReqs '["buttercup"]' \
-        --argstr command "emacs -Q --batch -l buttercup -f buttercup-run-discover $PWD"
+        "emacs -Q --batch -l buttercup -f buttercup-run-discover $PWD" \
+        --arg extraPackReqs '["buttercup"]'
       # Below it the ideal way to run buttercup, but it fails due to
       # missing site-start.el.
       #
@@ -464,8 +473,8 @@ run_tests() {
       ;;
     ert-runner)
       emacs_dev_shell_for_test \
-        --arg extraPackReqs '["ert-runner"]' \
-        --argstr command "emacs -Q --batch -l ert-runner"
+        "emacs -Q --batch -l ert-runner" \
+        --arg extraPackReqs '["ert-runner"]'
       ;;
     ert)
       # Extra arguments passed to elinter command are loaded in the
@@ -476,7 +485,7 @@ run_tests() {
       done
       # ert is a built-in package, so extraPackReqs is unnecessary
       emacs_dev_shell_for_test \
-        --argstr command "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
+        "emacs -Q --batch -l ert ${emacs_args[*]} -f ert-run-tests-batch-and-exit"
       ;;
   esac
 }
@@ -580,33 +589,28 @@ workflow_end_group
 case "$op" in
   default_check)
     r=0
-    for_each_package_and_version lint compile || r=1
+    run_lint_and_compile || r=1
     if [[ -v test_engine ]]; then
-      workflow_start_group "Run tests"
       run_tests "$@" || r=1
-      workflow_end_group
     fi
     exit $r
     ;;
-  lint)
-    for_each_package_and_version lint
-    exit $?
-    ;;
-  compile)
-    for_each_package_and_version compile
+  lint|compile)
+    run_lint_and_compile
     exit $?
     ;;
   test)
     run_tests "$@"
     exit $?
     ;;
-  shell)
-    if [[ $# -eq 0 ]]; then
-      shell_with_all_packages
-    else
-      shell_with_all_packages --command "$*"
-    fi
-    ;;
+  # This feature is disable for now.
+  # shell)
+  #   if [[ $# -eq 0 ]]; then
+  #     shell_with_all_packages
+  #   else
+  #     shell_with_all_packages --command "$*"
+  #   fi
+  #   ;;
   *)
     echo "Unsupported operation: $op" >&2
     exit 2

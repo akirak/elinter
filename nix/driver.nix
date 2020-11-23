@@ -6,7 +6,7 @@
 , # Abstract/concrete version spec, e.g. 26.1, snapshot, or all
   emacsVersions
 , # Command to run on each Emacs version
-  command ? ""
+  commands ? []
 , linters ? []
   # Like linters, but used for testing.
 , extraPackReqs ? []
@@ -102,6 +102,9 @@ let
 
   toBashList = concatStringsSep " ";
 
+  toBashQuotedList = xs: concatStringsSep " "
+    (map (s: "'" + s + "'") xs);
+
   encodeStringList = xs:
     "[" + concatStringsSep " " (map (s: "\"" + s + "\"") xs) + "]";
 
@@ -135,28 +138,31 @@ let
       )
       ++ extraBuildInputs;
 
-      shellHook = ''
-        . ${sources.ansi}/ansi
- 
-        set +e
-        r=0
-        for version in ${toBashList targetEmacsVersions}; do
-          if [[ -n "${command}" ]]; then
+      shellHook =
+        if length commands != 0
+        then ''
+          . ${sources.ansi}/ansi
+          set +e
+          r=0
+          for version in ${toBashList targetEmacsVersions}; do
             ansi --yellow "Using $version"
-            if ! "''${ELINTER_NIX_SHELL}" --argstr version $version \
-                     --arg elispPackages '${encodeStringList elispPackages}' \
-                     --arg libNix ${./lib.nix} \
-                     --run "${command}" \
-                     -A shell "${emacsForCIPath}"; then
-              r=1
+            for command in ${toBashQuotedList commands}; do
+              if ! "''${ELINTER_NIX_SHELL}" --argstr version $version \
+                        --arg elispPackages '${encodeStringList elispPackages}' \
+                        --arg libNix ${./lib.nix} \
+                        --run "$command" \
+                        -A shell "${emacsForCIPath}"; then
+                r=1
+              fi
+            done
+            if [[ $r -gt 0 ]]; then
               # Skip the following versions if any error occurs
               break
             fi
-          fi
-        done
-
-        exit $r
-      '';
+          done
+          exit $r
+        ''
+        else "";
     };
 
   caskReqs =

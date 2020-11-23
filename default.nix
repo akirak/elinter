@@ -89,6 +89,7 @@ let
         chmod +x $out/bin/$f
       done
       substituteInPlace $out/bin/elinter-run-linters \
+        --replace share/workflow.bash ${share}/share/elinter/workflow.bash \
         --replace share/lint-options.el ${share}/share/elinter/lint-options.el \
         --replace share/elinter-run-linters.el ${share}/share/elinter/elinter-run-linters.el
       substituteInPlace $out/bin/elinter-byte-compile \
