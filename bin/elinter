@@ -351,6 +351,7 @@ for_each_package_and_version() {
   else
     multi_packages=0
   fi
+  initialdir="$PWD"
   for package in ${packages[*]}; do
     r=0
 
@@ -417,6 +418,7 @@ for_each_package_and_version() {
       echo "Failed packages: ${failed_packages[*]}"
     fi
   fi
+  cd "$initialdir"
   return $r
 }
 
