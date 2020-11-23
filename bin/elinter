@@ -371,10 +371,8 @@ for_each_package_and_version() {
     for action in "$@"; do
       if ! case "$action" in
         lint)
-          workflow_with_group "Lint" \
-                              emacs_dev_shell_for_lint \
-                              --argstr target "$package" \
-                              --argstr command elinter-run-linters
+          emacs_dev_shell_for_lint --argstr target "$package" \
+                                   --argstr command elinter-run-linters
           ;;
         compile)
           emacs_dev_shell_for_lint --argstr target "$package" \
