@@ -31,8 +31,8 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
   -  [[#sandboxing][Sandboxing]]
 -  [[#credits-inspiration-sources-and-alternatives][Credits, inspiration sources, and alternatives]]
 
-** Design goals
-This project is designed with the following goals in mind:
+** Project goals
+This project aims at the following goals:
 
 - Support both local use and CI
 - Comprehensive linting using various backends (trying to produce the same result as [[https://github.com/riscy/melpazoid/][melpazoid]], which is created and used by the official reviewer on [[https://melpa.org/#/][MELPA]])
