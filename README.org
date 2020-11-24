@@ -14,8 +14,8 @@ This is a complete rewrite of my Emacs Lisp package checker, formerly called =em
 :PROPERTIES:
 :TOC:      siblings
 :END:
--  [[#design-goals][Design goals]]
--  [[#planned-features-69][Planned features [69%]​]]
+-  [[#project-goals][Project goals]]
+-  [[#planned-features-72][Planned features [72%]​]]
 -  [[#prerequisites][Prerequisites]]
 -  [[#installation][Installation]]
 -  [[#usage][Usage]]
