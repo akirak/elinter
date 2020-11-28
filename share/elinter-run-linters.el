@@ -96,8 +96,8 @@ This variable can also be a list of linter names."
    ((version< emacs-version "25")
     (message "warning: Due to API incompatibility, checkdoc isn't supported on Emacs 24.x")
     (throw 'failure 'warning))
-   ((version= emacs-version "26.3")
-    (message "Checkdoc shipped with Emacs 26.3 has bugs, so it is skipped."))
+   ((version< emacs-version "27")
+    (message "warning: Due to some reasons, checkdoc is run only on Emacs 27 and later"))
    (t
     (require 'checkdoc)
     (require 'which-func)
