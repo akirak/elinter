@@ -92,10 +92,13 @@ This variable can also be a list of linter names."
 ;; https://github.com/alphapapa/makem.sh/blob/master/makem.sh
 (defun elinter-checkdoc ()
   "Run checkdoc in batch mode."
-  (if (version< emacs-version "25")
-      (progn
-        (message "warning: Due to API incompatibility, checkdoc isn't supported on Emacs 24.x")
-        (throw 'failure 'warning))
+  (cond
+   ((version< emacs-version "25")
+    (message "warning: Due to API incompatibility, checkdoc isn't supported on Emacs 24.x")
+    (throw 'failure 'warning))
+   ((version= emacs-version "26.3")
+    (message "Checkdoc shipped with Emacs 26.3 has bugs, so it is skipped."))
+   (t
     (require 'checkdoc)
     (require 'which-func)
     (setq elinter-checkdoc-found-errors nil)
