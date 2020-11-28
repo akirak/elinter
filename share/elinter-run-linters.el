@@ -111,7 +111,7 @@ This variable can also be a list of linter names."
                     (funcall checkdoc-create-error-function text start end unfixable))))
     (mapc #'elinter-checkdoc-on-file elinter-package-elisp-files)
     (when elinter-checkdoc-found-errors
-      (throw 'failure '((errors . t))))))
+      (throw 'failure '((errors . t)))))))
 
 (defun elinter-check-declare ()
   "Run `check-declare' on the input files."
