@@ -235,6 +235,10 @@ arguments passed to elinter."
               spec)
           (setq elinter-fetcher-spec spec)))))
 
+(defsubst elinter--dquote (str)
+  "Enclose STR in a pair of double quotes."
+  (format "\"%s\"" str))
+
 (defun elinter--read-fetcher-spec ()
   "Read a remote repository location as fetcher."
   (cl-ecase elinter-user-fetcher
@@ -247,7 +251,7 @@ arguments passed to elinter."
                                          (file-name-nondirectory
                                           (string-remove-suffix "/" default-directory)))))))
        (list :fetcher fetcher
-             :repo (format "\"%s\"" repo))))
+             :repo (elinter--dquote repo))))
     (git
      (list :fetcher elinter-user-fetcher
            :url (read-string "Remote Git URL of the repository: ")))))
@@ -274,11 +278,11 @@ arguments passed to elinter."
      ((string-match (rx bol (or "git@github.com:" "https://github.com/")
                         (group (+? anything)) ".git" eol)
                     git-url)
-      `(:fetcher github :repo ,(match-string 1 git-url)))
+      `(:fetcher github :repo ,(elinter--dquote (match-string 1 git-url)) ))
      ((string-match (rx bol (or "git@gitlab.com:" "https://gitlab.com/")
                         (group (+? anything)) ".git" eol)
                     git-url)
-      `(:fetcher gitlab :repo ,(match-string 1 git-url)))
+      `(:fetcher gitlab :repo ,(elinter--dquote (match-string 1 git-url))))
      ;; TODO: Add support for BitBucket and other forges
      (t
       `(:fetcher git :url ,git-url)))))
