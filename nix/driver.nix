@@ -59,12 +59,12 @@ let
     (attrNames (filterAttrs (_: v: v == "directory") (readDir path)));
 
   packageAttrsFor = pname: rec {
-    src = (assert (isPath pkgRootAsPath); pkgRootAsPath) + "/${pname}";
+    src = pkgRootAsPath + "/${pname}";
     files = excludeFiles (getDirectoryFiles src);
     packageFiles = filter isElisp files;
     sourceFiles = filter isElisp packageFiles;
-    mainFile = src + "/${pname}.el";
-    mainSource = readFile mainFile;
+    mainFile = "${pname}.el";
+    mainSource = readFile (src + "/${mainFile}");
     minEmacsVersion =
       elinterLib.emacsVersionFromHeader mainSource;
     elispDependencies =
@@ -189,7 +189,7 @@ in
       ) // {
         PACKAGE_NAME = target;
         PACKAGE_ELISP_FILES = concatStringsSep " " (map baseNameOf packageAttrs.sourceFiles);
-        PACKAGE_MAIN_FILE = /. + packageAttrs.mainFile;
+        PACKAGE_MAIN_FILE = packageAttrs.mainFile;
       }
     );
 
