@@ -6,14 +6,14 @@
 , # Abstract/concrete version spec, e.g. 26.1, snapshot, or all
   emacsVersions
 , # Command to run on each Emacs version
-  commands ? []
-, linters ? []
+  commands ? [ ]
+, linters ? [ ]
   # Like linters, but used for testing.
-, extraPackReqs ? []
+, extraPackReqs ? [ ]
   # Used only for testing
 , caskFile ? null
   # Used only for testing
-, extraBuildInputs ? (_: [])
+, extraBuildInputs ? (_: [ ])
 }:
 with builtins;
 let
@@ -25,7 +25,7 @@ let
 
   emacsForCIPath = ./emacsForCI.nix;
 
-  pkgsForLib = import <nixpkgs> {};
+  pkgsForLib = import <nixpkgs> { };
 
   lib = pkgsForLib.lib;
 
@@ -74,14 +74,16 @@ let
   elispExternalDependenciesFor = pname:
     lib.flatten
       (
-        map (
-          dep:
+        map
+          (
+            dep:
             (
               if elem dep localPackageNames
               then elispExternalDependenciesFor dep
               else [ dep ]
             )
-        ) (packageAttrsFor pname).elispDependencies
+          )
+          (packageAttrsFor pname).elispDependencies
       );
 
   packageAttrs = packageAttrsFor target;
@@ -115,7 +117,7 @@ let
     { availableLocalPackages
     , elispPackages
     , targetEmacsVersions
-    , extraBuildInputs ? []
+    , extraBuildInputs ? [ ]
     }: rec {
       EMACSLOADPATH = localPackageLoadPath availableLocalPackages;
 
@@ -168,7 +170,7 @@ let
   caskReqs =
     if isString caskFile && caskFile != ""
     then elinterLib.packageDependenciesFromCask (readFile (/. + caskFile))
-    else [];
+    else [ ];
 
 in
 {
@@ -215,7 +217,7 @@ in
             concreteEmacsVersions_
               (elinterLib.maxEmacsVersion (map (x: x.minEmacsVersion) allPackageAttrs));
           # Is it better to pass pkgs?
-          extraBuildInputs = extraBuildInputs {};
+          extraBuildInputs = extraBuildInputs { };
         }
       );
 
