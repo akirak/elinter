@@ -149,7 +149,7 @@ ROOT is the project, and RECIPE is a package recipe."
                             (format "Confirm recipe for \"%s\": " package-name)
                             (prin1-to-string `(,(intern package-name)
                                                ,@fetcher-spec)))))
-              (princ recipe (current-buffer))
+              (insert (prin1-to-string recipe))
               (setq buffer-file-name recipe-file)
               (setq uncovered-files (cl-set-difference uncovered-files
                                                        (elinter--expand-files-in-recipe
