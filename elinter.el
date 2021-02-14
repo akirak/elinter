@@ -241,6 +241,11 @@ arguments passed to elinter."
   (format "\"%s\"" string))
 
 (defun elinter--build-fetcher-spec (fetcher repo-or-url)
+  "Return fetcher and repo components of a package.
+
+This function builds the tail of a recipe, with the package name
+and :files spec excluded. Depending on FETCHER, it uses a
+different keyword for REPO-OR-URL."
   (cl-ecase fetcher
     ((github gitlab)
      (list :fetcher fetcher :repo repo-or-url))
@@ -248,6 +253,7 @@ arguments passed to elinter."
      (list :fetcher fetcher :url repo-or-url))))
 
 (defun elinter--default-repo-name (dir)
+  "Return a repository name for DIR not including the user name."
   (file-name-nondirectory (string-remove-suffix "/" dir)))
 
 (defun elinter--read-fetcher-spec ()
