@@ -284,11 +284,17 @@ arguments passed to elinter."
   (save-match-data
     (cond
      ((string-match (rx bol (or "git@github.com:" "https://github.com/")
-                        (group (+? anything)) ".git" eol)
+                        (group (+? anything))
+                        (? ".git")
+                        (? "/")
+                        eol)
                     git-url)
       (elinter--build-fetcher-spec 'github (match-string 1 git-url)))
      ((string-match (rx bol (or "git@gitlab.com:" "https://gitlab.com/")
-                        (group (+? anything)) ".git" eol)
+                        (group (+? anything))
+                        (? ".git")
+                        (? "/")
+                        eol)
                     git-url)
       (elinter--build-fetcher-spec 'gitlab (match-string 1 git-url)))
      ;; TODO: Add support for BitBucket and other forges
