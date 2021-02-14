@@ -149,7 +149,7 @@ ROOT is the project, and RECIPE is a package recipe."
                             (format "Confirm recipe for \"%s\": " package-name)
                             (prin1-to-string `(,(intern package-name)
                                                ,@fetcher-spec)))))
-              (princ recipe (current-buffer))
+              (insert (prin1-to-string recipe))
               (setq buffer-file-name recipe-file)
               (setq uncovered-files (cl-set-difference uncovered-files
                                                        (elinter--expand-files-in-recipe
@@ -225,32 +225,44 @@ arguments passed to elinter."
 (defun elinter--fetcher-spec ()
   "Retrieve or set a remote repository location for the recipe."
   (or elinter-fetcher-spec
-      (-some-> (elinter--origin-url)
+      (-some-> (process-lines "git" "config" "--local" "--list")
+        (elinter--origin-url-from-config-lines)
         (elinter--url-to-fetcher-spec))
       (let ((spec (elinter--read-fetcher-spec)))
         (if (yes-or-no-p "Set origin of this repository to the spec? ")
             (progn
               (elinter--add-remote "origin"
-                                  (elinter--spec-to-url spec))
+                                   (elinter--spec-to-url spec))
               spec)
           (setq elinter-fetcher-spec spec)))))
 
+(defsubst elinter--quote-string-for-recipe (string)
+  "Quote STRING for use in a package recipe."
+  (format "\"%s\"" string))
+
+(defun elinter--build-fetcher-spec (fetcher repo-or-url)
+  (cl-ecase fetcher
+    ((github gitlab)
+     (list :fetcher fetcher :repo repo-or-url))
+    (git
+     (list :fetcher fetcher :url repo-or-url))))
+
+(defun elinter--default-repo-name (dir)
+  (file-name-nondirectory (string-remove-suffix "/" dir)))
+
 (defun elinter--read-fetcher-spec ()
   "Read a remote repository location as fetcher."
-  (cl-ecase elinter-user-fetcher
-    ((github gitlab)
-     (let* ((fetcher elinter-user-fetcher)
-            (user elinter-user-name)
-            (repo (read-string (format-message "Repository on %s (in USER/REPO): " fetcher)
-                               (when user
-                                 (concat user "/"
-                                         (file-name-nondirectory
-                                          (string-remove-suffix "/" default-directory)))))))
-       (list :fetcher fetcher
-             :repo (format "\"%s\"" repo))))
-    (git
-     (list :fetcher elinter-user-fetcher
-           :url (read-string "Remote Git URL of the repository: ")))))
+  (elinter--build-fetcher-spec
+   elinter-user-fetcher
+   (cl-ecase elinter-user-fetcher
+     ((github gitlab)
+      (read-string (format-message "Repository on %s (in USER/REPO): "
+                                   elinter-user-fetcher)
+                   (when elinter-user-name
+                     (concat elinter-user-name "/"
+                             (elinter--default-repo-name default-directory)))))
+     (git
+      (read-string "Remote Git URL of the repository: ")))))
 
 (defun elinter--break (str needle)
   "Break STR at NEEDLE and return a pair."
@@ -260,10 +272,10 @@ arguments passed to elinter."
         (cons (substring str 0 pos)
               (substring str (+ pos (length needle))))))))
 
-(defun elinter--origin-url ()
-  "Return the URL of the origin of this repository."
+(defun elinter--origin-url-from-config-lines (lines)
+  "Find the URL of origin from LINES of git config."
   (-some--> (-find (lambda (s) (string-prefix-p "remote.origin.url=" s))
-                   (process-lines "git" "config" "--local" "--list"))
+                   lines)
     (elinter--break it "=")
     (cdr it)))
 
@@ -272,16 +284,22 @@ arguments passed to elinter."
   (save-match-data
     (cond
      ((string-match (rx bol (or "git@github.com:" "https://github.com/")
-                        (group (+? anything)) ".git" eol)
+                        (group (+? anything))
+                        (? ".git")
+                        (? "/")
+                        eol)
                     git-url)
-      `(:fetcher github :repo ,(match-string 1 git-url)))
+      (elinter--build-fetcher-spec 'github (match-string 1 git-url)))
      ((string-match (rx bol (or "git@gitlab.com:" "https://gitlab.com/")
-                        (group (+? anything)) ".git" eol)
+                        (group (+? anything))
+                        (? ".git")
+                        (? "/")
+                        eol)
                     git-url)
-      `(:fetcher gitlab :repo ,(match-string 1 git-url)))
+      (elinter--build-fetcher-spec 'gitlab (match-string 1 git-url)))
      ;; TODO: Add support for BitBucket and other forges
      (t
-      `(:fetcher git :url ,git-url)))))
+      (elinter--build-fetcher-spec 'git git-url)))))
 
 (defun elinter--add-remote (name git-url)
   "Add a remote named NAME to GIT-URL to the repository."
