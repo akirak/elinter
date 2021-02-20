@@ -35,6 +35,12 @@
 (require 'package-build)
 (require 'dash)
 (require 'subr-x)
+(require 'cl-lib)
+
+(declare-function epkg-provided-by "ext:epkg")
+(declare-function epkg-builtin-package-p "ext:epkg")
+(declare-function epkg "ext:epkg")
+(declare-function find-library-name "find-func")
 
 (defgroup elinter nil
   "Recipe helper for Emacs packages."
@@ -89,8 +95,8 @@ ROOT is the project, and SPECS is a spec to select files."
 
 ROOT is the project, and RECIPE is a package recipe."
   (elinter--expand-file-specs root
-                             (or (plist-get (cdr recipe) :files)
-                                 package-build-default-files-spec)))
+                              (or (plist-get (cdr recipe) :files)
+                                  package-build-default-files-spec)))
 
 (defun elinter--discover-source-files (&optional root)
   "Find elisp source files in ROOT."
@@ -324,6 +330,71 @@ different keyword for REPO-OR-URL."
                                (github "github.com")
                                (gitlab "gitlab.com"))
                              (plist-get spec :repo)))))
+
+;;;; Generate a Package-Requires header for the current main file
+
+(defun elinter--package-requires ()
+  "Generate a list of required packages for the current main file."
+  (let* ((package-name (file-name-base (buffer-file-name)))
+         (recipe-file (expand-file-name package-name ".recipes"))
+         (recipe (with-temp-buffer
+                   (insert-file-contents recipe-file)
+                   (goto-char (point-min))
+                   (read (current-buffer))))
+         (files (elinter--expand-files-in-recipe default-directory recipe))
+         features
+         packages)
+    (dolist (file files)
+      (with-current-buffer (or (find-buffer-visiting file)
+                               (find-file-noselect file))
+        (save-excursion
+          (save-restriction
+            (widen)
+            (goto-char (point-min))
+            (while (re-search-forward (rx bol "(require '") nil t)
+              (push (intern (thing-at-point 'symbol t)) features))))))
+    (dolist (feature (cl-remove-duplicates features))
+      (push (epkg-provided-by feature) packages))
+    (->> (cl-remove-duplicates packages :test #'string-equal)
+         (-non-nil)
+         (-filter (lambda (package-name)
+                    (not (epkg-builtin-package-p (epkg package-name))))))))
+
+(defun elinter--package-requires-with-versions ()
+  "Generate a list of required packages with versions."
+  (-map (lambda (library)
+          (let ((path (find-library-name library)))
+            (with-current-buffer (or (find-buffer-visiting path)
+                                     (find-file-noselect path))
+              (save-excursion
+                (goto-char (point-min))
+                (let ((version (or (lm-header "Version")
+                                   (lm-header "Package-Version"))))
+                  (list (intern library)
+                        (if version
+                            (--> (version-to-list version)
+                                 (-take 2 it)
+                                 (-take-while (lambda (n) (>= n 0)) it)
+                                 (-map #'number-to-string it)
+                                 (string-join it "."))
+                          "0")))))))
+        (elinter--package-requires)))
+
+;;;###autoload
+(defun elinter-generate-package-requires ()
+  "Insert \"Package-Requires\" header for the current file."
+  (interactive)
+  (require 'epkg)
+  (goto-char (point-min))
+  (when (or (re-search-forward (lm-get-header-re "Package-Requires") nil t)
+            (re-search-forward (lm-get-header-re "Version") nil t))
+    (beginning-of-line 1))
+  (let* ((emacs (or (assoc 'emacs (read (lm-header-multiline "Package-Requires")))
+                    ;; Use the running Emacs version as fallback.
+                    (list 'emacs emacs-version)))
+         (package-deps (elinter--package-requires-with-versions))
+         (package-requires (cons emacs package-deps)))
+    (insert (concat ";; Package-Requires: " (prin1-to-string package-requires) "\n"))))
 
 (provide 'elinter)
 ;;; elinter.el ends here
