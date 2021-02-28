@@ -29,10 +29,10 @@
         "homepage": "",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "a22d4adf9b8e8d151a60267ef4ae3d0dd49b9fb6",
-        "sha256": "07i1sirixcapnq0dx9mxh3815k0c7i8zz6x7ab64aba3v76i4kdq",
+        "rev": "ef8dc327f62cc51b12b7dff890d3fe8cc8a4b57c",
+        "sha256": "1mbyk0zwjnrbknkz6zgg0cs8aik5zqdpv0kpakhxzig19kmy3fsq",
         "type": "tarball",
-        "url": "https://github.com/nix-community/emacs-overlay/archive/a22d4adf9b8e8d151a60267ef4ae3d0dd49b9fb6.tar.gz",
+        "url": "https://github.com/nix-community/emacs-overlay/archive/ef8dc327f62cc51b12b7dff890d3fe8cc8a4b57c.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "gitignore": {
@@ -53,10 +53,10 @@
         "homepage": "",
         "owner": "riscy",
         "repo": "melpazoid",
-        "rev": "f9abcddc99bc0a62ca1a2f70cd25f0e68d954146",
-        "sha256": "0y9781qmfrg62n1vild5574a0jqmzygx5zcqfdzylf5nzsyplnkd",
+        "rev": "78375618a5ae1d8d905df9cef86ebf91b92742f6",
+        "sha256": "1j0whvy84p5zq9kvfa0qh9w56z4vflfq3mc424g09al2p8xy42bz",
         "type": "tarball",
-        "url": "https://github.com/riscy/melpazoid/archive/f9abcddc99bc0a62ca1a2f70cd25f0e68d954146.tar.gz",
+        "url": "https://github.com/riscy/melpazoid/archive/78375618a5ae1d8d905df9cef86ebf91b92742f6.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "niv": {
