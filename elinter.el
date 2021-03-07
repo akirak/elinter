@@ -95,8 +95,12 @@ ROOT is the project, and SPECS is a spec to select files."
 
 ROOT is the project, and RECIPE is a package recipe."
   (elinter--expand-file-specs root
-                              (or (plist-get (cdr recipe) :files)
-                                  package-build-default-files-spec)))
+                              (if-let (file-list (plist-get (cdr recipe) :files))
+                                  (if (eq :defaults (car file-list))
+                                      (append package-build-default-files-spec
+                                              (cdr file-list))
+                                    file-list)
+                                package-build-default-files-spec)))
 
 (defun elinter--discover-source-files (&optional root)
   "Find elisp source files in ROOT."
