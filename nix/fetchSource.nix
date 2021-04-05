@@ -3,4 +3,4 @@
 , recipeFile
 }:
 (import (import ./sources.nix).nix-elisp-helpers { inherit pkgs; }).fetchFromRecipe
-  (builtins.readFile recipeFile);
+  (builtins.readFile recipeFile)
