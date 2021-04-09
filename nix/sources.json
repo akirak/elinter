@@ -77,10 +77,10 @@
         "homepage": "",
         "owner": "akirak",
         "repo": "nix-elisp-helpers",
-        "rev": "a9157dd3c51da9a3b4db73a4a11ae44e44a0a2fd",
-        "sha256": "0pmj1wa61h1324wizxyqazn204gwgj034h8gna42vx31vvdqijp4",
+        "rev": "fa7341ce1ec8ba48ee3d5c100969a5fb87323daa",
+        "sha256": "04npb5b9qdqsqh1rh2y821jls03qf2wwcwy6aq1w5nnbn614533c",
         "type": "tarball",
-        "url": "https://github.com/akirak/nix-elisp-helpers/archive/a9157dd3c51da9a3b4db73a4a11ae44e44a0a2fd.tar.gz",
+        "url": "https://github.com/akirak/nix-elisp-helpers/archive/fa7341ce1ec8ba48ee3d5c100969a5fb87323daa.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "nix-emacs-ci": {
