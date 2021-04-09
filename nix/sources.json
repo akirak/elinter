@@ -89,10 +89,10 @@
         "homepage": null,
         "owner": "purcell",
         "repo": "nix-emacs-ci",
-        "rev": "6893031a5d2f4e3c7e42cc4cfeaaef64962e61aa",
-        "sha256": "0dgrj3jyn9aln0jyf4mjs4xgcp78hpvjgirzmwbxfjpd73dri0qb",
+        "rev": "e785fc535900fcb55394b0b82f02089be72cf1a5",
+        "sha256": "15nwazga9vhl9r18n4z0d5rqbhz2km2p1jmfpl5xj33p5r5a31ri",
         "type": "tarball",
-        "url": "https://github.com/purcell/nix-emacs-ci/archive/6893031a5d2f4e3c7e42cc4cfeaaef64962e61aa.tar.gz",
+        "url": "https://github.com/purcell/nix-emacs-ci/archive/e785fc535900fcb55394b0b82f02089be72cf1a5.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "pre-commit-hooks.nix": {
