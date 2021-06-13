@@ -12,8 +12,7 @@ jobs:
     strategy:
       matrix:
         nixpkgs_channel:
-        - nixos-20.03-small
-        - nixos-20.09-small
+        - nixos-21.05-small
         - nixos-unstable-small
     steps:
     - uses: cachix/install-nix-action@v13
