@@ -1,12 +1,13 @@
 name: Update dependencies
 on:
   schedule:
-    # Run the job twice a month
-    - cron:  '0 5 9,24 * *'
+    # Every week
+    - cron:  '0 5 * * 2'
 jobs:
   niv-updater:
     name: 'Create PRs for niv-managed dependencies'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: niv-updater-action
         uses: knl/niv-updater-action@v9
