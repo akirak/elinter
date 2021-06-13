@@ -7,6 +7,7 @@ jobs:
   niv-updater:
     name: 'Create PRs for niv-managed dependencies'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: niv-updater-action
         uses: knl/niv-updater-action@v9
