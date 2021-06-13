@@ -398,7 +398,7 @@ different keyword for REPO-OR-URL."
                     (list 'emacs emacs-version)))
          (package-deps (elinter--package-requires-with-versions))
          (package-requires (cons emacs package-deps)))
-    (insert (concat ";; Package-Requires: " (prin1-to-string package-requires) "\n"))))
+    (insert ";; Package-Requires: " (prin1-to-string package-requires) "\n")))
 
 (provide 'elinter)
 ;;; elinter.el ends here
