@@ -32,7 +32,12 @@ let
       mainFile =
         if length sourceFiles == 1
         then head sourceFiles
-        else head (filter isMainFile sourceFiles);
+        else
+          let mainFiles = (filter isMainFile sourceFiles);
+          in
+          if mainFiles == [ ]
+          then abort "Main elisp file not found for recipe ${recipeFile}."
+          else head mainFiles;
     };
 in
 with package;
