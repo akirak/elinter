@@ -1,6 +1,6 @@
 # Provides a derivation with 'buttercup' executable script for running
 # tests.
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> { } }:
 let
   archive = builtins.fetchTarball (import ./sources.nix).emacs-buttercup.url;
   buttercupDrv = pkgs.srcOnly {

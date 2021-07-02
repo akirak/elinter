@@ -1,5 +1,5 @@
 # Git hook for development
-{ pkgs ? import <nixpkgs> {}
+{ pkgs ? import <nixpkgs> { }
 }:
 with pkgs;
 with (import (import ./sources.nix).gitignore { inherit (pkgs) lib; });
