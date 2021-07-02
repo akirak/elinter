@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {}
+{ pkgs ? import <nixpkgs> { }
   # Whether to turn on experimental checks using melpazoid.
 , useMelpazoid ? false
 }:
@@ -11,7 +11,7 @@ let
     "checkdoc"
     "check-declare"
     "package-lint"
-  ] ++ (if useMelpazoid then [ "melpazoid" ] else []);
+  ] ++ (if useMelpazoid then [ "melpazoid" ] else [ ]);
 
   # A list of linter names joined by space.
   # This should be consistent with ELINTER_LINTERS environment variables
@@ -49,7 +49,8 @@ let
         }
       ).package;
     in
-      runCommandNoCC "elinter-file-linter" {
+    runCommandNoCC "elinter-file-linter"
+      {
         preferLocalBuild = true;
 
         propagateBuildInputs = [
@@ -61,26 +62,27 @@ let
           makeWrapper
         ];
       }
-        ''
-          mkdir -p $out/bin
-          makeWrapper ${emacsForLint}/bin/emacs $out/bin/elinter-lint-files \
-            --run "exec &> >(${gnugrep}/bin/grep -E -f ${share}/share/elinter/file-linter-patterns.txt)" \
-            --add-flags "-Q --batch" \
-            --add-flags "--script ${share}/share/elinter/elinter-run-linters.el" \
-            --set-default ELINTER_LINTERS "${lintersAsString}" \
-            --set-default ELINTER_LINT_CUSTOM_FILE ${share}/share/elinter/lint-options.el
-        '';
+      ''
+        mkdir -p $out/bin
+        makeWrapper ${emacsForLint}/bin/emacs $out/bin/elinter-lint-files \
+          --run "exec &> >(${gnugrep}/bin/grep -E -f ${share}/share/elinter/file-linter-patterns.txt)" \
+          --add-flags "-Q --batch" \
+          --add-flags "--script ${share}/share/elinter/elinter-run-linters.el" \
+          --set-default ELINTER_LINTERS "${lintersAsString}" \
+          --set-default ELINTER_LINT_CUSTOM_FILE ${share}/share/elinter/lint-options.el
+      '';
 
-  runners = runCommandNoCC "elinter-linters" {
-    preferLocalBuild = true;
-    inherit src;
-    buildInputs = [
-      makeWrapper
-    ];
-    propagateBuildInputs = [
-      share
-    ];
-  }
+  runners = runCommandNoCC "elinter-linters"
+    {
+      preferLocalBuild = true;
+      inherit src;
+      buildInputs = [
+        makeWrapper
+      ];
+      propagateBuildInputs = [
+        share
+      ];
+    }
     ''
       mkdir -p $out/bin
       for f in elinter-logger elinter-github-logger \
@@ -153,4 +155,4 @@ in
 {
   inherit file-linter;
 }
-// main
+  // main

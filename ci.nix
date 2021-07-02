@@ -1,6 +1,6 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> { } }:
 pkgs.mkShell {
   buildInputs = [
-    (import ./default.nix {})
+    (import ./default.nix { })
   ];
 }

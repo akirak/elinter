@@ -1,7 +1,7 @@
 { version
 , elispPackages
 , libNix
-, pkgs ? import <nixpkgs> {}
+, pkgs ? import <nixpkgs> { }
 }:
 rec {
   package = (import libNix).emacsDerivation {

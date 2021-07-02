@@ -7,14 +7,14 @@ with builtins;
 let
   sources = import ./sources.nix;
 
-  pkgsForLib = import <nixpkgs> {};
+  pkgsForLib = import <nixpkgs> { };
 
   lib = pkgsForLib.lib;
 
   emacsOverlayParseLib =
-    pkgsForLib.callPackage (sources.emacs-overlay + "/parse.nix") {};
+    pkgsForLib.callPackage (sources.emacs-overlay + "/parse.nix") { };
 
-  elispHelperLib = import sources.nix-elisp-helpers {};
+  elispHelperLib = import sources.nix-elisp-helpers { };
 
   nonEmpty = s: defaultVal: if s == "" then defaultVal else s;
 
@@ -39,9 +39,9 @@ let
     let
       cask = elispHelperLib.parseCask str;
       depsWithMaybeVersions =
-        (cask.dependencies or []) ++ ((cask.development or {}).dependencies or []);
+        (cask.dependencies or [ ]) ++ ((cask.development or { }).dependencies or [ ]);
     in
-      map head depsWithMaybeVersions;
+    map head depsWithMaybeVersions;
 
   splitQuotedString = str:
     let
@@ -49,13 +49,13 @@ let
       first = elemAt m 0;
       rest = elemAt m 2;
     in
-      if m == null
-      then []
-      else [ first ] ++ (
-        if rest == null
-        then []
-        else splitQuotedString rest
-      );
+    if m == null
+    then [ ]
+    else [ first ] ++ (
+      if rest == null
+      then [ ]
+      else splitQuotedString rest
+    );
 
   # Retrieve a source of a particular package from the user's
   # sources.json.
@@ -66,8 +66,8 @@ let
   # - `name` should be the name in sources.json
   sourceWithFallback = name:
     if userSources != null
-    && pathExists userSources
-    && hasAttr name (import userSources)
+      && pathExists userSources
+      && hasAttr name (import userSources)
     then (import userSources).${name}
     else sources.${name};
 
@@ -102,12 +102,12 @@ let
   emacsDerivation =
     { emacs ? "emacs"
     , # elisp packages as a list of strings
-      dependencies ? []
+      dependencies ? [ ]
     }:
-      (localEmacsPackagesFor emacs).emacsWithPackages (
-        epkgs:
-          map (name: epkgs.${name}) dependencies
-      );
+    (localEmacsPackagesFor emacs).emacsWithPackages (
+      epkgs:
+      map (name: epkgs.${name}) dependencies
+    );
 
   attrNameToVersion = name:
     lib.replaceStrings [ "-" ] [ "." ]
@@ -157,8 +157,8 @@ let
         assert (header != null);
         builtins.match ".+\\(emacs \"([.[:digit:]]+)\"\\).+" header;
     in
-      assert (length versions > 0);
-      head versions;
+    assert (length versions > 0);
+    head versions;
 
   builtinPackages = [ "checkdoc" "check-declare" ];
 
