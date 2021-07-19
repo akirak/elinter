@@ -29,12 +29,11 @@ let
         filter (file: match "(.*/)?flycheck_.+\.el" file == null)
           (expandPackageFiles srcRoot recipeAttrs.files);
       sourceFiles = filter isElisp packageFiles;
+      mainFiles = (filter isMainFile sourceFiles);
       mainFile =
         if length sourceFiles == 1
         then head sourceFiles
         else
-          let mainFiles = (filter isMainFile sourceFiles);
-          in
           if mainFiles == [ ]
           then abort "Main elisp file not found for recipe ${recipeFile}."
           else head mainFiles;
