@@ -321,4 +321,8 @@ elinter -c -l --experimental
 - [[https://github.com/DamienCassou/nix-hello-world][nix-hello-world]] by Damien Cassou, for configuring Nix projects
 - [[https://gitea.petton.fr/DamienCassou/makel][makel]] by Damien Cassou, for some linting code
 
-=elinter= is an improvement upon the previous version, which was helped by [[https://github.com/ericdallo][Eric Dallo]] and [[https://github.com/terlar][Terje Larsen]].
+=elinter= is an improvement upon the previous version, on which I gained help by [[https://github.com/ericdallo][Eric Dallo]] and [[https://github.com/terlar][Terje Larsen]].
+
+The current version (v4) was contributed by the following people:
+
+- Zainab Ali ([[https://github.com/zainab-ali][@zainab-ali]]) [[https://github.com/akirak/elinter/pull/101][#101]]
