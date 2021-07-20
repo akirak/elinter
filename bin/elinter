@@ -62,7 +62,7 @@ else
 fi
 
 usage() {
-  # Follow the style in docopt https://docopt.org/
+  # Follow the style in docopt http://docopt.org/
   cat <<HELP
 Usage: elinter [options] <recipe>...
 
@@ -273,6 +273,7 @@ copy_package_sources() {
   initialdir="$(pwd)"
   # Operate on each package recipe
   for f in ${recipes[*]}; do
+    echo "Linking package source files for recipe ${f} ..."
     # Use the base name of the recipe file as the package name
     package=$(basename "$f")
     # Convert to an absolute path
