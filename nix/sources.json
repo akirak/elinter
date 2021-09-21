@@ -53,10 +53,10 @@
         "homepage": "",
         "owner": "riscy",
         "repo": "melpazoid",
-        "rev": "3a46620b8241c5698f44e7390177eac4f3e40dad",
-        "sha256": "1px8lncxnv3k354y2aiv9kb34nkynrwm7p2h5nnmfc5dx6ms9sck",
+        "rev": "7e5dfbb54057ccf55e6781f211c303a2a5235764",
+        "sha256": "1y1czc1gpz3hs7dxx4n67m3214lsrmj58a5gvkxgw08xcbqd233f",
         "type": "tarball",
-        "url": "https://github.com/riscy/melpazoid/archive/3a46620b8241c5698f44e7390177eac4f3e40dad.tar.gz",
+        "url": "https://github.com/riscy/melpazoid/archive/7e5dfbb54057ccf55e6781f211c303a2a5235764.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "niv": {
