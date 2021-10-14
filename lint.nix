@@ -30,12 +30,10 @@ runCommandNoCC "elinter-lint"
     src
   ];
 } ''
-  mkdir -p $out/share/elinter
-  ln -t $out/share/elinter -s ${src}/elinter-lint.el
-  mkdir $out/bin
+  mkdir -p $out/bin
   makeWrapper ${emacs}/bin/emacs $out/bin/elinter-lint \
     --set ELINTER_LINT_CUSTOM_FILE "${customFile}" \
     --set ELINTER_RECIPE_DIR "${recipeDir}" \
     --add-flags "-Q --batch" \
-    --add-flags "--script $out/share/elinter/elinter-lint.el"
+    --add-flags "--script ${src}/elinter-lint.el"
 ''

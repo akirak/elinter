@@ -46,7 +46,7 @@
 
 (defvar elinter-recipe-dir nil)
 
-(defcustom elinter-prebuild-dir ".elinter-prebuild"
+(defcustom elinter-prebuild-dir ".elinter/build"
   ""
   :type 'directory)
 

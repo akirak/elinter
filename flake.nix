@@ -2,10 +2,6 @@
   description = "An Emacs Lisp lint runner";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
-  # inputs.fromElisp = {
-  #   url = "github:talyz/fromElisp";
-  #   flake = false;
-  # };
   inputs.pre-commit-hooks = {
     url = "github:cachix/pre-commit-hooks.nix";
     inputs.nixpkgs.follows = "nixpkgs";
@@ -39,26 +35,53 @@
           };
           inherit (gitignore.lib) gitignoreSource;
           # fromElisp = (import inputs.fromElisp) { inherit pkgs; };
+          lispSrc = gitignoreSource ./lisp;
           elispLinter = pkgs.callPackage ./lint.nix {
-            src = gitignoreSource ./lisp;
+            src = lispSrc;
           };
         in
         {
+          packages = flake-utils.lib.flattenTree {
+            elinter-lint = elispLinter {
+              recipeDir = ./.recipes;
+              package = pkgs.emacs;
+            };
+            elinter-compile = pkgs.runCommandNoCC "elinter-compile"
+              {
+                src = gitignoreSource ./bash;
+                propagatedBuildInputs = [
+                  lispSrc
+                ];
+              } ''
+              mkdir -p $out/bin
+              cp $src/elinter-compile.bash $out/bin/elinter-compile
+              substituteInPlace $out/bin/elinter-compile \
+                --replace elinter-install-deps.el "${lispSrc}/elinter-install-deps.el"
+            '';
+          };
           checks = {
             pre-commit-check = pre-commit-hooks.lib.${system}.run {
               src = gitignoreSource ./.;
               hooks = {
                 nixpkgs-fmt.enable = true;
                 nix-linter.enable = true;
+                elinter = {
+                  enable = true;
+                  name = "elinter";
+                  description = "Lint Emacs Lisp files";
+                  entry = "${self.packages.${system}.elinter-lint}/bin/elinter-lint";
+                  files = "\\.el$";
+                  excludes = [
+                    "\\.dir-locals\\.el"
+                  ];
+                };
               };
             };
           };
           devShell = nixpkgs.legacyPackages.${system}.mkShell {
             buildInputs = [
-              (elispLinter {
-                recipeDir = ./.recipes;
-                package = pkgs.emacs;
-              })
+              self.packages.${system}.elinter-lint
+              self.packages.${system}.elinter-compile
             ];
 
             inherit (self.checks.${system}.pre-commit-check) shellHook;
