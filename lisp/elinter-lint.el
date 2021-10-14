@@ -40,10 +40,15 @@
 
 (defgroup elinter nil
   "Lint runner for Emacs Lisp projects."
+  :prefix "elinter"
   :group 'maint
   :group 'lisp)
 
 (defvar elinter-recipe-dir nil)
+
+(defcustom elinter-prebuild-dir ".elinter-prebuild"
+  ""
+  :type 'directory)
 
 (defvar elinter-package-elisp-files
   (split-string (or (getenv "PACKAGE_ELISP_FILES") "") " ")
@@ -259,16 +264,29 @@ This function returns non-nil if there is any error found."
 
 (defvar package-build-default-files-spec)
 
+(defun elinter-read-recipes ()
+  "Read all recipes from `elinter-recipe-dir'."
+  (thread-last (directory-files elinter-recipe-dir t)
+    (cl-remove-if (lambda (file)
+                    (string-match-p (rx "/." (* (not (any "/"))) eol) file)))
+    (mapcar (lambda (file)
+              (ignore-errors
+                (with-temp-buffer
+                  (insert-file-contents file)
+                  (goto-char (point-min))
+                  (read (current-buffer))))))))
+
+(defun elinter--main-file (package-name source-files)
+  "Find the main file for PACKAGE-NAME from SOURCE-FILES."
+  (cl-find-if
+   (lambda (file)
+     (string-equal (file-name-nondirectory file) (concat package-name ".el")))
+   source-files))
+
 (defun elinter-lint-on-files (files)
   "Run the linters on FILES based on the in-repository recipes."
-  (cl-labels
-      ((read-recipe (file)
-                    (ignore-errors
-                      (with-temp-buffer
-                        (insert-file-contents file)
-                        (goto-char (point-min))
-                        (read (current-buffer)))))
-       (expand-recipe-files (recipe)
+  (cl-flet
+      ((expand-recipe-files (recipe)
                             (let ((files (plist-get (cdr recipe) :files)))
                               (mapcar #'car
                                       (package-build-expand-file-specs
@@ -277,37 +295,84 @@ This function returns non-nil if there is any error found."
                                            (append package-build-default-files-spec
                                                    (cdr files))
                                          (or files
-                                             package-build-default-files-spec))))))
-       (main-file (package-name source-files)
-                  (car (cl-find-if
-                        (lambda (file)
-                          (let ((base (file-name-base file)))
-                            (member base (list (concat package-name ".el")
-                                               (concat package-name "-pkg.el")))))
-                        source-files))))
+                                             package-build-default-files-spec)))))))
     (let* (failure
-           (recipes (mapcar #'read-recipe (directory-files elinter-recipe-dir t))))
+           (recipes (elinter-read-recipes)))
       (dolist (recipe recipes)
         (when recipe
           (let* ((package-name (symbol-name (car recipe)))
                  (package-files (expand-recipe-files recipe))
-                 (matches (cl-intersection package-files files
-                                           :test #'file-equal-p)))
+                 (matches (cl-intersection package-files files :test #'file-equal-p)))
             (when matches
               (message "Linting files in package %s: %s"
                        package-name
                        (string-join matches " "))
               (setq elinter-package-elisp-files matches
-                    elinter-package-main-file (main-file package-name package-files))
+                    elinter-package-main-file (elinter--main-file package-name package-files))
               (when (elinter-run-linters-current-package)
                 (setq failure t))))))
       failure)))
+
+(defun elinter-lint-and-prepare-compile ()
+  ""
+  (unless (file-directory-p elinter-prebuild-dir)
+    (make-directory elinter-prebuild-dir t))
+  (let (failure)
+    (dolist (recipe (elinter-read-recipes))
+      (let* ((package-name (symbol-name (car recipe)))
+             (files-spec (plist-get (cdr recipe) :files))
+             (package-files (package-build-expand-file-specs
+                             default-directory
+                             (if (eq :defaults (car files-spec))
+                                 (append package-build-default-files-spec
+                                         (cdr files-spec))
+                               (or files-spec
+                                   package-build-default-files-spec))))
+             (elisp-files (cl-remove-if (lambda (fpath)
+                                          (string-match-p (rx ".el" bol) fpath))
+                                        (mapcar #'car package-files)))
+             (prebuild-dest (expand-file-name package-name elinter-prebuild-dir))
+             (main-file (elinter--main-file package-name elisp-files)))
+        (message "Linting files in package %s: %s"
+                 package-name
+                 (string-join elisp-files " "))
+        (setq elinter-package-elisp-files elisp-files
+              elinter-package-main-file main-file)
+        (when (elinter-run-linters-current-package)
+          (setq failure t))
+        (when (file-directory-p prebuild-dest)
+          (delete-directory prebuild-dest 'recursive))
+        (make-directory prebuild-dest)
+        (pcase-dolist (`(,src . ,name) package-files)
+          (make-symbolic-link (expand-file-name src default-directory)
+                              (expand-file-name name prebuild-dest)))
+        (with-temp-buffer
+          (prin1 (elinter--define-package main-file)
+                 (current-buffer))
+          (write-file (expand-file-name (concat package-name "-pkg.el")
+                                        prebuild-dest)))))
+    failure))
+
+(require 'lisp-mnt)
+
+(defun elinter--define-package (main-file)
+  (cl-check-type main-file string)
+  (with-temp-buffer
+    (insert-file-contents main-file)
+    `(define-package ,(lm-get-package-name)
+       ,(lm-version)
+       "Omitted. Use package-build.el for retrieving a proper value."
+       ,(let ((lines (lm-header-multiline "package-requires")))
+          (with-temp-buffer
+            (insert (string-join lines " "))
+            (goto-char (point-min))
+            `',(read (current-buffer)))))))
 
 (defun elinter-lint-run-and-exit ()
   "Run the linters and kill Emacs with an appropriate exit code."
   (let ((failure (if command-line-args-left
                      (elinter-lint-on-files command-line-args-left)
-                   (elinter-run-linters-current-package))))
+                   (elinter-lint-and-prepare-compile))))
     (kill-emacs (if failure 1 0))))
 
 (defun elinter-setup-from-env ()
@@ -319,7 +384,10 @@ This function returns non-nil if there is any error found."
   (let ((recipe-dir (getenv "ELINTER_RECIPE_DIR")))
     (when (and recipe-dir
                (file-directory-p recipe-dir))
-      (setq elinter-recipe-dir (file-name-as-directory recipe-dir)))))
+      (setq elinter-recipe-dir (file-name-as-directory recipe-dir))))
+  (let ((prebuild-dir (getenv "ELINTER_PREBUILD_DIR")))
+    (when prebuild-dir
+      (setq elinter-prebuild-dir (file-name-as-directory prebuild-dir)))))
 
 (when noninteractive
   (elinter-setup-from-env)
