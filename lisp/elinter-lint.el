@@ -4,8 +4,8 @@
 
 ;; Author: Akira Komamura <akira.komamura@gmail.com>
 ;; Version: 0.1
-;; Package-Requires: ((emacs "27.1"))
-;; Keywords:
+;; Package-Requires: ((emacs "27.1") (package-lint "0") (package-build "0"))
+;; Keywords: lisp maint
 ;; URL: https://github.com/akirak/elinter
 
 ;; This file is not part of GNU Emacs.
@@ -33,11 +33,17 @@
 
 (require 'cl-lib)
 (require 'subr-x)
+(require 'package-build)
+(require 'package-lint)
+
+(defvar package-lint-main-file)
 
 (defgroup elinter nil
   "Lint runner for Emacs Lisp projects."
   :group 'maint
   :group 'lisp)
+
+(defvar elinter-recipe-dir nil)
 
 (defvar elinter-package-elisp-files
   (split-string (or (getenv "PACKAGE_ELISP_FILES") "") " ")
@@ -79,8 +85,6 @@ This variable can also be a list of linter names."
 
 (defun elinter-package-lint ()
   "Run package-lint on the input files."
-  (require 'package-lint)
-
   ;; Prevent use of package.el to install packages
   (advice-add #'package-initialize :override #'ignore)
   (advice-add #'package-lint--check-packages-installable :override #'ignore)
@@ -255,9 +259,8 @@ This function returns non-nil if there is any error found."
 
 (defvar package-build-default-files-spec)
 
-(defun elinter-run-linters-on-files (files)
+(defun elinter-lint-on-files (files)
   "Run the linters on FILES based on the in-repository recipes."
-  (require 'package-build)
   (cl-labels
       ((read-recipe (file)
                     (ignore-errors
@@ -283,7 +286,7 @@ This function returns non-nil if there is any error found."
                                                (concat package-name "-pkg.el")))))
                         source-files))))
     (let* (failure
-           (recipes (mapcar #'read-recipe (directory-files ".recipes" t))))
+           (recipes (mapcar #'read-recipe (directory-files elinter-recipe-dir t))))
       (dolist (recipe recipes)
         (when recipe
           (let* ((package-name (symbol-name (car recipe)))
@@ -300,20 +303,27 @@ This function returns non-nil if there is any error found."
                 (setq failure t))))))
       failure)))
 
-(defun elinter-run-linters-and-exit ()
+(defun elinter-lint-run-and-exit ()
   "Run the linters and kill Emacs with an appropriate exit code."
   (let ((failure (if command-line-args-left
-                     (elinter-run-linters-on-files command-line-args-left)
+                     (elinter-lint-on-files command-line-args-left)
                    (elinter-run-linters-current-package))))
     (kill-emacs (if failure 1 0))))
 
-(when noninteractive
+(defun elinter-setup-from-env ()
+  "Configure linters from the environment."
   (let ((custom-file (getenv "ELINTER_LINT_CUSTOM_FILE")))
     (when (and custom-file
                (file-exists-p custom-file))
       (load custom-file nil 'nomessage)))
+  (let ((recipe-dir (getenv "ELINTER_RECIPE_DIR")))
+    (when (and recipe-dir
+               (file-directory-p recipe-dir))
+      (setq elinter-recipe-dir (file-name-as-directory recipe-dir)))))
 
-  (elinter-run-linters-and-exit))
+(when noninteractive
+  (elinter-setup-from-env)
+  (elinter-lint-run-and-exit))
 
 (provide 'elinter-lint)
 ;;; elinter-lint.el ends here
