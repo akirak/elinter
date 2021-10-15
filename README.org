@@ -1,4 +1,4 @@
-* elinter@v5
+* elinter@v5 (initial work in progress)
 :PROPERTIES:
 :TOC:      :include siblings :depth 2 :ignore this
 :END:
@@ -8,11 +8,47 @@
 
 This is a rewrite of [[https://github.com/akirak/elinter/tree/v4][the former version]] of my Emacs Lisp linter runner.
 It helps you maintain configuration for running =package-lint=, =checkdoc=, =byte-compile=, etc. both locally and on CI (typically GitHub Actions).
+
 Its goal is to handle cases where other solutions like [[https://github.com/alphapapa/makem.sh][makem.sh]] do not handle well.
-Unlike the former two versions, it is no longer aimed at user-friendliness and minimal configuration.
-Instead, it focus on simplicity and modularity, which should be referred to as a /library/ rather than a /framework/.
-It is totally for Nix users, and it requires understanding of [[https://nixos.wiki/wiki/Flakes][Nix flakes]].
+
+It is totally for Nix users, and it requires your understanding of [[https://nixos.wiki/wiki/Flakes][Nix flakes]].
+You can think of it as a /library/ rather than a /framework/, unlike the former two versions.
 
 :CONTENTS:
 
 :END:
+** Features
+With elinter, you will be able to:
+
+- Statically check your Emacs Lisp code as a library with modestly a small amount of configuration
+- After successfully checking your code, byte-compile it as a package or packages
+
+Elinter won't run tests, but if you follow conventions of elinter projects, you will be able to run a test suite relatively easily. I plan on writing another library for aiding the purpose.
+*** When to and when not to use elinter
+Compared to other solutions, elinter is probably better when your project is:
+
+- a multi-package repository, which contain multiple packages in a single repository
+- a polyglot project, which hosts multiple languages in a single repository
+
+Otherwise, you can stick with [[https://github.com/alphapapa/makem.sh][makem.sh]] which is actively maintained and handles typical projects well.
+** Guide: How to configure your Emacs Lisp project
+** Design goal
+This version is no longer aimed at user-friendliness and minimizing configuration code.
+Instead, I want to focuses more on simplicity and modularity, and also on reducing the library code.
+
+After working on several projects both personally and at work, I have changed my opinions about how one should configure CI for his/her project.
+Since CI is about checking your code, it is good to be explicit about what you run on the code.
+If you are especially serious about quality control of your project, it may not be a good idea to rely on a certain framework which attempts to do everything on behalf of the user.
+On the contrary, there can be a number of small projects which you want to finish quickly without spending much time on basic QC, where a convenient framework would help.
+There are trade-offs between ease of configuration (saving your time) and specificability (confidence about your code).
+After all, you may need to write it on your own.
+A linting framework, if there were such a notion, should be about saving developers' time while allowing a certain level of explicitness and flexibility.
+It does not need to ship a ton of fancy features, but it should help developers throughout the lifecycle.
+
+Thinking about lifecycles (or DevOps) of software programs, a certain group of people are already standardizing their workflows around Nix.
+It would be better to reuse their wisdom wherever possible rather than to reinvent the wheel.
+I made the latter mistake in the previous version.
+We now have flakes.
+They are a standardization of many aspects in the lifecycle, such as building packages, maintaining dependencies, etc.
+The best one can do might be to create something that integrates with flakes.
+This project is part of an attempt to achieve that for Emacs Lisp.
