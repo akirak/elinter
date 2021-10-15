@@ -14,4 +14,5 @@ Instead, it focus on simplicity and modularity, which should be referred to as a
 It is totally for Nix users, and it requires understanding of [[https://nixos.wiki/wiki/Flakes][Nix flakes]].
 
 :CONTENTS:
+
 :END:
