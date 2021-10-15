@@ -1,0 +1,17 @@
+* elinter@v5
+:PROPERTIES:
+:TOC:      :include siblings :depth 2 :ignore this
+:END:
+# Add CI badges here
+#+BEGIN_HTML
+#+END_HTML
+
+This is a rewrite of [[https://github.com/akirak/elinter/tree/v4][the former version]] of my Emacs Lisp linter runner.
+It helps you maintain configuration for running =package-lint=, =checkdoc=, =byte-compile=, etc. both locally and on CI (typically GitHub Actions).
+Its goal is to handle cases where other solutions like [[https://github.com/alphapapa/makem.sh][makem.sh]] do not handle well.
+Unlike the former two versions, it is no longer aimed at user-friendliness and minimal configuration.
+Instead, it focus on simplicity and modularity, which should be referred to as a /library/ rather than a /framework/.
+It is totally for Nix users, and it requires understanding of [[https://nixos.wiki/wiki/Flakes][Nix flakes]].
+
+:CONTENTS:
+:END:
