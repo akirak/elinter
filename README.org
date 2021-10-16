@@ -1,6 +1,6 @@
 * elinter@v5 (initial work in progress)
 :PROPERTIES:
-:TOC:      :include siblings :depth 2 :ignore this
+:TOC:      :include descendants :depth 2
 :END:
 # Add CI badges here
 #+BEGIN_HTML
@@ -16,9 +16,9 @@ You can think of it as a /library/ rather than a /framework/, unlike the former 
 
 :CONTENTS:
 - [[#features][Features]]
-    - [[#when-to-and-when-not-to-use-elinter][When to and when not to use elinter]]
-  - [[#guide-how-to-configure-your-emacs-lisp-project][Guide: How to configure your Emacs Lisp project]]
-  - [[#design-goal][Design goal]]
+  - [[#when-to-and-when-not-to-use-elinter][When to and when not to use elinter]]
+- [[#guide-how-to-configure-your-emacs-lisp-project][Guide: How to configure your Emacs Lisp project]]
+- [[#design-goal][Design goal]]
 :END:
 ** Features
 With elinter, you will be able to:
