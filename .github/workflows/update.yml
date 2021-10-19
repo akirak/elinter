@@ -9,7 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: peter-evans/create-pull-request@v3
+        with:
+          base: v4
+          branch: 'pr/update-deps-v4'
+          draft: true
+          delete-branch: true
+          title: 'chore: Update dependencies'
+          body: 'This is a base branch for dependency updates by a bot.'
+
       - name: niv-updater-action
         uses: knl/niv-updater-action@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          pull_request_base: 'pr/update-deps-v4'
+          # keep_updating: true
+          message_prefix: 'This is a weekly update of dependencies tracked using niv.'
+          branch_prefix: 'bot/niv-updater/'
