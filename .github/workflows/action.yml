@@ -1,6 +1,8 @@
 name: 'GitHub Action'
 on:
   pull_request:
+    branches-ignore:
+    - pr/update-deps-v4
   push:
     branches:
     - v4
