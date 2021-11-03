@@ -22,5 +22,5 @@ jobs:
       run: |
         nix-env -iA cachix -f https://cachix.org/api/v1/install
         cachix use emacs-ci
-    - uses: actions/checkout@v2.3.5
+    - uses: actions/checkout@v2.4.0
     - run: nix-shell test/shell.nix

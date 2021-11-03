@@ -18,7 +18,7 @@ jobs:
     - uses: cachix/install-nix-action@v14
       with:
         nix_path: nixpkgs=channel:${{ matrix.nixpkgs_channel }}
-    - uses: actions/checkout@v2.3.5
+    - uses: actions/checkout@v2.4.0
     - uses: ./
     - run: elinter -t --buttercup -e latest
     - run: elinter -t --buttercup -e snapshot
