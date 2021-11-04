@@ -20,7 +20,5 @@ jobs:
         nix_path: nixpkgs=channel:${{ matrix.nixpkgs_channel }}
     - uses: actions/checkout@v2.4.0
     - uses: ./
-      with:
-        working-directory: .
     - run: elinter -t --buttercup -e latest
     - run: elinter -t --buttercup -e snapshot
