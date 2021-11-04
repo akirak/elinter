@@ -1,7 +1,14 @@
 name: 'elinter'
 description: 'Lint Emacs Lisp packages'
+inputs:
+  working-directory:
+    description: 'Directory where the action is run'
+    required: false
+    default: '.'
 runs:
   using: 'composite'
   steps:
-    - run: $GITHUB_ACTION_PATH/action.bash
-      shell: bash
+    - shell: bash
+      run: |
+        cd '${{ inputs.working-directory }}'
+        $GITHUB_ACTION_PATH/action.bash
