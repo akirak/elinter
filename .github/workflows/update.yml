@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: peter-evans/create-pull-request@v3
+      - uses: peter-evans/create-pull-request@v3.11.0
         with:
           base: v4
           branch: 'pr/update-deps-v4'
