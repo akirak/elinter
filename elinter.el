@@ -160,7 +160,8 @@ ROOT is the project, and RECIPE is a package recipe."
              (recipe-file (expand-file-name package-name elinter-recipes-dir)))
         (ignore-errors
           (make-directory dest-dir t))
-        (unless (file-exists-p recipe-file)
+        (unless (or (file-exists-p recipe-file)
+                    (find-buffer-visiting recipe-file))
           (with-current-buffer (create-file-buffer recipe-file)
             (let* ((fetcher-spec (elinter--fetcher-spec))
                    ;; TODO: Generate files spec
