@@ -172,13 +172,16 @@ ROOT is the project, and RECIPE is a package recipe."
                                                ,@(when files-spec
                                                    (list :files files-spec)))))))
               (insert (prin1-to-string recipe))
+              (when (search-backward ":files")
+                (insert "\n"))
               (setq buffer-file-name recipe-file)
               (setq uncovered-files (cl-set-difference uncovered-files
                                                        (elinter--expand-files-in-recipe
                                                         root
                                                         recipe)
                                                        :test #'string-equal))
-              (emacs-lisp-mode)
+              (delay-mode-hooks (emacs-lisp-mode))
+              (indent-region (point-min) (point-max))
               (save-buffer))))
         (message "Copying %s to %s" package-name dest-dir)
         (copy-file recipe-file (expand-file-name package-name dest-dir))))))
