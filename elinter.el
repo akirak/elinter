@@ -154,11 +154,23 @@ ROOT is the project, and RECIPE is a package recipe."
         (unless (file-exists-p recipe-file)
           (with-current-buffer (create-file-buffer recipe-file)
             (let* ((fetcher-spec (elinter--fetcher-spec))
-                   ;; TODO: Generate files spec
+                   ;; TODO: Provide better suggestions for :files spec
+                   ;; by reading the dependencies.
+                   (files-spec (read-from-minibuffer
+                                (format "Enter :files spec for %s (optional): " package-name)
+                                ;; If there are multiple packages in the repository,
+                                ;; you will probably need :files spec.
+                                (when (or recipes
+                                          (> (length new-main-files) 1))
+                                  (prin1-to-string (list (file-relative-name main-file root))))
+                                nil
+                                #'read))
                    (recipe (read--expression
                             (format "Confirm recipe for \"%s\": " package-name)
                             (prin1-to-string `(,(intern package-name)
-                                               ,@fetcher-spec)))))
+                                               ,@fetcher-spec
+                                               ,@(when files-spec
+                                                   (list :files files-spec)))))))
               (insert (prin1-to-string recipe))
               (setq buffer-file-name recipe-file)
               (setq uncovered-files (cl-set-difference uncovered-files
