@@ -52,6 +52,15 @@
   "Root directory of your local melpa repository."
   :type 'directory)
 
+(defcustom elinter-copy-recipes t
+  "Whether to copy generated recipes to `elinter-recipes-dir'.
+
+If this option is non-nil, `elinter-discover-packages' copies
+recipes it creates to `elinter-recipes-dir'.
+
+This is useful for maintaining your own package registry."
+  :type 'boolean)
+
 (defcustom elinter-discover-patterns
   '("*.el")
   "List of patterns used to discover source files."
@@ -168,8 +177,9 @@ ROOT is the project, and RECIPE is a package recipe."
                                                        :test #'string-equal))
               (emacs-lisp-mode)
               (save-buffer))))
-        (message "Copying %s to %s" package-name dest-dir)
-        (copy-file recipe-file (expand-file-name package-name dest-dir))))))
+        (when elinter-copy-recipes
+          (message "Copying %s to %s" package-name dest-dir)
+          (copy-file recipe-file (expand-file-name package-name dest-dir)))))))
 
 ;;;###autoload
 (defmacro elinter-with-packages (root &rest progn)
