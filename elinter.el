@@ -52,7 +52,7 @@
   "Root directory of your local melpa repository."
   :type 'directory)
 
-(defcustom elinter-copy-recipes t
+(defcustom elinter-copy-recipes nil
   "Whether to copy generated recipes to `elinter-recipes-dir'.
 
 If this option is non-nil, `elinter-discover-packages' copies
