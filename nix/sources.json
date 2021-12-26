@@ -17,10 +17,10 @@
         "homepage": null,
         "owner": "jorgenschaefer",
         "repo": "emacs-buttercup",
-        "rev": "1de6be465cfe2c3f00183de9351bd838690c9f81",
-        "sha256": "1w02p4bfkyga6sign4flq2kw0hawyvnv63410pyh8nm7acp311gg",
+        "rev": "108d2298cc34d906b196178ad955e3dc139e1779",
+        "sha256": "1vwg82haclgwgjaq0r84gj416ribv7qn1lz8ixf05xhqsvq7ja87",
         "type": "tarball",
-        "url": "https://github.com/jorgenschaefer/emacs-buttercup/archive/1de6be465cfe2c3f00183de9351bd838690c9f81.tar.gz",
+        "url": "https://github.com/jorgenschaefer/emacs-buttercup/archive/108d2298cc34d906b196178ad955e3dc139e1779.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "emacs-overlay": {
@@ -29,10 +29,10 @@
         "homepage": "",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "de982af2c9fb85001b5bea94efe64d8545ba5e55",
-        "sha256": "17dwg0rsa80dr6waj881pz37sxddzcz5ml44rqqy2l6xri39fcrx",
+        "rev": "cb38af53960fe48c09bfd483501779f48efbbd5f",
+        "sha256": "08lgxk8akxgd82lpy7hy2wjwaq5a170vzbgy1gs7wgfmr2jd0vk7",
         "type": "tarball",
-        "url": "https://github.com/nix-community/emacs-overlay/archive/de982af2c9fb85001b5bea94efe64d8545ba5e55.tar.gz",
+        "url": "https://github.com/nix-community/emacs-overlay/archive/cb38af53960fe48c09bfd483501779f48efbbd5f.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "gitignore": {
@@ -53,10 +53,10 @@
         "homepage": "",
         "owner": "riscy",
         "repo": "melpazoid",
-        "rev": "7e5dfbb54057ccf55e6781f211c303a2a5235764",
-        "sha256": "1y1czc1gpz3hs7dxx4n67m3214lsrmj58a5gvkxgw08xcbqd233f",
+        "rev": "47394689a721c783ecd91f64a22bba91665f68a0",
+        "sha256": "00g1ff6a2bpl94bmd6amlmx8hj3w0zkdqcgygi8n5gzz14k0wn61",
         "type": "tarball",
-        "url": "https://github.com/riscy/melpazoid/archive/7e5dfbb54057ccf55e6781f211c303a2a5235764.tar.gz",
+        "url": "https://github.com/riscy/melpazoid/archive/47394689a721c783ecd91f64a22bba91665f68a0.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "niv": {
@@ -89,10 +89,10 @@
         "homepage": null,
         "owner": "purcell",
         "repo": "nix-emacs-ci",
-        "rev": "0da3d86cfc2c49e62744e8366e345df1785d05ca",
-        "sha256": "1lgr23w94lllmmywlnwraq82i2xhhy4cvy1ispmrcq18nhq1mhz6",
+        "rev": "6ac997af7076d654521870c3a3caabdcc5c37399",
+        "sha256": "1wsjb20z1jh5bzvz9jkvi1y9vvjciiipn9d0mlqzkrfvxazk3351",
         "type": "tarball",
-        "url": "https://github.com/purcell/nix-emacs-ci/archive/0da3d86cfc2c49e62744e8366e345df1785d05ca.tar.gz",
+        "url": "https://github.com/purcell/nix-emacs-ci/archive/6ac997af7076d654521870c3a3caabdcc5c37399.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "pre-commit-hooks.nix": {
