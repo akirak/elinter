@@ -52,7 +52,7 @@
   "Root directory of your local melpa repository."
   :type 'directory)
 
-(defcustom elinter-copy-recipes t
+(defcustom elinter-copy-recipes nil
   "Whether to copy generated recipes to `elinter-recipes-dir'.
 
 If this option is non-nil, `elinter-discover-packages' copies
@@ -157,7 +157,7 @@ ROOT is the project, and RECIPE is a package recipe."
     (dolist (main-file new-main-files)
       (let* ((package-name (file-name-base main-file))
              (dest-dir (expand-file-name elinter-recipe-cache-directory root))
-             (recipe-file (expand-file-name package-name elinter-recipes-dir)))
+             (recipe-file (expand-file-name package-name dest-dir)))
         (ignore-errors
           (make-directory dest-dir t))
         (unless (or (file-exists-p recipe-file)
@@ -194,8 +194,8 @@ ROOT is the project, and RECIPE is a package recipe."
               (indent-region (point-min) (point-max))
               (save-buffer))))
         (when elinter-copy-recipes
-          (message "Copying %s to %s" package-name dest-dir)
-          (copy-file recipe-file (expand-file-name package-name dest-dir)))))))
+          (message "Copying %s to %s" package-name elinter-recipes-dir)
+          (copy-file recipe-file (expand-file-name package-name elinter-recipes-dir)))))))
 
 ;;;###autoload
 (defmacro elinter-with-packages (root &rest progn)
