@@ -50,31 +50,27 @@
         };
       };
     } //
-    flake-utils.lib.eachSystem [
-      # TODO: Use the same set of systems as nix-emacs-ci
-      "x86_64-linux"
-    ]
-      (system:
-      let
-        inherit (nixpkgs) lib;
+    flake-utils.lib.eachDefaultSystem (system:
+    let
+      inherit (nixpkgs) lib;
 
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [
-            (import (inputs.emacs-ci + "/overlay.nix"))
-            inputs.twist.overlay
-          ];
-        };
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [
+          (import (inputs.emacs-ci + "/overlay.nix"))
+          inputs.twist.overlay
+        ];
+      };
 
-        elinter = pkgs.callPackage ./pkgs/elinter {
-          emacs = pkgs.callPackage ./lib/emacsSmall.nix { };
-          inherit inputs;
-        };
-      in
-      {
-        packages = flake-utils.lib.flattenTree {
-          inherit elinter;
-        };
-      }
-      );
+      elinter = pkgs.callPackage ./pkgs/elinter {
+        emacs = pkgs.callPackage ./lib/emacsSmall.nix { };
+        inherit inputs;
+      };
+    in
+    {
+      packages = flake-utils.lib.flattenTree {
+        inherit elinter;
+      };
+    }
+    );
 }
