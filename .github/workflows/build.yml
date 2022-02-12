@@ -1,0 +1,21 @@
+name: 'Tests'
+on:
+  pull_request:
+  push:
+    paths-ignore:
+    - '**.org'
+    branches:
+    - v5
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: cachix/install-nix-action@v16
+      with:
+        extra_nix_config: |
+          substituters = https://cache.nixos.org https://emacs-ci.cachix.org
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4=
+    - uses: actions/checkout@v2.3.4
+
+    - run: nix build .#elinter
+    - run: nix run .#elinter -- --help
