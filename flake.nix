@@ -39,6 +39,16 @@
     } @ inputs:
     {
       lib = import ./lib { inherit inputs; };
+      templates = {
+        simple = {
+          path = ./templates/simple;
+          description = "A boilerplate for an Emacs Lisp-only project";
+        };
+        action = {
+          path = ./templates/action;
+          description = "A GitHub Actions workflow for linting your package";
+        };
+      };
     } //
     flake-utils.lib.eachSystem [
       # TODO: Use the same set of systems as nix-emacs-ci
