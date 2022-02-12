@@ -15,19 +15,11 @@ It is totally for Nix users, and it requires your understanding of [[https://nix
 You can think of it as a /library/ rather than a /framework/, unlike the former two versions.
 
 :CONTENTS:
-- [[#features][Features]]
-  - [[#when-to-and-when-not-to-use-elinter][When to and when not to use elinter]]
+- [[#when-to-and-when-not-to-use-elinter][When to and when not to use elinter]]
 - [[#guide-how-to-configure-your-emacs-lisp-project][Guide: How to configure your Emacs Lisp project]]
 - [[#design-goal][Design goal]]
 :END:
-** Features
-With elinter, you will be able to:
-
-- Statically check your Emacs Lisp code as a library with modestly a small amount of configuration
-- After successfully checking your code, byte-compile it as a package or packages
-
-Elinter won't run tests, but if you follow conventions of elinter projects, you will be able to run a test suite relatively easily. I plan on writing another library for aiding the purpose.
-*** When to and when not to use elinter
+** When to and when not to use elinter
 Compared to other solutions, elinter is probably better when your project is:
 
 - a multi-package repository, which contain multiple packages in a single repository
