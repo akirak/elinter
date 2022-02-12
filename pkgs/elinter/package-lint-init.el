@@ -1,7 +1,9 @@
 (require 'package)
 (require 'lisp-mnt)
 
-(push '(melpa . "https://melpa.org/packages/") package-archives)
+(add-to-list 'package-archives
+             '(melpa . "https://melpa.org/packages/")
+             t)
 (package-initialize)
 
 (defvar package-lint-main-file)
