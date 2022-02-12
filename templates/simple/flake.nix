@@ -16,19 +16,17 @@
 
     elinter = {
       url = "github:akirak/elinter/v5";
-      # Update GNU ELPA at your will.
       inputs.gnu-elpa.follows = "gnu-elpa";
+      inputs.melpa.follows = "melpa";
     };
   };
 
   outputs =
     { self
-    , nixpkgs
     , elinter
     , ...
     } @ inputs:
     elinter.lib.mkFlake {
-      inherit (inputs) nixpkgs melpa;
       src = ./.;
       lockDirName = "lock";
       localPackages = [
