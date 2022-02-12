@@ -1,2 +1,0 @@
-(elinter-lint :fetcher github :repo "akirak/elinter"
-              :files ("lisp/elinter-lint.el"))
