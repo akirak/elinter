@@ -48,9 +48,6 @@ writeShellApplication {
       if [[ "$autoloads" =~ (.+)-autoloads.el ]]
       then
         main_file="''${BASH_REMATCH[1]}.el"
-      else
-        echo "Error matching on $autoloads" >&1
-        exit 200
       fi
 
       files=()
@@ -63,6 +60,8 @@ writeShellApplication {
         files+=("$f")
       done
 
+      echo "Checking the package with package-lint..."
+      set -x
       emacs -batch -L "${package-lint}/share/emacs/site-lisp" -l package-lint \
         --eval "(setq package-lint-main-file \"''${main_file}\")" \
         -l ${./package-lint-init.el} \
@@ -95,6 +94,7 @@ writeShellApplication {
 
       for f in *.el
       do
+        echo "Compiling $f..."
         if ! emacs -batch --no-site-file -L . \
           --eval "(setq byte-compile-error-on-warn t)" \
           -f batch-byte-compile "$f"
@@ -105,12 +105,11 @@ writeShellApplication {
 
       if [[ $status -eq 0 ]]
       then
-        echo "Successfully compiled all the files."
+        echo "Loading $ename.elc..."
         if ! emacs -batch --no-site-file -L . -l "$ename.elc"
         then
           status=1
         fi
-        echo "Successfully loaded the main file."
       fi
       exit $status
     '')
