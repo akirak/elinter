@@ -1,9 +1,6 @@
 { inputs
 }:
 { system
-  # flake inputs
-, nixpkgs
-, melpa
   # Package configuration
 , src
 , lockDirName
@@ -11,6 +8,7 @@
 }:
 with builtins;
 let
+  inherit (inputs) nixpkgs;
   inherit (nixpkgs) lib;
   inherit (inputs.gitignore.lib) gitignoreSource;
 
@@ -29,8 +27,7 @@ let
     inherit localPackages;
     src = gitignoreSource src;
     inventories = import ./inventories.nix {
-      inherit melpa;
-      inherit (inputs) gnu-elpa;
+      inherit (inputs) melpa gnu-elpa;
     };
     lockDir = src + "/${lockDirName}";
   };
