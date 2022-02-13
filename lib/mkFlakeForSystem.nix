@@ -34,9 +34,16 @@ let
 
   elispPackages = lib.getAttrs localPackages emacsConfig.elispPackages;
 
-  lintConfig = pkgs.callPackage ./emacs.nix {
-    inherit inputs;
-  };
+  admin = emacsConfig.admin lockDirName;
+
+  update = pkgs.writeShellScriptBin "update" ''
+    set -euo pipefail
+
+    nix flake update
+    ${admin.update}/bin/lock
+    cd ${lockDirName}
+    nix flake update
+  '';
 
   elinter = pkgs.callPackage ../pkgs/elinter {
     inherit emacs inputs;
@@ -45,7 +52,8 @@ in
 {
   packages = {
     inherit emacsConfig;
-    inherit (emacsConfig.admin lockDirName) update lock;
+    inherit (admin) lock;
+    inherit update;
     inherit elinter;
   };
 
