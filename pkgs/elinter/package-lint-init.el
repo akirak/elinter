@@ -1,3 +1,5 @@
+(setq package-user-dir (locate-user-emacs-file
+                        (format "elpa/%d" emacs-major-version)))
 (require 'package)
 (require 'lisp-mnt)
 
