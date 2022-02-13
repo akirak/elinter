@@ -7,6 +7,7 @@
 , lockDirName ? "lock"
 , localPackages
 , extraPackages ? [ ]
+, scripts ? { }
 }:
 with builtins;
 let
@@ -35,6 +36,14 @@ let
     cd ${lockDirName}
     nix flake update
   '';
+
+  scriptPackages = lib.mapAttrs (name: text: pkgs.writeShellApplication {
+    inherit name;
+    runtimeInputs = [
+      emacsConfig
+    ];
+    inherit text;
+  }) scripts;
 in
 {
   packages = {
@@ -42,7 +51,7 @@ in
     inherit (admin) lock;
     inherit update;
     inherit (pkgs.elinter) elinter;
-  };
+  } // scriptPackages;
 
   inherit elispPackages;
 }
