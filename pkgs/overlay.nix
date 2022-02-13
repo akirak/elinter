@@ -36,9 +36,16 @@ in {
       emacsWithElsa = self.emacsConfigForLint;
     };
 
-    elinter = self.callPackage ./elinter {
-      inherit (self.emacsConfigForLint.elispPackages) package-lint;
+    # TODO: Use a proper module API
+    plugins = {
+      package-lint = self.callPackage ./plugins/package-lint {
+        inherit (self.emacsConfigForLint.elispPackages) package-lint;
+      };
+      byte-compile-and-load = self.callPackage ./plugins/byte-compile { };
+      elsa = self.callPackage ./plugins/elsa { };
     };
+
+    elinter = self.callPackage ./elinter { };
 
     mkEmacsConfigForDevelopment = { src, lockDirName, localPackages }:
       self.callPackage ./emacs-config {
