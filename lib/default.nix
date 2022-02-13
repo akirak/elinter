@@ -1,9 +1,10 @@
-{ inputs }:
+{ inputs, overlay }:
 let
   inherit (inputs) flake-utils;
 
   mkFlakeForSystem = import ./mkFlakeForSystem.nix {
-    inherit inputs;
+    inherit (inputs) nixpkgs;
+    inherit overlay;
   };
 
   mkFlake =

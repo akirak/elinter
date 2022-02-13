@@ -37,8 +37,14 @@
     , flake-utils
     , ...
     } @ inputs:
+    let
+      overlay = import ./pkgs/overlay.nix { inherit inputs; };
+
+      inherit (flake-utils.lib) mkApp;
+    in
     {
-      lib = import ./lib { inherit inputs; };
+      inherit overlay;
+      lib = import ./lib { inherit inputs overlay; };
       templates = {
         simple = {
           path = ./templates/simple;
@@ -57,19 +63,19 @@
       pkgs = import nixpkgs {
         inherit system;
         overlays = [
-          (import (inputs.emacs-ci + "/overlay.nix"))
-          inputs.twist.overlay
+          overlay
         ];
       };
 
-      elinter = pkgs.callPackage ./pkgs/elinter {
-        emacs = pkgs.callPackage ./lib/emacsSmall.nix { };
-        inherit inputs;
-      };
+      admin = pkgs.elinter.emacsConfigForLint.admin "./pkgs/emacs-config/lock";
     in
     {
       packages = flake-utils.lib.flattenTree {
-        inherit elinter;
+        inherit (pkgs.elinter) elinter;
+      };
+
+      apps.lock = mkApp {
+        drv = admin.lock;
       };
     }
     );

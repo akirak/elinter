@@ -2,18 +2,9 @@
 , writeShellScriptBin
 , writers
 , jq
-, emacs
-, emacsTwist
-, inputs
+, package-lint
 }:
 with builtins;
-let
-  config = import ./emacs.nix {
-    inherit emacs emacsTwist inputs;
-  };
-
-  inherit (config.elispPackages) package-lint;
-in
 writeShellApplication {
   name = "elinter";
 

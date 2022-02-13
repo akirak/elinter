@@ -1,0 +1,27 @@
+{
+  "nodes": {
+    "package-lint": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1644764238,
+        "narHash": "sha256-3jyAylJJTd0N5r3v7Ov22Xturdk7qR1W2z2Qae+3UYM=",
+        "owner": "purcell",
+        "repo": "package-lint",
+        "rev": "873025ffc85b5e40ec361e953218fa09c6ebd621",
+        "type": "github"
+      },
+      "original": {
+        "owner": "purcell",
+        "repo": "package-lint",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "package-lint": "package-lint"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

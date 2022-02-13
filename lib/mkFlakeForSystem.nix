@@ -1,4 +1,5 @@
-{ inputs
+{ nixpkgs
+, overlay
 }:
 { system
   # Package configuration
@@ -8,28 +9,17 @@
 }:
 with builtins;
 let
-  inherit (inputs) nixpkgs;
   inherit (nixpkgs) lib;
-  inherit (inputs.gitignore.lib) gitignoreSource;
 
   pkgs = import nixpkgs {
     inherit system;
     overlays = [
-      (import (inputs.emacs-ci + "/overlay.nix"))
-      inputs.twist.overlay
+      overlay
     ];
   };
 
-  emacs = pkgs.callPackage ./emacsSmall.nix { };
-
-  emacsConfig = pkgs.callPackage ./config.nix {
-    inherit emacs;
-    inherit localPackages;
-    src = gitignoreSource src;
-    inventories = import ./inventories.nix {
-      inherit (inputs) melpa gnu-elpa;
-    };
-    lockDir = src + "/${lockDirName}";
+  emacsConfig = pkgs.elinter.mkEmacsConfigForDevelopment {
+    inherit src lockDirName localPackages;
   };
 
   elispPackages = lib.getAttrs localPackages emacsConfig.elispPackages;
@@ -44,17 +34,13 @@ let
     cd ${lockDirName}
     nix flake update
   '';
-
-  elinter = pkgs.callPackage ../pkgs/elinter {
-    inherit emacs inputs;
-  };
 in
 {
   packages = {
     inherit emacsConfig;
     inherit (admin) lock;
     inherit update;
-    inherit elinter;
+    inherit (pkgs.elinter) elinter;
   };
 
   inherit elispPackages;
