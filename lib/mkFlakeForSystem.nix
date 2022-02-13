@@ -3,7 +3,7 @@
 { system
   # Package configuration
 , src
-, lockDirName
+, lockDirName ? "lock"
 , localPackages
 }:
 with builtins;
