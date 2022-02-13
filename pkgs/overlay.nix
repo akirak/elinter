@@ -10,7 +10,9 @@ let
   ] final prev;
 in {
   elinter = lib.makeScope prev.newScope (self: {
-    emacs = pkgs.emacs-27-2;
+    emacs = pkgs.emacs-snapshot;
+
+    emacsCIVersions = lib.getAttrs pkgs.emacs-ci-versions pkgs;
 
     emacsConfigForLint = self.callPackage ./emacs-config {
       inherit (pkgs) emacsTwist;
@@ -50,10 +52,15 @@ in {
     };
 
     mkEmacsConfigForDevelopment =
-      { src, lockDirName, localPackages, extraPackages }:
-      self.callPackage ./emacs-config {
+      { src, lockDirName
+      , localPackages, extraPackages
+      , emacs ? self.emacs
+      , compile ? false
+      }:
+      self.callPackage ./emacs-config ({
         inherit (pkgs) emacsTwist;
         inherit inputs;
+        inherit emacs;
 
         extraPackages = localPackages ++ extraPackages;
         lockDir = src + "/${lockDirName}";
@@ -61,6 +68,13 @@ in {
         inputOverrides = lib.genAttrs localPackages (_: _: _: {
           src = gitignoreSource src;
         });
-      };
+      } // lib.optionalAttrs compile {
+        elispPackageOverrides = _eself: esuper: 
+          lib.genAttrs localPackages (ename: esuper.${ename}.overrideAttrs (_: {
+            dontByteCompile = false;
+            errorOnWarn = true;
+          }));
+      }
+      );
   });
 }

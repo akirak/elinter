@@ -20,11 +20,20 @@ let
     ];
   };
 
-  emacsConfig = pkgs.elinter.mkEmacsConfigForDevelopment {
+  inherit (pkgs.elinter) emacsCIVersions;
+
+  emacsConfig = lib.makeOverridable pkgs.elinter.mkEmacsConfigForDevelopment {
     inherit src lockDirName localPackages extraPackages;
   };
 
   elispPackages = lib.getAttrs localPackages emacsConfig.elispPackages;
+
+  emacsVersions = import ./versionMatrix.nix {
+    inherit lib;
+    inherit localPackages;
+    inherit (emacsConfig) packageInputs;
+    inherit emacsCIVersions;
+  };
 
   admin = emacsConfig.admin lockDirName;
 
@@ -37,17 +46,38 @@ let
     nix flake update
   '';
 
-  scriptPackages = lib.mapAttrs (name: text: pkgs.writeShellApplication {
+  makeScriptDerivation = { name, emacs, text }: pkgs.writeShellApplication {
     inherit name;
     runtimeInputs = [
-      emacsConfig
+      emacs
     ];
     inherit text;
-  }) scripts;
+  };
+
+  scriptPackages = lib.mapAttrs
+    (prefix: { text, compile ? false }:
+      lib.extendDerivation true
+        {
+          matrix = lib.genAttrs emacsVersions (emacsVersion: makeScriptDerivation {
+            name = "${prefix}-${emacsVersion}";
+            emacs = emacsConfig.override {
+              emacs = emacsCIVersions.${emacsVersion};
+              inherit compile;
+            };
+            inherit text;
+          });
+        }
+        (makeScriptDerivation {
+          name = prefix;
+          emacs = emacsConfig.override { inherit compile; };
+          inherit text;
+        })
+    ) scripts;
 in
 {
   packages = {
     inherit emacsConfig;
+    emacsConfig27 = emacsConfig.override { emacs = pkgs.elinter.emacsCIVersions.emacs-27-2; };
     inherit (admin) lock;
     inherit update;
     inherit (pkgs.elinter) elinter;
