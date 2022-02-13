@@ -29,7 +29,7 @@ let
   update = pkgs.writeShellScriptBin "update" ''
     set -euo pipefail
 
-    nix flake update
+    nix flake lock --update-input elinter
     ${admin.update}/bin/lock
     cd ${lockDirName}
     nix flake update
