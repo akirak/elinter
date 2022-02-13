@@ -7,7 +7,8 @@
       flake = false;
     };
     melpa = {
-      # FIXME: Fork MELPA, create a new branch for your package, and push it to GitHub
+      # FIXME: Fork MELPA, create a new branch for your package, add a recipe,
+      # and push it to GitHub
       url = "github:OWNER/melpa/BRANCH";
       # TODO: After your package is on MELPA, switch to master.
       # url = "github:melpa/melpa";
