@@ -4,7 +4,7 @@
 , jq
 , lib
 , plugins
-, enabledPlugins ? [ "package-lint" "byte-compile-and-load" ]
+, enabledPlugins ? [ "elsa" "package-lint" "byte-compile-and-load" ]
 }:
 with builtins;
 writeShellApplication {
