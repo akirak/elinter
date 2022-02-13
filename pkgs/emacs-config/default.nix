@@ -15,7 +15,13 @@ in
     inherit (inputs) gnu-elpa melpa;
   };
   initFiles = [ ];
-  inherit inputOverrides extraPackages lockDir;
+  inherit extraPackages lockDir;
+  # TODO: Allow composing overrides
+  inputOverrides = {
+    buttercup = _: super: {
+      files = builtins.removeAttrs super.files [ "buttercup-pkg.el" ];
+    };
+  } // inputOverrides;
 }).overrideScope' (_self: super: {
   elispPackages = super.elispPackages.overrideScope' (eself: esuper:
     builtins.mapAttrs
