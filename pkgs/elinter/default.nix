@@ -1,10 +1,10 @@
 { writeShellApplication
 , writeShellScriptBin
-, writers
 , jq
 , lib
-, plugins
-, enabledPlugins ? [ "elsa" "package-lint" "byte-compile-and-load" ]
+}:
+{ plugins
+, enabledPlugins
 }:
 with builtins;
 writeShellApplication {
