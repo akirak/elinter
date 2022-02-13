@@ -46,7 +46,7 @@ in {
         elsa = self.callPackage ./plugins/elsa { };
       };
 
-      enabledPlugins = [ "elsa" "package-lint" "byte-compile-and-load" ];
+      enabledPlugins = [ "package-lint" "byte-compile-and-load" ];
     };
 
     mkEmacsConfigForDevelopment = { src, lockDirName, localPackages }:
