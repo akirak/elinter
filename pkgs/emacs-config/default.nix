@@ -17,11 +17,7 @@ in
   initFiles = [ ];
   inherit extraPackages lockDir;
   # TODO: Allow composing overrides
-  inputOverrides = {
-    buttercup = _: super: {
-      files = builtins.removeAttrs super.files [ "buttercup-pkg.el" ];
-    };
-  } // inputOverrides;
+  inputOverrides = (import ./workarounds.nix) // inputOverrides;
 }).overrideScope' (_self: super: {
   elispPackages = super.elispPackages.overrideScope' (eself: esuper:
     builtins.mapAttrs
