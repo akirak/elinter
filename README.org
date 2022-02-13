@@ -12,7 +12,6 @@ It helps you maintain configuration for running =package-lint=, =checkdoc=, =byt
 Its goal is to handle cases where other solutions like [[https://github.com/alphapapa/makem.sh][makem.sh]] do not handle well.
 
 It is totally for Nix users, and it requires your understanding of [[https://nixos.wiki/wiki/Flakes][Nix flakes]].
-You can think of it as a /library/ rather than a /framework/, unlike the former two versions.
 
 :CONTENTS:
 - [[#when-to-and-when-not-to-use-elinter][When to and when not to use elinter]]
