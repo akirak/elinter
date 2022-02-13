@@ -20,6 +20,10 @@
       url = "github:purcell/package-lint";
       flake = false;
     };
+    elsa = {
+      url = "github:emacs-elsa/Elsa";
+      flake = false;
+    };
 
     melpa = {
       url = "github:melpa/melpa";
@@ -71,7 +75,7 @@
     in
     {
       packages = flake-utils.lib.flattenTree {
-        inherit (pkgs.elinter) elinter;
+        inherit (pkgs.elinter) elinter elsa;
       };
 
       apps.lock = mkApp {

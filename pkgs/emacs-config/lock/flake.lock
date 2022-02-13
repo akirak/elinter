@@ -1,5 +1,53 @@
 {
   "nodes": {
+    "dash": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1632096711,
+        "narHash": "sha256-oeIUEe5OGgij6IessN6bmS7re5r+D5BlrU4MOsaK3JE=",
+        "owner": "magnars",
+        "repo": "dash.el",
+        "rev": "da167c51e9fd167a48d06c7c0ee8e3ac7abd9718",
+        "type": "github"
+      },
+      "original": {
+        "owner": "magnars",
+        "repo": "dash.el",
+        "type": "github"
+      }
+    },
+    "elsa": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1644279463,
+        "narHash": "sha256-uYx5LBvxv3F7OKWdBGiXrrWHSRt6/54hnE/tuxUTyqs=",
+        "owner": "emacs-elsa",
+        "repo": "Elsa",
+        "rev": "82ffb6eecefde7e99383e4a657f17fe414287846",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-elsa",
+        "repo": "Elsa",
+        "type": "github"
+      }
+    },
+    "f": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1624532602,
+        "narHash": "sha256-vsslMtF8dQm6cJYb07SxPO0rp44lfRONSxRHj3e52Ew=",
+        "owner": "rejeep",
+        "repo": "f.el",
+        "rev": "50af874cd19042f17c8686813d52569b1025c76a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rejeep",
+        "repo": "f.el",
+        "type": "github"
+      }
+    },
     "package-lint": {
       "flake": false,
       "locked": {
@@ -18,7 +66,44 @@
     },
     "root": {
       "inputs": {
-        "package-lint": "package-lint"
+        "dash": "dash",
+        "elsa": "elsa",
+        "f": "f",
+        "package-lint": "package-lint",
+        "s": "s",
+        "trinary": "trinary"
+      }
+    },
+    "s": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1623824393,
+        "narHash": "sha256-F0BrAlsxBskNzkyHriG3yNY+PZ7npYi1x98Ci5yVDAo=",
+        "owner": "magnars",
+        "repo": "s.el",
+        "rev": "08661efb075d1c6b4fa812184c1e5e90c08795a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "magnars",
+        "repo": "s.el",
+        "type": "github"
+      }
+    },
+    "trinary": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1536102832,
+        "narHash": "sha256-ue3c8LJBfh63JtlBm3L+wBeIC/LIjnjLuGIKypu4BoI=",
+        "owner": "emacs-elsa",
+        "repo": "trinary-logic",
+        "rev": "886232c6d7e92a8e9fe573eef46754ebe321f90d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-elsa",
+        "repo": "trinary-logic",
+        "type": "github"
       }
     }
   },

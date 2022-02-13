@@ -16,6 +16,22 @@
         "type": "github"
       }
     },
+    "elsa": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1644279463,
+        "narHash": "sha256-uYx5LBvxv3F7OKWdBGiXrrWHSRt6/54hnE/tuxUTyqs=",
+        "owner": "emacs-elsa",
+        "repo": "Elsa",
+        "rev": "82ffb6eecefde7e99383e4a657f17fe414287846",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emacs-elsa",
+        "repo": "Elsa",
+        "type": "github"
+      }
+    },
     "emacs-ci": {
       "flake": false,
       "locked": {
@@ -147,6 +163,7 @@
     },
     "root": {
       "inputs": {
+        "elsa": "elsa",
         "emacs-ci": "emacs-ci",
         "flake-utils": "flake-utils",
         "gitignore": "gitignore",

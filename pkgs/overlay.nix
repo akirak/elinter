@@ -16,14 +16,24 @@ in {
       inherit (pkgs) emacsTwist;
       inherit inputs;
 
-      extraPackages = [ "package-lint" ];
+      extraPackages = [
+        "package-lint"
+        "elsa"
+      ];
       lockDir = ./emacs-config/lock;
       # Allow the user to update lint packages
       inputOverrides = {
         package-lint = _: _: {
           src = inputs.package-lint;
         };
+        elsa = _: _: {
+          src = inputs.elsa;
+        };
       };
+    };
+
+    elsa = self.callPackage ./elsa {
+      emacsWithElsa = self.emacsConfigForLint;
     };
 
     elinter = self.callPackage ./elinter {
