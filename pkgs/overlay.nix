@@ -49,12 +49,13 @@ in {
       enabledPlugins = [ "package-lint" "byte-compile-and-load" ];
     };
 
-    mkEmacsConfigForDevelopment = { src, lockDirName, localPackages }:
+    mkEmacsConfigForDevelopment =
+      { src, lockDirName, localPackages, extraPackages }:
       self.callPackage ./emacs-config {
         inherit (pkgs) emacsTwist;
         inherit inputs;
 
-        extraPackages = localPackages;
+        extraPackages = localPackages ++ extraPackages;
         lockDir = src + "/${lockDirName}";
         # Allow the user to update lint packages
         inputOverrides = lib.genAttrs localPackages (_: _: _: {

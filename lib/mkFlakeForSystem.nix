@@ -6,6 +6,7 @@
 , src
 , lockDirName ? "lock"
 , localPackages
+, extraPackages ? [ ]
 }:
 with builtins;
 let
@@ -19,7 +20,7 @@ let
   };
 
   emacsConfig = pkgs.elinter.mkEmacsConfigForDevelopment {
-    inherit src lockDirName localPackages;
+    inherit src lockDirName localPackages extraPackages;
   };
 
   elispPackages = lib.getAttrs localPackages emacsConfig.elispPackages;

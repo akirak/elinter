@@ -1,4 +1,11 @@
-{ emacs, inputs, emacsTwist, inputOverrides, extraPackages, lockDir }:
+{ emacs
+, lib
+, inputs
+, emacsTwist
+, inputOverrides
+, extraPackages
+, lockDir
+}:
 let
   inherit (inputs.gitignore.lib) gitignoreSource;
 in
