@@ -62,9 +62,24 @@ let
     lib.unique
   ];
 
+  mainFile = emacsConfig.packageInputs.${head localPackages}.mainFile;
+
   scriptWorkflows = pkgs.elinter.makeGitHubWorkflows {
     inherit minimumEmacsVersion lockDirName localPackages lispFiles lispDirs;
-  } scripts;
+  } ({
+    lint = {
+      description = "Run package-lint";
+      compile = false;
+      matrix = false;
+      extraPackages = [ "package-lint" ];
+      # Only a single package is supported right now.
+      text = ''
+        emacs -batch -l package-lint \
+          --eval "(setq package-lint-main-file \"${mainFile}\")" \
+          -f package-lint-batch-and-exit ${lib.escapeShellArgs lispFiles}
+      '';
+    };
+  } // scripts);
 in
 {
   packages = {

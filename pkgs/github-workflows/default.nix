@@ -36,21 +36,31 @@ let
     then "emacs " + emacsArgs + head (filter isString (match "emacs([[:space:]].+)" cmdline))
     else cmdline;
 
+  indent = n: s:
+    let
+      lines = filter isString (split "\n" s);
+      pad = lib.fixedWidthString n " " "";
+    in
+    concatStringsSep "\n"
+      ([(head lines)] ++ map (s: pad + s) (tail lines));
+
   makeWorkflowBody = name:
     { text
     , compile ? false
     , github ? { }
+    , matrix ? true
     , description ? null
+    , extraPackages ? [ ]
     , ...
     }: ''
       name: '${name}'
-      on: ${github.on or "push: { paths: ['**.el'] }"}
+      on: ${github.on or "{ push: { paths: [ '**.el' ] } }"}
       jobs:
         ${name}:
           runs-on: ubuntu-latest
           strategy:
             matrix:
-              emacs_version: ${toJSON emacsVersions}
+              emacs_version: ${toJSON (if matrix then emacsVersions else [ "snapshot" ])}
           steps:
           - uses: purcell/setup-emacs@master
             with:
@@ -60,6 +70,8 @@ let
             run: |
               cat <(jq -r '.nodes.root.inputs | map(.) | .[]' ${lockDirName}/flake.lock) \
                   <(jq -r 'keys | .[]' ${lockDirName}/archive.lock) \
+                  ${lib.optionalString (extraPackages != [ ])
+                    ("<(echo ${lib.escapeShellArgs extraPackages})")} \
                   | xargs emacs -batch -l package --eval \
                   "(progn
                       (push '(\"melpa\" . \"https://melpa.org/packages/\")
@@ -75,12 +87,13 @@ let
                              (package-install (cadr (assq package 
                                                           package-archive-contents)))))))"
           - name: Byte-compile
+            if: ''${{ ${lib.boolToString compile} }}
             run: |
               emacs -batch -l bytecomp ${emacsArgs} \
                 --eval "(setq byte-compile-error-on-warn t)" \
                 -f batch-byte-compile ${lib.escapeShellArgs lispFiles}
           - run: |
-              ${prependEmacsArgs (trim text)}
+              ${indent 8 (prependEmacsArgs (trim text))}
             ${lib.optionalString (description != null) "name: ${description}"}
     '';
 in
