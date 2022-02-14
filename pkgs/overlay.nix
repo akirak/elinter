@@ -76,5 +76,7 @@ in {
           }));
       }
       );
+
+    makeScriptPackage = self.callPackage ./script { };
   });
 }
