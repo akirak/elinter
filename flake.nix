@@ -59,6 +59,7 @@
           description = "A GitHub Actions workflow for linting your package";
         };
       };
+      defaultTemplate = self.templates.simple;
     } //
     flake-utils.lib.eachDefaultSystem (system:
     let
