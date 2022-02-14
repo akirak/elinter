@@ -83,7 +83,7 @@ let
 in
 {
   packages = {
-    inherit emacsConfig;
+    emacs = emacsConfig;
     inherit (admin) lock;
     inherit update;
     inherit (pkgs.elinter) elinter;
