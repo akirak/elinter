@@ -27,7 +27,8 @@ in
 prefix:
 { text
 , compile ? false
-, matrix ? true }:
+, ...
+}:
 let
   origDerivation = makeScriptDerivation {
     name = prefix;
@@ -44,11 +45,8 @@ let
     inherit text;
   };
 in
-if matrix
-then lib.extendDerivation true
+lib.extendDerivation true
   {
     matrix = lib.genAttrs emacsVersions makeDerivationForEmacsVersion;
   }
   origDerivation
-else origDerivation
-

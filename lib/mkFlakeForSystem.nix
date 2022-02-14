@@ -51,6 +51,20 @@ let
     inherit minimumEmacsVersion emacsConfig;
   })
     scripts;
+
+  lispFiles = lib.pipe localPackages [
+    (map (ename: emacsConfig.packageInputs.${ename}.lispFiles))
+    concatLists
+  ];
+
+  lispDirs = lib.pipe lispFiles [
+    (map dirOf)
+    lib.unique
+  ];
+
+  scriptWorkflows = pkgs.elinter.makeGitHubWorkflows {
+    inherit minimumEmacsVersion lockDirName localPackages lispFiles lispDirs;
+  } scripts;
 in
 {
   packages = {
@@ -58,6 +72,7 @@ in
     inherit (admin) lock;
     inherit update;
     inherit (pkgs.elinter) elinter;
+    github-workflows = scriptWorkflows;
   } // scriptPackages;
 
   inherit elispPackages;

@@ -78,5 +78,7 @@ in {
       );
 
     makeScriptPackage = self.callPackage ./script { };
+
+    makeGitHubWorkflows = self.callPackage ./github-workflows { };
   });
 }
