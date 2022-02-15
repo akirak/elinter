@@ -1,4 +1,6 @@
 * elinter
+*This project is soon to be replaced by [[https://github.com/emacs-twist/nomake][nomake]]. I won't develop elinter any more. See nomake instead.*
+
 This is a complete rewrite of my Emacs Lisp package checker, formerly called =emacs-package-checker= or =melpa-check=. It is still currently at an alpha stage.
 
 #+begin_html
